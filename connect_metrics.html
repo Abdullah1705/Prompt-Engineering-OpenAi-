@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Connect Metrics</title>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Reset & base */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            height: 100%;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to bottom, #000, skyblue);
+            overflow: auto;
+        }
+
+        /* Glassmorphic top bar */
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 15px 40px;
+            margin: 20px 40px 0;
+        }
+
+        .branding h1 {
+            font-size: 1.6em;
+            color: #ecf0f1;
+        }
+
+        .branding p {
+            margin-top: 4px;
+            font-size: 0.9em;
+            color: #bdc3c7;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .user-details {
+            text-align: right;
+            margin-right: 12px;
+        }
+
+        .user-name {
+            font-size: 1em;
+            font-weight: bold;
+            color: #ecf0f1;
+        }
+
+        .user-accounts {
+            margin-top: 2px;
+            font-size: 0.8em;
+            color: #bdc3c7;
+        }
+
+        .user-icon {
+            font-size: 2em;
+            color: #ecf0f1;
+        }
+
+        /* Main layout */
+        .main {
+            display: flex;
+            height: calc(100% - 100px);
+            margin: 20px 40px 20px;
+        }
+
+        /* Glassmorphic sidebar */
+        .sidebar {
+            width: 300px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            color: #ecf0f1;
+            padding: 30px 0;
+            margin-right: 20px;
+            flex-shrink: 0;
+            overflow-y: auto;
+        }
+
+        .sidebar button {
+            width: 100%;
+            padding: 15px 25px;
+            background: none;
+            border: none;
+            color: inherit;
+            text-align: left;
+            font-size: 1em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .sidebar button i {
+            margin-right: 12px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .sidebar button:hover,
+        .sidebar button.active {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Content area */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .content-section {
+            display: none;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 20px;
+            padding: 0 20px;
+            margin-bottom: 20px;
+        }
+
+        .filters select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background: rgba(255, 255, 255, 0.8) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' fill='%23000' viewBox='0 0 10 6'><path d='M0,0 L5,6 L10,0 Z'/></svg>") no-repeat right 10px center;
+            background-size: 8px 5px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: #000;
+            font-size: 1em;
+            cursor: pointer;
+            width: 160px;
+        }
+
+        /* Dashboard rows */
+        .row {
+            display: flex;
+            gap: 20px;
+            margin: 0 20px 20px;
+        }
+
+        .row.half {
+            height: 50vh;
+        }
+
+        /* Glassmorphic cards */
+        .card {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        .card.full-width {
+            flex: none;
+            width: 100%;
+        }
+
+        .card h3 {
+            margin-bottom: 10px;
+            color: #ecf0f1;
+            display: flex;
+            align-items: center;
+            font-size: 1.1em;
+        }
+
+        .card h3 i {
+            margin-right: 8px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .card canvas {
+            flex: 1;
+            width: 100% !important;
+        }
+
+        /* Dashboard table */
+        .dashboard-table-container {
+            overflow-x: auto;
+            flex: 1;
+        }
+
+        #dashboardTable {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        #dashboardTable th,
+        #dashboardTable td {
+            border: 1px solid #3498db;
+            padding: 8px 12px;
+            color: #ecf0f1;
+            text-align: left;
+        }
+
+        #dashboardTable th {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Activity filters */
+        .activity-filters {
+            display: flex;
+            gap: 20px;
+            padding: 0 20px;
+            margin-bottom: 20px;
+        }
+
+        .activity-filters select{
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background: rgba(255, 255, 255, 0.8) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' fill='%23000' viewBox='0 0 10 6'><path d='M0,0 L5,6 L10,0 Z'/></svg>") no-repeat right 10px center;
+            background-size: 8px 5px;
+        }
+
+        .activity-filters select,
+        .activity-filters input {
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: #000;
+            font-size: 1em;
+            cursor: pointer;
+            width: 160px;
+        }
+
+        .activity-filters input[type="date"] {
+            width: 160px;
+        }
+
+        .export-btn {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: #000;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.2s;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+
+        .export-btn:hover {
+            background: rgba(255, 255, 255, 1);
+        }
+
+        /* Activity table */
+        .activity-table-container {
+            margin: 0 20px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            overflow-x: auto;
+        }
+
+        #commentsTable {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        #commentsTable th,
+        #commentsTable td {
+            border: 1px solid #3498db;
+            padding: 12px 16px;
+            color: #ecf0f1;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        #commentsTable th {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="topbar">
+        <div class="branding">
+            <h1>Connect Metrics</h1>
+            <p>Insightful metrics, seamless connections</p>
+        </div>
+        <div class="user-info">
+            <div class="user-details">
+                <div class="user-name">Jane Doe</div>
+                <div class="user-accounts">Connected Accounts: 4</div>
+            </div>
+            <div class="user-icon"><i class="fas fa-user"></i></div>
+        </div>
+    </div>
+
+    <div class="main">
+        <nav class="sidebar">
+            <button class="sidebar-btn active" data-target="dashboard">
+                <i class="fas fa-chart-line"></i><span>Main Dashboard</span>
+            </button>
+            <button class="sidebar-btn" data-target="activity">
+                <i class="fas fa-list"></i><span>Activity</span>
+            </button>
+        </nav>
+
+        <section class="content">
+            <!-- Dashboard Section -->
+            <div id="dashboard" class="content-section active">
+                <div class="filters">
+                    <select id="accountFilter">
+                        <option value="All Accounts">All Accounts</option>
+                        <option value="Account 1">Account 1</option>
+                        <option value="Account 2">Account 2</option>
+                        <option value="Account 3">Account 3</option>
+                        <option value="Account 4">Account 4</option>
+                    </select>
+                    <select id="timeFilter">
+                        <option value="7">Last 7 Days</option>
+                        <option value="15">Last 15 Days</option>
+                        <option value="30">Last 30 Days</option>
+                    </select>
+                </div>
+                <div class="row half">
+                    <div class="card">
+                        <h3><i class="fas fa-user-friends"></i>Followers</h3>
+                        <canvas id="followersChart"></canvas>
+                    </div>
+                    <div class="card">
+                        <h3><i class="fas fa-project-diagram"></i>Connections</h3>
+                        <canvas id="connectionsChart"></canvas>
+                    </div>
+                    <div class="card">
+                        <h3><i class="fas fa-comment"></i>Comments</h3>
+                        <canvas id="commentsChart"></canvas>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="card full-width">
+                        <h3><i class="fas fa-table"></i>Comments Summary</h3>
+                        <div class="dashboard-table-container">
+                            <table id="dashboardTable">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Name</th>
+                                        <th>Total Comments</th>
+                                        <th>Latest Comment Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activity Section -->
+            <div id="activity" class="content-section">
+                <div class="activity-filters">
+                    <select id="actAccountFilter">
+                        <option value="All Accounts">All Accounts</option>
+                        <option value="Account 1">Account 1</option>
+                        <option value="Account 2">Account 2</option>
+                        <option value="Account 3">Account 3</option>
+                        <option value="Account 4">Account 4</option>
+                    </select>
+                    <select id="actStatusFilter">
+                        <option value="all">All Statuses</option>
+                        <option value="online">Online</option>
+                        <option value="deleted">Deleted</option>
+                    </select>
+                    <input type="date" id="startDateFilter">
+                    <input type="date" id="endDateFilter">
+                    <button class="export-btn" id="exportBtn"><i class="fas fa-file-export"></i>Export Comments</button>
+                </div>
+                <div class="activity-table-container">
+                    <table id="commentsTable">
+                        <thead>
+                            <tr>
+                                <th>S/N</th>
+                                <th>Post</th>
+                                <th>Comment</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <script>
+        // Sidebar navigation
+        const buttons = document.querySelectorAll('.sidebar-btn');
+        const sections = document.querySelectorAll('.content-section');
+        buttons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                buttons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                sections.forEach(sec => sec.classList.toggle('active', sec.id === btn.dataset.target));
+            });
+        });
+
+        // Sample data
+        const dashboardData = [
+            { number: 1, name: 'Account 1', totalComments: 24, latestDate: '2025-04-30' },
+            { number: 2, name: 'Account 2', totalComments: 18, latestDate: '2025-04-28' },
+            { number: 3, name: 'Account 3', totalComments: 30, latestDate: '2025-04-29' },
+            { number: 4, name: 'Account 4', totalComments: 12, latestDate: '2025-04-27' },
+        ];
+        const activityData = [
+            { sn: 1, account: 'Account 1', post: 'How to Learn JavaScript', comment: 'Great article!', status: 'online', date: '2025-04-21' },
+            { sn: 2, account: 'Account 1', post: 'CSS Flexbox Guide', comment: 'Very helpful!', status: 'online', date: '2025-04-20' },
+            { sn: 3, account: 'Account 2', post: 'Async/Await', comment: 'Excellent explanation.', status: 'deleted', date: '2025-04-19' },
+            { sn: 4, account: 'Account 3', post: 'React Hooks', comment: 'This cleared doubts.', status: 'online', date: '2025-04-18' },
+            { sn: 5, account: 'Account 4', post: 'Node.js Streams', comment: 'Well written.', status: 'online', date: '2025-04-17' },
+        ];
+
+        // Chart instances
+        let followersChart, connectionsChart, commentsChart;
+
+        function initCharts() {
+            const days7 = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            followersChart = new Chart(
+                document.getElementById('followersChart').getContext('2d'),
+                {
+                    type: 'line',
+                    data: { labels: days7, datasets: [{ data: [12, 19, 3, 5, 2, 3, 9], borderColor: '#3498db', backgroundColor: '#3498db33', fill: true }] },
+                    options: {
+                        responsive: true, maintainAspectRatio: false, layout: {
+                            padding: {
+                                top: 10,
+                                bottom: 10,
+                                left: 10,
+                                right: 10
+                            }
+                        },
+                        scales: { x: { display: false }, y: { display: false } }, plugins: { legend: { display: false } }
+                    }
+                }
+            );
+            connectionsChart = new Chart(
+                document.getElementById('connectionsChart').getContext('2d'),
+                {
+                    type: 'line',
+                    data: { labels: days7, datasets: [{ data: [5, 10, 5, 2, 20, 30, 45], borderColor: '#e67e22', backgroundColor: '#e67e2233', fill: true }] },
+                    options: {
+                        responsive: true, maintainAspectRatio: false, layout: {
+                            padding: {
+                                top: 10,
+                                bottom: 10,
+                                left: 10,
+                                right: 10
+                            }
+                        },
+                        scales: { x: { display: false }, y: { display: false } }, plugins: { legend: { display: false } }
+                    }
+                }
+            );
+            commentsChart = new Chart(
+                document.getElementById('commentsChart').getContext('2d'),
+                {
+                    type: 'line',
+                    data: { labels: days7, datasets: [{ data: [2, 3, 5, 1, 7, 3, 4], borderColor: '#2ecc71', backgroundColor: '#2ecc7133', fill: true }] },
+                    options: {
+                        responsive: true, maintainAspectRatio: false, layout: {
+                            padding: {
+                                top: 10,
+                                bottom: 10,
+                                left: 10,
+                                right: 10
+                            }
+                        },
+                        scales: { x: { display: false }, y: { display: false } }, plugins: { legend: { display: false } }
+                    }
+                }
+            );
+        }
+
+        // Update dashboard table and charts
+        function updateDashboard() {
+            const acc = document.getElementById('accountFilter').value;
+            const days = parseInt(document.getElementById('timeFilter').value, 10);
+            // update charts with random data
+            const labels = Array.from({ length: days }, (_, i) => `Day ${i + 1}`);
+            [followersChart, connectionsChart, commentsChart].forEach(chart => {
+                chart.data.labels = labels;
+                chart.data.datasets[0].data = Array.from({ length: days }, () => Math.floor(Math.random() * 50));
+                chart.update();
+            });
+            // update table
+            const tbody = document.querySelector('#dashboardTable tbody');
+            tbody.innerHTML = '';
+            let filtered = dashboardData.filter(d => acc === 'All Accounts' || d.name === acc);
+            const cutoff = new Date();
+            cutoff.setDate(cutoff.getDate() - days);
+            filtered = filtered.filter(d => new Date(d.latestDate) >= cutoff);
+            filtered.forEach(d => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${d.number}</td><td>${d.name}</td><td>${d.totalComments}</td><td>${d.latestDate}</td>`;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Update activity table
+        function updateActivity() {
+            const acc = document.getElementById('actAccountFilter').value;
+            const status = document.getElementById('actStatusFilter').value;
+            const start = document.getElementById('startDateFilter').value;
+            const end = document.getElementById('endDateFilter').value;
+            const tbody = document.querySelector('#commentsTable tbody');
+            tbody.innerHTML = '';
+            activityData.filter(item => {
+                return (acc === 'All Accounts' || item.account === acc)
+                    && (status === 'all' || item.status === status)
+                    && (!start || new Date(item.date) >= new Date(start))
+                    && (!end || new Date(item.date) <= new Date(end));
+            }).forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${item.sn}</td>
+                        <td>${item.post}</td>
+                        <td>${item.comment}</td>
+                        <td>${item.status.charAt(0).toUpperCase() + item.status.slice(1)}</td>
+                        <td>${item.date}</td>`;
+                tbody.appendChild(tr);
+            });
+        }
+
+        window.addEventListener('load', () => {
+            initCharts();
+            updateDashboard();
+            updateActivity();
+            // listeners
+            document.getElementById('accountFilter').addEventListener('change', updateDashboard);
+            document.getElementById('timeFilter').addEventListener('change', updateDashboard);
+            ['actAccountFilter', 'actStatusFilter', 'startDateFilter', 'endDateFilter']
+                .forEach(id => document.getElementById(id).addEventListener('change', updateActivity));
+            // export
+            document.getElementById('exportBtn').addEventListener('click', () => {
+                const wb = XLSX.utils.table_to_book(document.getElementById('commentsTable'), { sheet: "Comments" });
+                XLSX.writeFile(wb, 'comments.xlsx');
+            });
+        });
+    </script>
+</body>
+
+</html>

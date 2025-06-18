@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Global Economic Dashboard</title>
+    <!-- Load Winky Sans font from Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Winky+Sans&display=swap" rel="stylesheet">
+    <!-- Include Chart.js from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Global reset and set font to Winky Sans for all text */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Winky Sans', cursive;
+        }
+
+        body {
+            background: #f2f2f2;
+            padding: 20px;
+        }
+
+        .container {
+            margin: 0 auto;
+        }
+
+        header {
+            position: relative;
+            text-align: center;
+            margin-bottom: 20px;
+            /* Ensure no extra padding/margin on right */
+            padding-right: 0;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            color: #333;
+            padding: 10px 0;
+        }
+
+        /* Compare Multiple Countries button - flush with container's right edge */
+        #compareModeButton {
+            position: absolute;
+            top: 10px;
+            right: 0;
+            padding: 10px 16px;
+            background: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        #compareModeButton:hover {
+            background: #0056b3;
+        }
+
+        /* Single country section: no extra white container */
+        #singleCountrySection {
+            margin-bottom: 30px;
+        }
+
+        .filter-container {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 10px;
+            align-items: flex-end;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .filter-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-item label {
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .filter-item select,
+        .filter-item input {
+            padding: 8px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            min-width: 140px;
+        }
+
+        .filter-item input::placeholder {
+            font-family: 'Winky Sans', cursive;
+        }
+
+        .filter-item button {
+            padding: 10px 20px;
+            background: #007BFF;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .filter-item button:hover {
+            background: #0056b3;
+        }
+
+        /* Layout for results: table on left, chart on right */
+        .results-flex {
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+            align-items: flex-start;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .table-container,
+        .chart-container {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .table-container table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table-container th,
+        .table-container td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            font-size: 0.9em;
+        }
+
+        .table-container th {
+            background: #007BFF;
+            color: #fff;
+        }
+
+        .loading {
+            text-align: center;
+            font-style: italic;
+            padding: 20px;
+        }
+
+        /* Modal overlay for multi-country comparison */
+        #overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 1200px;
+            width: 100%;
+            max-height: 90vh;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 15px;
+        }
+
+        #closeModalButton {
+            background: #ff5c5c;
+            border: none;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        #closeModalButton:hover {
+            background: #e04a4a;
+        }
+
+        .modal-filters {
+            margin-bottom: 20px;
+        }
+
+        /* All filter options in one row for multi-country container */
+        .modal .filter-container {
+            flex-wrap: nowrap;
+            justify-content: center;
+        }
+
+        .modal-content {
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+            flex: 1;
+            overflow-y: auto;
+            flex-wrap: nowrap;
+        }
+
+        @media (max-width: 800px) {
+            .modal-content {
+                flex-direction: column;
+            }
+        }
+
+        .table-container {
+            flex: 0 0 auto;
+            width: 600px;
+            max-width: 600px;
+            overflow-x: auto;
+            overflow-y: auto;
+        }
+
+        .chart-container {
+            flex: 1 1 auto;
+            min-width: 300px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Global Economic Dashboard</h1>
+            <button id="compareModeButton">Compare Multiple Countries</button>
+        </header>
+
+        <!-- Single Country Section (no extra white container or headings) -->
+        <div id="singleCountrySection">
+            <div class="filter-container">
+                <div class="filter-item">
+                    <label for="singleCountrySelect">Country</label>
+                    <select id="singleCountrySelect"></select>
+                </div>
+                <div class="filter-item">
+                    <label for="singleIndicatorSelect">Economic Indicator</label>
+                    <select id="singleIndicatorSelect">
+                        <option value="SP.POP.TOTL">Population (SP.POP.TOTL)</option>
+                        <option value="NY.GDP.MKTP.CD">GDP (NY.GDP.MKTP.CD)</option>
+                        <option value="NY.GDP.PCAP.CD">GDP per Capita (NY.GDP.PCAP.CD)</option>
+                        <option value="FP.CPI.TOTL.ZG">Inflation (FP.CPI.TOTL.ZG)</option>
+                        <option value="SL.UEM.TOTL.ZS">Unemployment (SL.UEM.TOTL.ZS)</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label for="singleFromYear">From Year</label>
+                    <input type="number" id="singleFromYear" placeholder="e.g., 2000" />
+                </div>
+                <div class="filter-item">
+                    <label for="singleToYear">To Year</label>
+                    <input type="number" id="singleToYear" placeholder="e.g., 2020" />
+                </div>
+                <div class="filter-item">
+                    <button id="singleFetchButton">Fetch Data</button>
+                </div>
+            </div>
+            <div id="singleResults">
+                <!-- For single country, table and chart will be shown side by side -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Multi-Country Modal Overlay -->
+    <div id="overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <button id="closeModalButton">X</button>
+            </div>
+            <div class="modal-filters">
+                <div class="filter-container">
+                    <div class="filter-item">
+                        <label for="multiCountrySelect">Countries</label>
+                        <!-- Allow selection of any (non-consecutive) countries -->
+                        <select id="multiCountrySelect" multiple size="5"></select>
+                    </div>
+                    <div class="filter-item">
+                        <label for="multiIndicatorSelect">Economic Indicator</label>
+                        <select id="multiIndicatorSelect">
+                            <option value="SP.POP.TOTL">Population (SP.POP.TOTL)</option>
+                            <option value="NY.GDP.MKTP.CD">GDP (NY.GDP.MKTP.CD)</option>
+                            <option value="NY.GDP.PCAP.CD">GDP per Capita (NY.GDP.PCAP.CD)</option>
+                            <option value="FP.CPI.TOTL.ZG">Inflation (FP.CPI.TOTL.ZG)</option>
+                            <option value="SL.UEM.TOTL.ZS">Unemployment (SL.UEM.TOTL.ZS)</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label for="multiFromYear">From Year</label>
+                        <input type="number" id="multiFromYear" placeholder="e.g., 2000">
+                    </div>
+                    <div class="filter-item">
+                        <label for="multiToYear">To Year</label>
+                        <input type="number" id="multiToYear" placeholder="e.g., 2020">
+                    </div>
+                    <div class="filter-item">
+                        <button id="multiFetchButton">Fetch Data</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-content">
+                <!-- Left: Details Table -->
+                <div class="table-container" id="tableContainer">
+                    <!-- Table details will be injected here -->
+                </div>
+                <!-- Right: Chart -->
+                <div class="chart-container" id="chartContainer">
+                    <!-- Chart.js canvas will be injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let singleChart = null;
+        let multiChart = null;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            populateCountryLists();
+            document.getElementById("compareModeButton").addEventListener("click", openOverlay);
+            document.getElementById("closeModalButton").addEventListener("click", closeOverlay);
+            document.getElementById("multiFetchButton").addEventListener("click", fetchMultiData);
+            document.getElementById("singleFetchButton").addEventListener("click", fetchSingleData);
+        });
+
+        function populateCountryLists() {
+            const singleSelect = document.getElementById("singleCountrySelect");
+            const multiSelect = document.getElementById("multiCountrySelect");
+            fetch("https://api.worldbank.org/v2/country?format=json&per_page=300")
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data[1]) {
+                        data[1].forEach(country => {
+                            const optionSingle = document.createElement("option");
+                            optionSingle.value = country.id;
+                            optionSingle.textContent = `${country.name} (${country.id})`;
+                            singleSelect.appendChild(optionSingle);
+
+                            const optionMulti = document.createElement("option");
+                            optionMulti.value = country.id;
+                            optionMulti.textContent = `${country.name} (${country.id})`;
+                            multiSelect.appendChild(optionMulti);
+                        });
+                    } else {
+                        console.error("No country data returned.");
+                    }
+                })
+                .catch(error => console.error("Error fetching country list:", error));
+        }
+
+        function openOverlay() {
+            document.getElementById("overlay").style.display = "flex";
+        }
+
+        function closeOverlay() {
+            document.getElementById("overlay").style.display = "none";
+            document.getElementById("tableContainer").innerHTML = "";
+            document.getElementById("chartContainer").innerHTML = "";
+            if (multiChart) {
+                multiChart.destroy();
+                multiChart = null;
+            }
+        }
+
+        function fetchMultiData() {
+            const multiSelect = document.getElementById("multiCountrySelect");
+            const selectedOptions = Array.from(multiSelect.selectedOptions);
+            if (selectedOptions.length === 0) {
+                document.getElementById("tableContainer").innerHTML = "<p style='color:red;'>Please select at least one country.</p>";
+                return;
+            }
+            const selectedCountries = selectedOptions.map(opt => opt.value);
+            const indicator = document.getElementById("multiIndicatorSelect").value;
+            let fromYear = document.getElementById("multiFromYear").value;
+            let toYear = document.getElementById("multiToYear").value;
+            if (!fromYear) { fromYear = "2000"; }
+            if (!toYear) { toYear = new Date().getFullYear().toString(); }
+            if (parseInt(fromYear) > parseInt(toYear)) {
+                document.getElementById("tableContainer").innerHTML = "<p style='color:red;'>The start year must be less than or equal to the end year.</p>";
+                return;
+            }
+            const countriesParam = selectedCountries.join(";");
+            const url = `https://api.worldbank.org/v2/country/${countriesParam}/indicator/${indicator}?date=${fromYear}:${toYear}&format=json&per_page=1000`;
+            document.getElementById("tableContainer").innerHTML = `<p class="loading">Loading details...</p>`;
+            document.getElementById("chartContainer").innerHTML = `<p class="loading">Loading chart...</p>`;
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    displayMultiResults(data);
+                    drawMultiChart(data, fromYear, toYear);
+                })
+                .catch(error => {
+                    console.error("Error fetching data:", error);
+                    document.getElementById("tableContainer").innerHTML = "<p style='color:red;'>Error fetching data. Please try again later.</p>";
+                    document.getElementById("chartContainer").innerHTML = "";
+                });
+        }
+
+        function displayMultiResults(data) {
+            const tableContainer = document.getElementById("tableContainer");
+            if (!data || !data[1] || data[1].length === 0) {
+                tableContainer.innerHTML = "<p>No data available for the selected parameters.</p>";
+                return;
+            }
+            const groupedData = {};
+            const yearsSet = new Set();
+
+            data[1].forEach(point => {
+                const country = point.country ? point.country.value : "Unknown";
+                const year = point.date;
+                yearsSet.add(year);
+                if (!groupedData[country]) {
+                    groupedData[country] = {};
+                }
+                groupedData[country][year] = (point.value !== null) ? point.value : "N/A";
+            });
+
+            const years = Array.from(yearsSet).sort((a, b) => a - b);
+            const countries = Object.keys(groupedData);
+
+            let tableHTML = `<table style="width:100%; border-collapse: collapse;">
+        <thead>
+            <tr>
+                <th style="border: 1px solid #ddd; padding: 8px;">Year</th>
+                <th style="border: 1px solid #ddd; padding: 8px;">Indicator</th>`;
+            countries.forEach(country => {
+                tableHTML += `<th style="border: 1px solid #ddd; padding: 8px;">${country}</th>`;
+            });
+            tableHTML += `</tr></thead><tbody>`;
+
+            const indicator = data[1][0].indicator ? data[1][0].indicator.value : "";
+
+            years.forEach(year => {
+                tableHTML += `<tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">${year}</td>
+            <td style="border: 1px solid #ddd; padding: 8px;">${indicator}</td>`;
+                countries.forEach(country => {
+                    const value = groupedData[country][year] !== undefined ? groupedData[country][year] : "N/A";
+                    tableHTML += `<td style="border: 1px solid #ddd; padding: 8px;">${value}</td>`;
+                });
+                tableHTML += `</tr>`;
+            });
+
+            tableHTML += `</tbody></table>`;
+            tableContainer.innerHTML = tableHTML;
+        }
+
+        function drawMultiChart(apiData, fromYear, toYear) {
+            const chartContainer = document.getElementById("chartContainer");
+            chartContainer.innerHTML = '<canvas id="multiLineChart"></canvas>';
+            const canvas = document.getElementById("multiLineChart");
+            if (!apiData || !apiData[1] || apiData[1].length === 0) {
+                chartContainer.innerHTML = "<p>No chart available for the selected parameters.</p>";
+                return;
+            }
+            let years = [];
+            for (let y = parseInt(fromYear); y <= parseInt(toYear); y++) {
+                years.push(y.toString());
+            }
+            const groupedData = {};
+            apiData[1].forEach(point => {
+                const country = point.country && point.country.value ? point.country.value : "Unknown";
+                if (!groupedData[country]) {
+                    groupedData[country] = {};
+                }
+                groupedData[country][point.date] = point.value;
+            });
+            const datasets = [];
+            const colors = ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF", "#FF9F40", "#8B0000", "#008000", "#00008B"];
+            let colorIndex = 0;
+            for (const country in groupedData) {
+                const dataArray = years.map(year => {
+                    const val = groupedData[country][year];
+                    return (val !== undefined && val !== null) ? val : null;
+                });
+                datasets.push({
+                    label: country,
+                    data: dataArray,
+                    borderColor: colors[colorIndex % colors.length],
+                    fill: false,
+                    tension: 0.1
+                });
+                colorIndex++;
+            }
+            const ctx = canvas.getContext("2d");
+            if (multiChart) { multiChart.destroy(); }
+            multiChart = new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels: years,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: "top" },
+                        title: { display: true, text: "Economic Indicator Over Time" }
+                    }
+                }
+            });
+        }
+
+        function fetchSingleData() {
+            const country = document.getElementById("singleCountrySelect").value;
+            const indicator = document.getElementById("singleIndicatorSelect").value;
+            let fromYear = document.getElementById("singleFromYear").value;
+            let toYear = document.getElementById("singleToYear").value;
+            const resultsDiv = document.getElementById("singleResults");
+            if (!fromYear) { fromYear = "2000"; }
+            if (!toYear) { toYear = new Date().getFullYear().toString(); }
+            if (parseInt(fromYear) > parseInt(toYear)) {
+                resultsDiv.innerHTML = `<p style="color:red;">The start year must be less than or equal to the end year.</p>`;
+                return;
+            }
+            resultsDiv.innerHTML = `<p class="loading">Loading data...</p>`;
+            const url = `https://api.worldbank.org/v2/country/${country}/indicator/${indicator}?date=${fromYear}:${toYear}&format=json`;
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (!data || !data[1] || data[1].length === 0) {
+                        resultsDiv.innerHTML = `<p>No data available for the selected parameters.</p>`;
+                        return;
+                    }
+                    resultsDiv.innerHTML = `<div class="results-flex">
+                                    <div class="table-container" id="singleTableContainer"></div>
+                                    <div class="chart-container" id="singleChartContainer"><canvas id="singleLineChart"></canvas></div>
+                                  </div>`;
+                    displaySingleResults(data);
+                    drawSingleChart(data, fromYear, toYear);
+                })
+                .catch(error => {
+                    console.error("Error fetching data:", error);
+                    resultsDiv.innerHTML = `<p style="color:red;">Error fetching data. Please try again later.</p>`;
+                });
+        }
+
+        function displaySingleResults(data) {
+            const tableContainer = document.getElementById("singleTableContainer");
+            const dataPoints = data[1];
+            dataPoints.sort((a, b) => {
+                if (a.date === b.date) {
+                    return a.country.value.localeCompare(b.country.value);
+                }
+                return a.date - b.date;
+            });
+            let tableHTML = "<table><thead><tr><th>Country</th><th>Year</th><th>Value</th><th>Indicator</th><th>Country ISO3 Code</th></tr></thead><tbody>";
+            dataPoints.forEach(point => {
+                const countryName = point.country ? point.country.value : "";
+                const year = point.date;
+                const value = (point.value !== null) ? point.value : "N/A";
+                const indicatorName = point.indicator ? point.indicator.value : "";
+                const iso3 = point.countryiso3code || "";
+                tableHTML += `<tr><td>${countryName}</td><td>${year}</td><td>${value}</td><td>${indicatorName}</td><td>${iso3}</td></tr>`;
+            });
+            tableHTML += "</tbody></table>";
+            tableContainer.innerHTML = tableHTML;
+        }
+
+        function drawSingleChart(apiData, fromYear, toYear) {
+            const canvas = document.getElementById("singleLineChart");
+            const ctx = canvas.getContext("2d");
+            let years = [];
+            for (let y = parseInt(fromYear); y <= parseInt(toYear); y++) {
+                years.push(y.toString());
+            }
+            const groupedData = {};
+            apiData[1].forEach(point => {
+                const country = point.country && point.country.value ? point.country.value : "Unknown";
+                if (!groupedData[country]) {
+                    groupedData[country] = {};
+                }
+                groupedData[country][point.date] = point.value;
+            });
+            const datasets = [];
+            const colors = ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF", "#FF9F40", "#8B0000", "#008000", "#00008B"];
+            let colorIndex = 0;
+            for (const country in groupedData) {
+                const dataArray = years.map(year => {
+                    const val = groupedData[country][year];
+                    return (val !== undefined && val !== null) ? val : null;
+                });
+                datasets.push({
+                    label: country,
+                    data: dataArray,
+                    borderColor: colors[colorIndex % colors.length],
+                    fill: false,
+                    tension: 0.1
+                });
+                colorIndex++;
+            }
+            if (singleChart) { singleChart.destroy(); }
+            singleChart = new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels: years,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: "top" },
+                        title: { display: true, text: "Economic Indicator Over Time" }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>

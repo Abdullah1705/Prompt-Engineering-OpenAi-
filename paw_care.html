@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Paw Care</title>
+  <style>
+    /* Reset and Global Styles */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    html, body {
+      height: 100%;
+      font-family: Arial, sans-serif;
+      position: relative;
+      color: white;
+    }
+    /* Blurred Background (persistent for all pages) */
+    .background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('https://images.pexels.com/photos/1144410/pexels-photo-1144410.jpeg') no-repeat center center/cover;
+      filter: blur(4px);
+      z-index: -1;
+    }
+
+    /* Button Styles - Unified for all buttons */
+    button {
+      background-color: black;
+      color: white;
+      border: none;
+      border-radius: 24px;
+      padding: 10px 20px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #444;
+      transform: scale(1.05);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    /* Main Navigation */
+    header.main-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: flex-end;
+      background: transparent;
+      z-index: 1000;
+    }
+    header.main-nav button {
+      margin-left: 10px;
+    }
+
+    /* Profile Navigation */
+    header.profile-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: flex-end;
+      background: transparent;
+      z-index: 1000;
+    }
+    header.profile-nav button {
+      margin-left: 10px;
+    }
+
+    /* Appointments Navigation */
+    header.appointments-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: flex-end;
+      background: transparent;
+      z-index: 1000;
+    }
+    header.appointments-nav button {
+      margin-left: 10px;
+    }
+
+    /* Sections */
+    section {
+      padding: 100px 30px 30px 30px;
+      min-height: 100vh;
+    }
+    /* For non-home sections, position relative for Back button */
+    section:not(#homeSection) {
+      position: relative;
+    }
+    .backButton {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+    }
+
+    /* Home Section */
+    #homeSection {
+      text-align: center;
+      padding-top: 150px;
+    }
+    #homeSection h1 {
+      font-size: 4rem;
+      margin-bottom: 20px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+    }
+    #homeSection p {
+      font-size: 1.5rem;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
+    }
+
+    /* Vaccination Section */
+    #vaccinationSection h2 {
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    /* Vaccination Table Styles */
+    #vaccinationTable {
+      width: 100%;
+      border-collapse: collapse;
+      background: transparent;
+      color: white;
+      margin: 0 auto;
+    }
+    #vaccinationTable th, #vaccinationTable td {
+      border: 1px solid white;
+      padding: 8px;
+      text-align: center;
+    }
+    #vaccinationTable th {
+      background: rgba(0, 0, 0, 0.5);
+    }
+    #vaccinationTable td.vaccine-cell {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    /* Appointments Section - Weekly Schedule Table */
+    #weeklyScheduleTable {
+      width: 100%;
+      border-collapse: collapse;
+      background: transparent;
+      color: white;
+      margin: 0 auto 20px auto;
+    }
+    #weeklyScheduleTable th, #weeklyScheduleTable td {
+      border: 1px solid white;
+      padding: 6px;
+      text-align: center;
+      min-width: 80px;
+      height: 60px;
+      vertical-align: middle;
+    }
+
+    /* Profiles Section */
+    #profilesSection {
+      background: transparent;
+    }
+    /* Card View Styles */
+    #profilesCardsSection h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .profilesContainer {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-top: 20px;
+    }
+    .dogCard {
+      background: transparent;
+      border: 1px solid white;
+      border-radius: 10px;
+      overflow: hidden;
+      transition: transform 0.3s;
+    }
+    .dogCard:hover {
+      transform: translateY(-5px);
+    }
+    .dogCard img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+    }
+    .cardContent {
+      padding: 15px;
+    }
+    .cardContent h3,
+    .cardContent p {
+      color: white;
+    }
+    .paginationControls {
+      text-align: center;
+      margin-top: 20px;
+    }
+    .paginationControls button {
+      margin: 0 5px;
+      padding: 8px 16px;
+    }
+    .paginationControls button:disabled {
+      background-color: #333;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* Form Styles */
+    form {
+      max-width: 500px;
+      margin: 0 auto;
+      background: transparent;
+      border: 2px solid white;
+      padding: 20px;
+      border-radius: 8px;
+      color: white;
+    }
+    form label {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 1rem;
+    }
+  /* Form Styles */
+form input[type="text"],
+form input[type="file"],
+form input[type="date"],
+form input[type="time"],
+form textarea {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+  margin-bottom: 15px;
+  border: 1px solid white;
+  border-radius: 4px;
+  background: transparent;
+  color: white;
+}
+
+/* Dropdown (select) specific styles */
+form select {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+  margin-bottom: 15px;
+  border: 1px solid white;
+  border-radius: 4px;
+  background: transparent;
+  color: white;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px;
+  padding-right: 30px;
+}
+
+/* When dropdown is focused/clicked */
+form select:focus {
+  background-color: black;
+  outline: none;
+}
+
+/* Dropdown options */
+form select option {
+  background-color: black;
+  color: white;
+  padding: 8px;
+}
+
+/* Disabled dropdown styling */
+select:disabled {
+  background-color: transparent;
+  color: #aaa;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Remove default arrow in IE */
+select::-ms-expand {
+  display: none;
+}
+    form button {
+      margin-right: 10px;
+      padding: 10px 20px;
+    }
+
+    .profileImage {
+      width: 250px;
+      height: 200px;
+      object-fit: cover;
+      display: block;
+      margin: 0 auto 15px;
+    }
+
+    /* Modal Styles */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+    .modal-content {
+      background: rgba(0, 0, 0, 0.7);
+      border: 2px solid white;
+      padding: 30px;
+      border-radius: 10px;
+      color: white;
+      width: 500px;
+      min-height: 300px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+    .modal-content button {
+      margin: 15px 10px 0 10px;
+      padding: 10px 20px;
+    }
+    .modal-close {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      cursor: pointer;
+      font-size: 28px;
+      font-weight: bold;
+    }
+    #modalDetails {
+      text-align: left;
+      padding: 15px;
+      line-height: 1.6;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .modal-buttons {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+</style>
+</head>
+<body>
+  <div class="background"></div>
+  
+  <!-- Main Navigation -->
+  <header id="mainNav" class="main-nav">
+    <button id="profilesBtn">Profiles</button>
+    <button id="vaccinationBtn">Vaccination</button>
+    <button id="appointmentsBtn">Appointments</button>
+  </header>
+  
+  <!-- Profile Navigation (for Profiles section) -->
+  <header id="profileNav" class="profile-nav" style="display: none;">
+    <button id="addProfileBtn">Add Profile</button>
+    <button id="editProfileBtn">Edit Profile</button>
+    <button id="removeProfileBtn">Remove Profile</button>
+  </header>
+  
+  <!-- Home Section -->
+  <section id="homeSection">
+    <h1>Welcome to Paw Care</h1>
+    <p>Your pet's health is our top priority</p>
+  </section>
+  
+  <!-- Vaccination Section -->
+  <section id="vaccinationSection" style="display: none;">
+    <h2>Vaccination</h2>
+    <table id="vaccinationTable"></table>
+    <button class="backButton">Back to Main</button>
+  </section>
+  
+  <!-- Appointments Section -->
+  <section id="appointmentsSection" style="display: none;">
+    <!-- Appointments Sub-navigation -->
+    <header class="appointments-nav">
+      <button id="weeklyScheduleBtn">Weekly Schedule</button>
+      <button id="setAppointmentBtn">Set Appointment</button>
+    </header>
+    <!-- Weekly Schedule Section -->
+    <div id="weeklyScheduleSection">
+      <h2>Weekly Schedule</h2>
+      <table id="weeklyScheduleTable"></table>
+      <div id="appointmentDetails"></div>
+    </div>
+    <!-- Set Appointment Section -->
+    <div id="setAppointmentSection" style="display: none;">
+      <h2>Set Appointment</h2>
+      <form id="setAppointmentForm">
+        <label>
+          Select Dog:
+          <select id="appointmentDogSelect" required>
+            <option value="">Select a dog</option>
+          </select>
+        </label>
+        <label>
+          Date:
+          <input type="date" id="appointmentDate" required>
+        </label>
+        <label>
+          Time:
+          <input type="time" id="appointmentTime" required>
+        </label>
+        <label>
+          Vet Name:
+          <input type="text" id="appointmentVet" required>
+        </label>
+        <label>
+          Clinic Name:
+          <input type="text" id="appointmentClinic" required>
+        </label>
+        <label>
+          Purpose of Visit:
+          <textarea id="appointmentPurpose" rows="3" required></textarea>
+        </label>
+        <button type="submit">Set Appointment</button>
+      </form>
+    </div>
+    <button class="backButton">Back to Main</button>
+  </section>
+  
+  <!-- Profiles Section -->
+  <section id="profilesSection" style="display: none;">
+    <!-- Card View -->
+    <div id="profilesCardsSection">
+      <h2>Dog Profiles</h2>
+      <div id="profilesContainer" class="profilesContainer"></div>
+      <div id="paginationControls" class="paginationControls"></div>
+    </div>
+    
+    <!-- Add Profile Form -->
+    <div id="addProfileSection" style="display: none;">
+      <h2>Add Dog Profile</h2>
+      <form id="addProfileForm">
+        <label>
+          Name:
+          <input type="text" name="name" required>
+        </label>
+        <label>
+          Age:
+          <input type="text" name="age" required>
+        </label>
+        <label>
+          Breed:
+          <input type="text" name="breed" required>
+        </label>
+        <label>
+          Gender:
+          <select name="gender" required>
+            <option value="">Select Gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+        </label>
+        <label>
+          Weight:
+          <input type="text" name="weight" required>
+        </label>
+        <label>
+          Image:
+          <input type="file" name="image" accept="image/*" required>
+        </label>
+        <button type="submit">Add Profile</button>
+        <button type="button" id="cancelAdd">Cancel</button>
+      </form>
+    </div>
+    
+    <!-- Edit Profile Form -->
+    <div id="editProfileSection" style="display: none;">
+      <h2>Edit Dog Profile</h2>
+      <label>
+        Select Dog:
+        <select id="editProfileSelect">
+          <option value="">Select a dog</option>
+        </select>
+      </label>
+      <div id="editProfileFormContainer" style="display: none;">
+        <form id="editProfileForm">
+          <div>
+            <img id="editProfileImage" class="profileImage" src="" alt="Dog Image">
+          </div>
+          <label>
+            Name:
+            <input type="text" name="name" id="editName" required>
+          </label>
+          <label>
+            Age:
+            <input type="text" name="age" id="editAge" required>
+          </label>
+          <label>
+            Breed:
+            <input type="text" name="breed" id="editBreed" required>
+          </label>
+          <label>
+            Gender:
+            <select name="gender" id="editGender" required>
+              <option value="">Select Gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </label>
+          <label>
+            Weight:
+            <input type="text" name="weight" id="editWeight" required>
+          </label>
+          <label>
+            Change Image:
+            <input type="file" name="image" id="editImageInput" accept="image/*">
+          </label>
+          <button type="submit">Update Profile</button>
+          <button type="button" id="cancelEdit">Cancel</button>
+        </form>
+      </div>
+    </div>
+    
+    <!-- Remove Profile Form -->
+    <div id="removeProfileSection" style="display: none;">
+      <h2>Remove Dog Profile</h2>
+      <label>
+        Select Dog:
+        <select id="removeProfileSelect">
+          <option value="">Select a dog</option>
+        </select>
+      </label>
+      <div id="removeProfileDisplay" style="display: none;">
+        <form id="removeProfileForm">
+          <div>
+            <img id="removeProfileImage" class="profileImage" src="" alt="Dog Image">
+          </div>
+          <label>
+            Name:
+            <input type="text" id="removeName" disabled>
+          </label>
+          <label>
+            Age:
+            <input type="text" id="removeAge" disabled>
+          </label>
+          <label>
+            Breed:
+            <input type="text" id="removeBreed" disabled>
+          </label>
+          <label>
+            Gender:
+            <select id="removeGender" disabled>
+              <option value="">Select Gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </label>
+          <label>
+            Weight:
+            <input type="text" id="removeWeight" disabled>
+          </label>
+          <button id="deleteProfileButton" type="button">Delete Profile</button>
+          <button type="button" id="cancelRemove">Cancel</button>
+        </form>
+      </div>
+    </div>
+    <button class="backButton">Back to Main</button>
+  </section>
+  
+  <!-- Modal for Appointment Details -->
+  <div id="appointmentModal" class="modal">
+    <div class="modal-content">
+      <span id="modalClose" class="modal-close">&times;</span>
+      <div id="modalDetails"></div>
+      <button id="modalDone">Done</button>
+      
+    </div>
+  </div>
+  
+  <script>
+    /***** Global Data *****/
+    let dogProfiles = [
+      { id: 1, name: "Buddy", age: "3 years", breed: "Golden Retriever", gender: "Male", weight: "30 kg", image: "https://images.dog.ceo/breeds/retriever-golden/n02099601_3004.jpg" },
+      { id: 2, name: "Bella", age: "2 years", breed: "Labrador Retriever", gender: "Female", weight: "28 kg", image: "https://images.dog.ceo//breeds//labrador//n02099712_1229.jpg" },
+      { id: 3, name: "Charlie", age: "4 years", breed: "Beagle", gender: "Male", weight: "10 kg", image: "https://images.dog.ceo/breeds/beagle/n02088364_11136.jpg" },
+      { id: 4, name: "Lucy", age: "5 years", breed: "Poodle", gender: "Female", weight: "12 kg", image: "https://images.dog.ceo/breeds/poodle-toy/n02113624_9550.jpg" },
+      { id: 5, name: "Max", age: "1 year", breed: "Bulldog", gender: "Male", weight: "20 kg", image: "https://images.dog.ceo/breeds/bulldog-english/jager-1.jpg" },
+      { id: 6, name: "Daisy", age: "3 years", breed: "German Shepherd", gender: "Female", weight: "35 kg", image: "https:\/\/images.dog.ceo\/breeds\/labrador\/n02099712_4845.jpg" }
+    ];
+    let appointments = []; // Array to store appointments
+    let currentPage = 1;
+    const cardsPerPage = 12; // 3 rows x 4 columns
+
+    let currentModalAppointment = null;
+  
+    /***** Utility Functions *****/
+    function getMonday(d) {
+      d = new Date(d);
+      const day = d.getDay();
+      const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+      return new Date(d.setDate(diff));
+    }
+
+    /***** Back to Main Button Functionality *****/
+    document.querySelectorAll('.backButton').forEach(button => {
+      button.addEventListener('click', () => {
+        mainNav.style.display = "flex";
+        profileNav.style.display = "none";
+        homeSection.style.display = "block";
+        vaccinationSection.style.display = "none";
+        appointmentsSection.style.display = "none";
+        profilesSection.style.display = "none";
+      });
+    });
+  
+    /***** Functions for Card View with Pagination *****/
+    function loadProfiles() {
+      const container = document.getElementById('profilesContainer');
+      container.innerHTML = "";
+      const totalCards = dogProfiles.length;
+      const totalPages = Math.ceil(totalCards / cardsPerPage) || 1;
+      if (currentPage > totalPages) currentPage = totalPages;
+      if (currentPage < 1) currentPage = 1;
+      const startIndex = (currentPage - 1) * cardsPerPage;
+      const endIndex = startIndex + cardsPerPage;
+      const profilesToShow = dogProfiles.slice(startIndex, endIndex);
+      profilesToShow.forEach(profile => {
+        const card = document.createElement('div');
+        card.className = 'dogCard';
+  
+        const img = document.createElement('img');
+        img.src = profile.image;
+        img.alt = profile.name;
+        card.appendChild(img);
+  
+        const content = document.createElement('div');
+        content.className = 'cardContent';
+  
+        const nameEl = document.createElement('h3');
+        nameEl.textContent = profile.name;
+        content.appendChild(nameEl);
+  
+        const ageEl = document.createElement('p');
+        ageEl.textContent = "Age: " + profile.age;
+        content.appendChild(ageEl);
+  
+        const breedEl = document.createElement('p');
+        breedEl.textContent = "Breed: " + profile.breed;
+        content.appendChild(breedEl);
+  
+        const genderEl = document.createElement('p');
+        genderEl.textContent = "Gender: " + profile.gender;
+        content.appendChild(genderEl);
+  
+        const weightEl = document.createElement('p');
+        weightEl.textContent = "Weight: " + profile.weight;
+        content.appendChild(weightEl);
+  
+        card.appendChild(content);
+        container.appendChild(card);
+      });
+      // Fill blank cards to ensure exactly 12 slots (3 rows x 4 columns)
+      let cardsDisplayed = profilesToShow.length;
+      while (cardsDisplayed < cardsPerPage) {
+        const blankCard = document.createElement('div');
+        blankCard.className = 'dogCard';
+        blankCard.style.visibility = 'hidden';
+        container.appendChild(blankCard);
+        cardsDisplayed++;
+      }
+      updatePaginationControls(totalPages);
+    }
+  
+    function updatePaginationControls(totalPages) {
+      const paginationDiv = document.getElementById('paginationControls');
+      paginationDiv.innerHTML = "";
+      if(totalPages <= 1) return;
+  
+      const prevBtn = document.createElement('button');
+      prevBtn.textContent = "Previous";
+      prevBtn.disabled = currentPage === 1;
+      prevBtn.addEventListener('click', () => {
+        if(currentPage > 1) {
+          currentPage--;
+          loadProfiles();
+        }
+      });
+      paginationDiv.appendChild(prevBtn);
+  
+      const pageInfo = document.createElement('span');
+      pageInfo.textContent = " Page " + currentPage + " of " + totalPages + " ";
+      paginationDiv.appendChild(pageInfo);
+  
+      const nextBtn = document.createElement('button');
+      nextBtn.textContent = "Next";
+      nextBtn.disabled = currentPage === totalPages;
+      nextBtn.addEventListener('click', () => {
+        if(currentPage < totalPages) {
+          currentPage++;
+          loadProfiles();
+        }
+      });
+      paginationDiv.appendChild(nextBtn);
+    }
+  
+    /***** Vaccination Table Functionality *****/
+    function updateVaccinationTable() {
+      const table = document.getElementById('vaccinationTable');
+      table.innerHTML = "";
+  
+      // Create header row
+      const headerRow = document.createElement('tr');
+      const headers = ["Dog's Name", "Canine Distemper", "Rabies", "Parvoviridae"];
+      headers.forEach(text => {
+        const th = document.createElement('th');
+        th.textContent = text;
+        headerRow.appendChild(th);
+      });
+      table.appendChild(headerRow);
+  
+      // Create a row for each dog
+      dogProfiles.forEach(profile => {
+        const row = document.createElement('tr');
+  
+        // Dog's name cell
+        const nameCell = document.createElement('td');
+        nameCell.textContent = profile.name;
+        row.appendChild(nameCell);
+  
+        // Vaccine cells
+        ["canineDistemper", "rabies", "parvoviridae"].forEach(key => {
+          const cell = document.createElement('td');
+          cell.className = "vaccine-cell";
+          cell.textContent = profile.vaccines && profile.vaccines[key] ? "✔" : "";
+          cell.addEventListener('click', () => {
+            if(!profile.vaccines) profile.vaccines = { canineDistemper: false, rabies: false, parvoviridae: false };
+            profile.vaccines[key] = !profile.vaccines[key];
+            cell.textContent = profile.vaccines[key] ? "✔" : "";
+          });
+          row.appendChild(cell);
+        });
+  
+        table.appendChild(row);
+      });
+    }
+  
+    /***** Weekly Schedule Table Functionality *****/
+    function updateWeeklyScheduleTable() {
+      const table = document.getElementById('weeklyScheduleTable');
+      table.innerHTML = "";
+  
+      // Get current week's Monday
+      const today = new Date();
+      const monday = getMonday(today);
+      let weekDates = [];
+      const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+      // Header row with 7 columns: Mon-Sun with dates
+      const headerRow = document.createElement("tr");
+      for(let i = 0; i < 7; i++){
+        const d = new Date(monday);
+        d.setDate(monday.getDate() + i);
+        weekDates.push(d);
+        const th = document.createElement("th");
+        const options = { month: 'numeric', day: 'numeric' };
+        th.textContent = dayNames[i] + " " + d.toLocaleDateString(undefined, options);
+        headerRow.appendChild(th);
+      }
+      table.appendChild(headerRow);
+  
+      // Create 6 rows for 4-hour time slots:
+      // Slot 0: 00:00-04:00, 1: 04:00-08:00, 2: 08:00-12:00, 3: 12:00-16:00, 4: 16:00-20:00, 5: 20:00-24:00.
+      for (let slot = 0; slot < 6; slot++) {
+        const tr = document.createElement("tr");
+        for (let col = 0; col < 7; col++) {
+          const td = document.createElement("td");
+          // For each cell, determine the date string for that day:
+          const cellDate = weekDates[col].toISOString().slice(0,10);
+          // For each appointment, check if appointment.date equals cellDate and time falls in current slot.
+          const cellAppointments = appointments.filter(app => {
+            if(app.date !== cellDate) return false;
+            const hour = parseInt(app.time.split(":")[0]);
+            return (hour >= slot*4 && hour < slot*4+4);
+          });
+          // For each appointment in this cell, create a clickable element with dog's name.
+          cellAppointments.forEach(app => {
+            const dog = dogProfiles.find(p => p.id == app.dogId);
+            if(dog) {
+              const btn = document.createElement("button");
+              btn.textContent = dog.name;
+              btn.style.backgroundColor = "transparent";
+              btn.style.border = "none";
+              btn.style.color = "white";
+              btn.style.cursor = "pointer";
+              btn.addEventListener("click", () => {
+                openAppointmentModal(app);
+              });
+              td.appendChild(btn);
+              td.appendChild(document.createElement("br"));
+            }
+          });
+          tr.appendChild(td);
+        }
+        table.appendChild(tr);
+      }
+    }
+  
+    /***** Modal for Appointment Details *****/
+    function openAppointmentModal(app) {
+      currentModalAppointment = app;
+      const dog = dogProfiles.find(p => p.id == app.dogId);
+      const modalDetails = document.getElementById("modalDetails");
+      modalDetails.innerHTML = `<strong>Appointment Details:</strong><br>
+        Dog: ${dog ? dog.name : "Unknown"}<br>
+        Date: ${app.date}<br>
+        Time: ${app.time}<br>
+        Vet: ${app.vetName}<br>
+        Clinic: ${app.clinicName}<br>
+        Purpose: ${app.purpose}`;
+      document.getElementById("appointmentModal").style.display = "flex";
+    }
+  
+   
+    document.getElementById("modalClose").addEventListener("click", () => {
+      document.getElementById("appointmentModal").style.display = "none";
+    });
+    document.getElementById("modalDone").addEventListener("click", () => {
+      if (currentModalAppointment) {
+        appointments = appointments.filter(a => a.id != currentModalAppointment.id);
+        updateWeeklyScheduleTable();
+      }
+      document.getElementById("appointmentModal").style.display = "none";
+    });
+  
+    /***** Set Appointment Functionality *****/
+    function populateAppointmentDropdown() {
+      const select = document.getElementById('appointmentDogSelect');
+      select.innerHTML = '<option value="">Select a dog</option>';
+      dogProfiles.forEach(profile => {
+        const opt = document.createElement('option');
+        opt.value = profile.id;
+        opt.textContent = profile.name;
+        select.appendChild(opt);
+      });
+    }
+  
+    document.getElementById('setAppointmentForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const dogId = document.getElementById('appointmentDogSelect').value;
+      const date = document.getElementById('appointmentDate').value;
+      const time = document.getElementById('appointmentTime').value;
+      const vetName = document.getElementById('appointmentVet').value;
+      const clinicName = document.getElementById('appointmentClinic').value;
+      const purpose = document.getElementById('appointmentPurpose').value;
+      if (!dogId || !date || !time || !vetName || !clinicName || !purpose) {
+        alert("Please fill in all fields.");
+        return;
+      }
+      const newAppointment = {
+        id: appointments.length ? Math.max(...appointments.map(a => a.id)) + 1 : 1,
+        dogId,
+        date,
+        time,
+        vetName,
+        clinicName,
+        purpose
+      };
+      appointments.push(newAppointment);
+      alert("Appointment set successfully!");
+      document.getElementById('setAppointmentForm').reset();
+      showWeeklyScheduleSection();
+    });
+  
+    /***** Profile Section Functionality (Add, Edit, Remove) *****/
+    function populateEditDropdown() {
+      const select = document.getElementById('editProfileSelect');
+      select.innerHTML = '<option value="">Select a dog</option>';
+      dogProfiles.forEach(profile => {
+        const opt = document.createElement('option');
+        opt.value = profile.id;
+        opt.textContent = profile.name;
+        select.appendChild(opt);
+      });
+      document.getElementById('editProfileFormContainer').style.display = "none";
+    }
+  
+    document.getElementById('editProfileSelect').addEventListener('change', function() {
+      const id = this.value;
+      if (!id) {
+        document.getElementById('editProfileFormContainer').style.display = "none";
+        return;
+      }
+      const profile = dogProfiles.find(p => p.id == id);
+      if (profile) {
+        document.getElementById('editName').value = profile.name;
+        document.getElementById('editAge').value = profile.age;
+        document.getElementById('editBreed').value = profile.breed;
+        document.getElementById('editGender').value = profile.gender;
+        document.getElementById('editWeight').value = profile.weight;
+        document.getElementById('editProfileImage').src = profile.image;
+        document.getElementById('editProfileFormContainer').style.display = "block";
+      }
+    });
+  
+    document.getElementById('editProfileForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const id = document.getElementById('editProfileSelect').value;
+      if (!id) return;
+      const profile = dogProfiles.find(p => p.id == id);
+      if (profile) {
+        profile.name = document.getElementById('editName').value;
+        profile.age = document.getElementById('editAge').value;
+        profile.breed = document.getElementById('editBreed').value;
+        profile.gender = document.getElementById('editGender').value;
+        profile.weight = document.getElementById('editWeight').value;
+        const fileInput = document.getElementById('editImageInput');
+        if (fileInput.files && fileInput.files[0]) {
+          const reader = new FileReader();
+          reader.onload = function(event) {
+            profile.image = event.target.result;
+            alert("Profile updated successfully!");
+            showProfilesCardsView();
+          };
+          reader.readAsDataURL(fileInput.files[0]);
+        } else {
+          alert("Profile updated successfully!");
+          showProfilesCardsView();
+        }
+      }
+    });
+  
+    function populateRemoveDropdown() {
+      const select = document.getElementById('removeProfileSelect');
+      select.innerHTML = '<option value="">Select a dog</option>';
+      dogProfiles.forEach(profile => {
+        const opt = document.createElement('option');
+        opt.value = profile.id;
+        opt.textContent = profile.name;
+        select.appendChild(opt);
+      });
+      document.getElementById('removeProfileDisplay').style.display = "none";
+    }
+  
+    document.getElementById('removeProfileSelect').addEventListener('change', function() {
+      const id = this.value;
+      if (!id) {
+        document.getElementById('removeProfileDisplay').style.display = "none";
+        return;
+      }
+      const profile = dogProfiles.find(p => p.id == id);
+      if (profile) {
+        document.getElementById('removeName').value = profile.name;
+        document.getElementById('removeAge').value = profile.age;
+        document.getElementById('removeBreed').value = profile.breed;
+        document.getElementById('removeGender').value = profile.gender;
+        document.getElementById('removeWeight').value = profile.weight;
+        document.getElementById('removeProfileImage').src = profile.image;
+        document.getElementById('removeProfileDisplay').style.display = "block";
+      }
+    });
+  
+    document.getElementById('deleteProfileButton').addEventListener('click', function() {
+      const select = document.getElementById('removeProfileSelect');
+      const id = select.value;
+      if (!id) return;
+      dogProfiles = dogProfiles.filter(p => p.id != id);
+      alert("Profile deleted successfully!");
+      showProfilesCardsView();
+    });
+  
+    /***** Navigation Between Main Sections *****/
+    const mainNav = document.getElementById('mainNav');
+    const profileNav = document.getElementById('profileNav');
+  
+    const homeSection = document.getElementById('homeSection');
+    const vaccinationSection = document.getElementById('vaccinationSection');
+    const appointmentsSection = document.getElementById('appointmentsSection');
+    const profilesSection = document.getElementById('profilesSection');
+  
+    document.getElementById('profilesBtn').addEventListener('click', () => {
+      mainNav.style.display = "none";
+      profileNav.style.display = "flex";
+      homeSection.style.display = "none";
+      vaccinationSection.style.display = "none";
+      appointmentsSection.style.display = "none";
+      profilesSection.style.display = "block";
+      showProfilesCardsView();
+    });
+  
+    document.getElementById('vaccinationBtn').addEventListener('click', () => {
+      mainNav.style.display = "flex";
+      profileNav.style.display = "none";
+      homeSection.style.display = "none";
+      vaccinationSection.style.display = "block";
+      appointmentsSection.style.display = "none";
+      profilesSection.style.display = "none";
+      updateVaccinationTable();
+    });
+  
+    document.getElementById('appointmentsBtn').addEventListener('click', () => {
+  mainNav.style.display = "none";  // Hide main nav
+  profileNav.style.display = "none";
+  homeSection.style.display = "none";
+  vaccinationSection.style.display = "none";
+  appointmentsSection.style.display = "block";
+  profilesSection.style.display = "none";
+  showWeeklyScheduleSection();
+});
+    /***** Appointments Sub-navigation *****/
+    document.getElementById('weeklyScheduleBtn').addEventListener('click', () => {
+      showWeeklyScheduleSection();
+    });
+    document.getElementById('setAppointmentBtn').addEventListener('click', () => {
+      showSetAppointmentSection();
+    });
+  
+    function showWeeklyScheduleSection() {
+      document.getElementById('weeklyScheduleSection').style.display = "block";
+      document.getElementById('setAppointmentSection').style.display = "none";
+      updateWeeklyScheduleTable();
+    }
+  
+    function showSetAppointmentSection() {
+      document.getElementById('weeklyScheduleSection').style.display = "none";
+      document.getElementById('setAppointmentSection').style.display = "block";
+      populateAppointmentDropdown();
+    }
+  
+    /***** Profile Section Navigation (Add, Edit, Remove) *****/
+    document.getElementById('addProfileBtn').addEventListener('click', () => {
+      showAddProfileForm();
+    });
+    document.getElementById('editProfileBtn').addEventListener('click', () => {
+      showEditProfileForm();
+    });
+    document.getElementById('removeProfileBtn').addEventListener('click', () => {
+      showRemoveProfileForm();
+    });
+  
+    function showProfilesCardsView() {
+      document.getElementById('profilesCardsSection').style.display = "block";
+      document.getElementById('addProfileSection').style.display = "none";
+      document.getElementById('editProfileSection').style.display = "none";
+      document.getElementById('removeProfileSection').style.display = "none";
+      loadProfiles();
+    }
+  
+    function showAddProfileForm() {
+      document.getElementById('profilesCardsSection').style.display = "none";
+      document.getElementById('addProfileSection').style.display = "block";
+      document.getElementById('editProfileSection').style.display = "none";
+      document.getElementById('removeProfileSection').style.display = "none";
+      document.getElementById('addProfileForm').reset();
+    }
+  
+    function showEditProfileForm() {
+      document.getElementById('profilesCardsSection').style.display = "none";
+      document.getElementById('addProfileSection').style.display = "none";
+      document.getElementById('editProfileSection').style.display = "block";
+      document.getElementById('removeProfileSection').style.display = "none";
+      populateEditDropdown();
+    }
+  
+    function showRemoveProfileForm() {
+      document.getElementById('profilesCardsSection').style.display = "none";
+      document.getElementById('addProfileSection').style.display = "none";
+      document.getElementById('editProfileSection').style.display = "none";
+      document.getElementById('removeProfileSection').style.display = "block";
+      populateRemoveDropdown();
+    }
+  
+    // Cancel Buttons
+    document.getElementById('cancelAdd').addEventListener('click', () => {
+      showProfilesCardsView();
+    });
+    document.getElementById('cancelEdit').addEventListener('click', () => {
+      showProfilesCardsView();
+    });
+    document.getElementById('cancelRemove').addEventListener('click', () => {
+      showProfilesCardsView();
+    });
+
+     /***** Add Profile Functionality *****/
+     document.getElementById('addProfileForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const name = form.name.value;
+      const age = form.age.value;
+      const breed = form.breed.value;
+      const gender = form.gender.value;
+      const weight = form.weight.value;
+      const fileInput = form.image;
+      if (fileInput.files && fileInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          const imageData = event.target.result;
+          addNewProfile(name, age, breed, gender, weight, imageData);
+        };
+        reader.readAsDataURL(fileInput.files[0]);
+      } else {
+        alert("Please select an image.");
+      }
+    });
+    function addNewProfile(name, age, breed, gender, weight, imageData) {
+      const newId = dogProfiles.length ? Math.max(...dogProfiles.map(p => p.id)) + 1 : 1;
+      const newProfile = { id: newId, name, age, breed, gender, weight, image: imageData };
+      dogProfiles.push(newProfile);
+      alert("Profile added successfully!");
+      showProfilesCardsView();
+    }
+  
+    /***** Initialize: Show Home Section *****/
+    homeSection.style.display = "block";
+  </script>
+</body>
+</html>

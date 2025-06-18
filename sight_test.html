@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sight Test</title>
+  <style>
+    /* Global Reset */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: sans-serif;
+      
+    }
+    /* Fullscreen pages (stacked on top of each other) */
+    .page {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+      flex-direction: column;
+    }
+    /* Only the active page is visible */
+    .visible {
+      display: flex !important;
+    }
+    /* Center content within a page */
+    .container {
+      margin: auto;
+      text-align: center;
+      z-index: 1;
+      width: 90%;
+      max-width: 1200px;
+    }
+    
+    /* ----------------------- */
+    /* Start Page Styles       */
+    /* ----------------------- */
+    #start-page {
+      justify-content: center;
+      align-items: center;
+      color: #fff;
+      overflow: hidden;
+    }
+    /* Background image with blur & dark overlay */
+    #start-page::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: url("https://images.pexels.com/photos/946727/pexels-photo-946727.jpeg") no-repeat center center;
+      background-size: cover;
+      filter: blur(4px);
+      z-index: -2;
+    }
+    #start-page::after {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: -1;
+    }
+    /* Animated heading */
+    #animated-heading {
+      font-size: 4rem;
+      margin-bottom: 30px;
+    }
+    @keyframes colorchange {
+      0%   { color: red; }
+      20%  { color: blue; }
+      40%  { color: green; }
+      60%  { color: orange; }
+      80%  { color: purple; }
+      100% { color: red; }
+    }
+    .letter {
+      animation: colorchange 3s infinite;
+      display: inline-block;
+    }
+    /* Start button styling */
+    #start-button {
+      background: transparent;
+      border: 2px solid #fff;
+      color: #fff;
+      padding: 15px 30px;
+      font-size: 1.5rem;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    #start-button:hover {
+      background: rgba(255,255,255,0.2);
+    }
+    
+    /* ----------------------- */
+    /* Game Page Styles        */
+    /* ----------------------- */
+    #game-page {
+      background-color: #fff;
+      color: #000;
+      padding: 20px;
+      justify-content: flex-start;
+      align-items: center;
+    }
+    /* Dark mode styling for game and result pages */
+    .dark-mode {
+      background-color: #333 !important;
+      color: #eee !important;
+    }
+    /* Timer display */
+    #timer-display {
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+    }
+    /* Grid container */
+    #game-container {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      grid-gap: 10px;
+      justify-content: center;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+    .circle {
+      width: 100%;
+      height: 0;
+      padding-bottom: 100%;
+      border-radius: 50%;
+      cursor: pointer;
+      position: relative;
+    }
+    
+    /* Toggle Switch Styles */
+    .switch {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      display: inline-block;
+      width: 60px;
+      height: 34px;
+      z-index: 100;
+    }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 26px;
+      width: 26px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: #2196F3;
+    }
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+    
+    /* ----------------------- */
+    /* Result Page Styles      */
+    /* ----------------------- */
+    #result-page {
+      background-color: #fff;
+      color: #000;
+      padding: 20px;
+      justify-content: space-between;
+      align-items: center;
+    }
+    /* Card styles for stats */
+    .cards-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+      margin: 20px 0;
+    }
+    .card {
+      background: #f9f9f9;
+      border: 1px solid #ccc;
+      padding: 15px;
+      border-radius: 10px;
+      min-width: 120px;
+      text-align: center;
+      transition: transform 0.3s, background-color 0.3s;
+      flex: 1;
+    }
+    .dark-mode .card {
+      background: #555;
+      border-color: #777;
+    }
+    .card:hover {
+      transform: scale(1.05);
+    }
+    /* Larger font for Total Score */
+    #score {
+      font-size: 1.5rem;
+      margin-top: 5px;
+    }
+    /* Styling for the labels in the cards */
+    .card h3 {
+      margin-bottom: 5px;
+      font-size: 1.2rem;
+    }
+    
+    /* Bar Chart canvas (responsive) */
+    #bar-chart {
+      background: transparent;
+      margin-top: 20px;
+      width: 100%;
+      max-width: 500px;
+      height: auto;
+      aspect-ratio: 5/3;
+    }
+    
+    /* Restart button styling */
+    #restart-button {
+      background: transparent;
+      margin-bottom: 10px;
+      border: 2px solid #000;
+      color: #000;
+      padding: 8px 16px;
+      font-size: 1rem;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      margin-top: auto;
+      margin-bottom: 30px;
+      width: 100px;
+      align-self: center;
+    }
+    #restart-button:hover {
+      background-color: rgba(0,0,0,0.1);
+    }
+    /* In dark mode, restart button border and text become white */
+    .dark-mode #restart-button {
+      border-color: #fff;
+      color: #fff;
+    }
+
+    /* ----------------------- */
+    /* Media Queries           */
+    /* ----------------------- */
+    @media (max-width: 768px) {
+      #animated-heading {
+        font-size: 3rem;
+        margin-bottom: 20px;
+      }
+      #start-button {
+        padding: 12px 24px;
+        font-size: 1.2rem;
+      }
+      #timer-display {
+        font-size: 1.2rem;
+      }
+      #game-container {
+        grid-gap: 8px;
+        max-width: 300px;
+      }
+      .cards-container {
+        flex-direction: column;
+        align-items: center;
+      }
+      .card {
+        width: 80%;
+        margin-bottom: 10px;
+      }
+      
+    }
+
+    @media (max-width: 480px) {
+      #animated-heading {
+        font-size: 2rem;
+        margin-bottom: 15px;
+      }
+      #start-button {
+        padding: 10px 20px;
+        font-size: 1rem;
+      }
+      #timer-display {
+        font-size: 1rem;
+      }
+      #game-container {
+        grid-gap: 5px;
+        max-width: 250px;
+      }
+      .switch {
+        width: 50px;
+        height: 28px;
+        top: 10px;
+        right: 10px;
+      }
+      .slider:before {
+        height: 20px;
+        width: 20px;
+      }
+      input:checked + .slider:before {
+        transform: translateX(22px);
+      }
+      .card h3 {
+        font-size: 1rem;
+      }
+      #score {
+        font-size: 1.2rem;
+      }
+      
+    }
+</style>
+
+</head>
+<body>
+  <!-- Start Page -->
+  <div id="start-page" class="page visible">
+    <div class="container">
+      <h1 id="animated-heading">
+        <span class="letter" style="animation-delay: 0s;">S</span>
+        <span class="letter" style="animation-delay: 0.1s;">i</span>
+        <span class="letter" style="animation-delay: 0.2s;">g</span>
+        <span class="letter" style="animation-delay: 0.3s;">h</span>
+        <span class="letter" style="animation-delay: 0.4s;">t</span>
+        <span class="letter" style="animation-delay: 0.5s;">&nbsp;</span>
+        <span class="letter" style="animation-delay: 0.6s;">T</span>
+        <span class="letter" style="animation-delay: 0.7s;">e</span>
+        <span class="letter" style="animation-delay: 0.8s;">s</span>
+        <span class="letter" style="animation-delay: 0.9s;">t</span>
+      </h1>
+      <button id="start-button">Start</button>
+    </div>
+  </div>
+  
+  <!-- Game Page -->
+  <div id="game-page" class="page">
+    <!-- Toggle switch for dark mode -->
+    <label class="switch">
+      <input type="checkbox" id="dark-mode-toggle">
+      <span class="slider"></span>
+    </label>
+    <div class="container">
+      <div id="timer-display">Time: 0.00 s</div>
+      <div id="game-container">
+        <!-- 5x5 grid will be generated here -->
+      </div>
+    </div>
+  </div>
+  
+  <!-- Result Page -->
+  <div id="result-page" class="page">
+    <div class="container" style="display: flex; flex-direction: column; height: 100%;">
+      <div>
+        <h2>Results</h2>
+        <div class="cards-container">
+          <div class="card" id="score-card">
+            <h3>Total Score</h3>
+            <p id="score"></p>
+          </div>
+          <div class="card" id="levels-card">
+            <h3>Total Levels</h3>
+            <p id="levels"></p>
+          </div>
+          <div class="card" id="time-card">
+            <h3>Total Time</h3>
+            <p id="total-time"></p>
+          </div>
+        </div>
+        <canvas id="bar-chart"></canvas>
+      </div>
+      <button id="restart-button">Restart</button>
+    </div>
+  </div>
+  
+  <script>
+    // Global variables
+    let level = 1;
+    let startTime;
+    let levelStartTime;
+    let levelTimes = []; // store time (ms) for each level
+    let timerInterval;
+    
+    // DOM Elements
+    const startPage = document.getElementById('start-page');
+    const gamePage = document.getElementById('game-page');
+    const resultPage = document.getElementById('result-page');
+    const startButton = document.getElementById('start-button');
+    const restartButton = document.getElementById('restart-button');
+    const gameContainer = document.getElementById('game-container');
+    const timerDisplay = document.getElementById('timer-display');
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    
+    // Event listeners
+    startButton.addEventListener('click', startGame);
+    restartButton.addEventListener('click', restartGame);
+    darkModeToggle.addEventListener('change', toggleDarkMode);
+    
+    // Start game: hide start page completely and show game page
+    function startGame() {
+      level = 1;
+      levelTimes = [];
+      startTime = performance.now();
+      startPage.classList.remove("visible");
+      gamePage.classList.add("visible");
+      resultPage.classList.remove("visible");
+      nextLevel();
+    }
+    
+    function restartGame() {
+      clearInterval(timerInterval);
+      startPage.classList.add("visible");
+      gamePage.classList.remove("visible");
+      resultPage.classList.remove("visible");
+    }
+    
+    // Toggle dark mode on game and result pages
+    function toggleDarkMode() {
+      if(darkModeToggle.checked) {
+        gamePage.classList.add('dark-mode');
+        resultPage.classList.add('dark-mode');
+      } else {
+        gamePage.classList.remove('dark-mode');
+        resultPage.classList.remove('dark-mode');
+      }
+      // Redraw graph to update axis colors if needed.
+      if(resultPage.classList.contains("visible")) {
+        drawBarGraph(levelTimes);
+      }
+    }
+    
+    // Start the next level: generate new grid and start timer
+    function nextLevel() {
+      gameContainer.innerHTML = "";
+      clearInterval(timerInterval);
+      levelStartTime = performance.now();
+      timerDisplay.innerText = "Time: 0.00 s";
+      timerInterval = setInterval(updateTimer, 50);
+      
+      // Base color (HSL)
+      let hue = Math.floor(Math.random() * 360);
+      let saturation = 70;
+      let lightness = 50;
+      let baseColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+      
+      // Special circle color: difference decreases with level
+      let diff = level < 10 ? (15 - level) : 5;
+      let specialLightness = lightness + diff;
+      if (specialLightness > 100) specialLightness = lightness - diff;
+      let specialColor = `hsl(${hue}, ${saturation}%, ${specialLightness}%)`;
+      
+      // Choose a random index for the special circle (0-24)
+      let specialIndex = Math.floor(Math.random() * 25);
+      
+      // Create 25 circles
+      for (let i = 0; i < 25; i++) {
+        let circle = document.createElement('div');
+        circle.classList.add('circle');
+        if (i === specialIndex) {
+          circle.style.backgroundColor = specialColor;
+          circle.dataset.special = "true";
+        } else {
+          circle.style.backgroundColor = baseColor;
+        }
+        circle.addEventListener('click', circleClicked);
+        gameContainer.appendChild(circle);
+      }
+    }
+    
+    // Update timer display for current level
+    function updateTimer() {
+      let elapsed = (performance.now() - levelStartTime) / 1000;
+      timerDisplay.innerText = "Time: " + elapsed.toFixed(2) + " s";
+    }
+    
+    // Handle circle click: if special circle then next level; otherwise game over.
+    function circleClicked(e) {
+      clearInterval(timerInterval);
+      if (e.target.dataset.special === "true") {
+        let currentTime = performance.now();
+        let levelTime = currentTime - levelStartTime;
+        levelTimes.push(levelTime);
+        level++;
+        nextLevel();
+      } else {
+        gameOver();
+      }
+    }
+    
+    // Game over: show result page with stats and bar graph.
+    function gameOver() {
+      let totalTimeMs = performance.now() - startTime;
+      let totalTimeSec = totalTimeMs / 1000;
+      gamePage.classList.remove("visible");
+      resultPage.classList.add("visible");
+      
+      let levelsPassed = levelTimes.length;
+      // Calculate total score as (Total Levels / Total Time in seconds) * 100
+      let totalScore = ((levelsPassed / totalTimeSec) * 100).toFixed(2);
+      
+      document.getElementById('score').innerText = totalScore;
+      document.getElementById('levels').innerText = levelsPassed;
+      document.getElementById('total-time').innerText = totalTimeSec.toFixed(2) + " s";
+      
+      // Ensure result page uses the same dark mode state as game page.
+      if (darkModeToggle.checked) {
+        resultPage.classList.add('dark-mode');
+      } else {
+        resultPage.classList.remove('dark-mode');
+      }
+      
+      drawBarGraph(levelTimes);
+    }
+    
+    // Draw bar graph on canvas with transparent background.
+    // The x and y axes are white in dark mode and dark in light mode.
+    function drawBarGraph(times) {
+      const canvas = document.getElementById('bar-chart');
+      // Set canvas dimensions based on its display size
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+      
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      let axisColor = resultPage.classList.contains('dark-mode') ? "#fff" : "#333";
+      
+      let maxTime = Math.max(...times);
+      let margin = 40;
+      let barWidth = (canvas.width - margin * 2) / times.length;
+      
+      // Draw axes
+      ctx.beginPath();
+      ctx.moveTo(margin, canvas.height - margin);
+      ctx.lineTo(canvas.width - margin, canvas.height - margin);
+      ctx.moveTo(margin, canvas.height - margin);
+      ctx.lineTo(margin, margin);
+      ctx.strokeStyle = axisColor;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      
+      // Draw bars for each level
+      for (let i = 0; i < times.length; i++) {
+        let barHeight = ((times[i] / maxTime) * (canvas.height - margin * 2));
+        let x = margin + i * barWidth;
+        let y = canvas.height - margin - barHeight;
+        ctx.fillStyle = "#4CAF50";
+        ctx.fillRect(x, y, barWidth * 0.8, barHeight);
+        
+        // Label bars with level number and time (in seconds)
+        ctx.fillStyle = axisColor;
+        ctx.font = (canvas.width < 400 ? "10px" : "12px") + " sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("L" + (i + 1), x + (barWidth * 0.4), canvas.height - margin + 15);
+        ctx.fillText((times[i] / 1000).toFixed(2) + "s", x + (barWidth * 0.4), y - 5);
+      }
+    }
+  </script>
+</body>
+</html>

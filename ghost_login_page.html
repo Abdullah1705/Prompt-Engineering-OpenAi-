@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ghost Login Form</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        
+        .login-container {
+            position: relative;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 320px;
+            text-align: center;
+            padding-top: 50px; /* Reduced padding to bring title closer to ghost */
+        }
+        
+        .ghost-container {
+            position: absolute;
+            top: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 130px;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0% { transform: translateX(-50%) translateY(0px); }
+            50% { transform: translateX(-50%) translateY(-10px); }
+            100% { transform: translateX(-50%) translateY(0px); }
+        }
+        
+        .ghost-svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15));
+        }
+        
+        .eye {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background-color: #333;
+            border-radius: 50%;
+            top: 35px;
+            z-index: 2;
+        }
+        
+        .eye-left {
+            left: 30px;
+        }
+        
+        .eye-right {
+            right: 30px;
+        }
+        
+        .mouth {
+            position: absolute;
+            width: 25px;
+            height: 10px;
+            background-color: #333;
+            top: 75px; /* Increased distance from eyes */
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 0 0 5px 5px;
+            z-index: 2;
+        }
+        
+        h2 {
+            color: #333;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #555;
+            text-align: left;
+        }
+        
+        input {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #444444;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #333333;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="ghost-container">
+            <svg class="ghost-svg" viewBox="0 0 120 130" xmlns="http://www.w3.org/2000/svg">
+                <!-- Ghost body with straight sides and soft wavy bottom -->
+                <path d="M 10,50 
+                         A 50,50 0 0,1 110,50 
+                         L 110,100
+                         C 105,95 100,105 95,100
+                         C 90,95 85,105 80,100
+                         C 75,95 70,105 65,100
+                         C 60,95 55,105 50,100
+                         C 45,95 40,105 35,100
+                         C 30,95 25,105 20,100
+                         C 15,95 10,105 10,100
+                         Z" 
+                      fill="white"/>
+            </svg>
+            <div class="eye eye-left"></div>
+            <div class="eye eye-right"></div>
+            <div class="mouth"></div>
+        </div>
+        
+        <h2>Login</h2>
+        
+        <form>
+            <div class="input-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" placeholder="Enter username">
+            </div>
+            
+            <div class="input-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Enter password">
+            </div>
+            
+            <button type="submit">Login</button>
+        </form>
+    </div>
+</body>
+</html>

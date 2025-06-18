@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Explore Frame</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            overflow-x: hidden;
+        }
+
+        section {
+            height: 100vh;
+            width: 100%;
+            position: relative;
+        }
+
+        /* FIRST SCREEN */
+        #home {
+            background: url('https://images.pexels.com/photos/9754/mountains-clouds-forest-fog.jpg') no-repeat center center;
+            background-size: cover;
+        }
+
+        .top-nav {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: transparent;
+            z-index: 10;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .nav-buttons {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .nav-buttons button {
+            padding: 0.5rem 1rem;
+            border: 2px solid #fff;
+            background: transparent;
+            color: #fff;
+            font-size: 1rem;
+            border-radius: 25px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .nav-buttons button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        #user-btn {
+            border: none !important;
+            padding: 0 !important;
+        }
+
+        .dropdown {
+            position: relative;
+        }
+
+        .dropdown-content {
+            position: absolute;
+            top: 110%;
+            left: 0;
+            background: #fff;
+            border-radius: 8px;
+            min-width: 150px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+            z-index: 20;
+        }
+
+        .dropdown-content a {
+            display: block;
+            padding: 0.5rem 1rem;
+            color: #000;
+            text-decoration: none;
+        }
+
+        .dropdown-content a:hover {
+            background: #f0f0f0;
+        }
+
+        .dropdown:hover .dropdown-content {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .user-dropdown .dropdown-content {
+            right: 0;
+            left: auto;
+        }
+
+        /* LOGIN/SIGNUP MODAL */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .modal-content {
+            background: #fff;
+            border-radius: 8px;
+            width: 95%;
+            max-width: 600px;
+            padding: 2rem;
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-content h2 {
+            text-align: center;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .modal-body form {
+            display: none;
+        }
+
+        .modal-body form.active {
+            display: block;
+        }
+
+        .modal-body label {
+            display: block;
+            margin: 0.5rem 0 0.2rem;
+        }
+
+        .modal-body input[type="text"],
+        .modal-body input[type="password"] {
+            width: 100%;
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .modal-body input[type="text"],
+        .modal-body input[type="password"],
+        #upload-container input[type="text"],
+        #upload-container input[type="file"],
+        .search-bar input {
+            border-radius: 25px !important;
+        }
+
+        .file-upload {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #fff;
+            border: 2px dashed #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: #666;
+            text-align: center;
+        }
+
+        .file-upload input {
+            display: none;
+        }
+
+        .modal-body button.submit {
+            display: block;
+            margin: 1rem auto 0;
+            padding: 0.5rem 2rem;
+            border: 2px solid #000;
+            background: transparent;
+            color: #000;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .modal-body button.submit:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: #666;
+        }
+
+        .modal-body .switch {
+            text-align: center;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .modal-body .switch a {
+            color: #007BFF;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        /* SEARCH */
+        #home .content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            width: 90%;
+            max-width: 600px;
+            color: #fff;
+        }
+
+        #home .content h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .search-bar {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin: auto;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 0.75rem 3rem 0.75rem 1rem;
+            font-size: 1rem;
+            border: 2px solid #fff;
+            border-radius: 25px;
+            outline: none;
+            background: #fff;
+            color: #000;
+        }
+
+        .search-bar button {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 2px solid #fff;
+            background: transparent;
+            color: #000;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .search-bar button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* SECOND SCREEN */
+        #explore {
+            background: #fff;
+            color: #000;
+        }
+
+        .secondary-nav {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 1rem;
+            padding: 1rem 2rem;
+            background: #fff;
+            border-radius: 0 0 8px 8px;
+            z-index: 10;
+        }
+
+        .secondary-nav button {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: transparent;
+            font-size: 1rem;
+            color: #000;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .secondary-nav button:hover:not(.active) {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .secondary-nav button.active {
+            background: #000;
+            color: #fff;
+        }
+
+        .tab-content {
+            display: none;
+            position: absolute;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 1200px;
+            padding: 2rem 1rem;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .placeholder {
+            text-align: center;
+            font-size: 1.25rem;
+            color: #666;
+
+            /* Flexbox centering */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        /* GALLERIES */
+        .home-gallery,
+        .gallery {
+            column-count: 3;
+            column-gap: 1rem;
+        }
+
+        .img-box {
+            position: relative;
+            margin-bottom: 1rem;
+            break-inside: avoid;
+            cursor: pointer;
+        }
+
+        .home-gallery img,
+        .gallery img {
+            width: 100%;
+            display: block;
+            border-radius: 4px;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            opacity: 0;
+            transition: opacity 0.2s;
+            border-radius: 4px;
+        }
+
+        .img-box:hover .overlay {
+            opacity: 1;
+        }
+
+        .overlay .top-icons,
+        .overlay .bottom-icon {
+            position: absolute;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .overlay .top-icons {
+            top: 8px;
+            right: 8px;
+        }
+
+        .overlay .bottom-icon {
+            bottom: 8px;
+            right: 8px;
+        }
+
+        .overlay .top-icons button,
+        .overlay .bottom-icon button {
+            background: rgba(0, 0, 0, 0.6);
+            border: none;
+            color: #fff;
+            padding: 0.4rem;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .overlay .bottom-icon button {
+            background: green;
+            border-radius: 4px;
+            padding: 0.4rem 0.8rem;
+            border: none;
+            color: #fff;
+            font-size: 0.85rem;
+        }
+
+        .overlay .bottom-icon button:hover {
+            background: darkgreen;
+        }
+
+        .fa-bookmark.saved {
+            color: limegreen;
+        }
+
+        .fa-heart.liked {
+            color: crimson;
+        }
+
+        /* UPLOAD FORM */
+        #upload-container form {
+            display: flex;
+            flex-direction: column;
+            max-width: 400px;
+            margin: auto;
+        }
+
+        #upload-container label {
+            margin-top: 1rem;
+            margin-bottom: 0.3rem;
+            font-weight: bold;
+        }
+
+        #upload-container input {
+            padding: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        #btn-upload {
+            margin-top: 1rem;
+            padding: 0.5rem 2rem;
+            border: none;
+            background: #007BFF;
+            color: #fff;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            align-self: center;
+            transition: background 0.2s;
+        }
+
+        #btn-upload {
+            margin-top: 1rem;
+            padding: 0.5rem 2rem;
+            border: 2px solid #000;
+            background: transparent;
+            color: #000;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            align-self: center;
+            transition: background 0.2s;
+        }
+
+        #btn-upload:hover {
+            background: rgba(0, 0, 0, 0.1);
+            border-color: #000;
+        }
+
+        /* IMAGE DETAIL MODAL */
+        #image-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+
+        #image-modal .modal-content {
+            background: #fff;
+            width: 90%;
+            max-width: 800px;
+            border-radius: 8px;
+            display: flex;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #image-modal .close-image-modal {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+            z-index: 10;
+        }
+
+        #image-modal .modal-content .info {
+            flex: 1;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #image-modal .modal-content .info .avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin-bottom: 1rem;
+            background-size: cover;
+            background-position: center;
+        }
+
+        #image-modal .modal-content .info .field {
+            margin-bottom: 0.75rem;
+        }
+
+        #image-modal .modal-content .info .field label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        #image-modal .modal-content .info .buttons {
+            margin-top: auto;
+            display: flex;
+            gap: 1rem;
+        }
+
+        #image-modal .modal-content .info .buttons button {
+            flex: 1;
+            padding: 0.5rem;
+            border-radius: 25px;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+
+        #image-modal .modal-content .info .buttons .save-btn,
+        #image-modal .modal-content .info .buttons .like-btn {
+            background: transparent;
+            border: 2px solid #000;
+        }
+
+        #image-modal .modal-content .info .buttons .download-btn {
+            background: green;
+            color: #fff;
+        }
+
+        #image-modal .modal-content .info .buttons button:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        #image-modal .modal-content .image-container {
+            flex: 1;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #image-modal .modal-content .image-container img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Login/Signup Modal -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h2 id="modal-title">Login</h2>
+            <div class="modal-body">
+                <form id="form-login" class="active">
+                    <label>Id:</label>
+                    <input type="text" id="login-id" required>
+                    <label>Password:</label>
+                    <input type="password" id="login-password" required>
+                    <button type="button" class="submit" id="btn-login">Log In</button>
+                    <div class="switch">Don't have an account? <a id="switch-signup">Sign up</a></div>
+                </form>
+                <form id="form-signup">
+                    <div class="file-upload" id="file-upload">
+                        <span>Upload</span>
+                        <input type="file" id="signup-pic" accept="image/*" required>
+                    </div>
+                    <label>Name:</label>
+                    <input type="text" id="signup-name" required>
+                    <label>Id:</label>
+                    <input type="text" id="signup-id" required>
+                    <label>Password:</label>
+                    <input type="password" id="signup-password" required>
+                    <button type="button" class="submit" id="btn-signup">Sign Up</button>
+                    <div class="switch">Already have an account? <a id="switch-login">Log in</a></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- First Screen -->
+    <section id="home">
+        <header class="top-nav">
+            <div class="logo">ExploreFrame</div>
+            <div class="nav-buttons" id="nav-buttons">
+                <div class="dropdown">
+                    <button>Explore</button>
+                    <div class="dropdown-content">
+                        <a href="#" data-tab="home">Home</a>
+                        <a href="#" data-tab="upload">Upload</a>
+                        <a href="#" data-tab="favourite">Saved</a>
+                        <a href="#" data-tab="liked">Liked</a>
+                    </div>
+                </div>
+                <button id="btn-join">Join</button>
+            </div>
+        </header>
+        <div class="content">
+            <h1>Welcome to ExploreFrame</h1>
+            <div class="search-bar">
+                <input type="text" placeholder="Search...">
+                <button><i class="fa fa-search"></i></button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Second Screen -->
+    <section id="explore">
+        <div class="secondary-nav">
+            <button class="active" data-tab="home">Home</button>
+            <button data-tab="upload">Upload</button>
+            <button data-tab="favourite">Saved</button>
+            <button data-tab="liked">Liked</button>
+        </div>
+        <div class="tab-content active" data-tab="home">
+            <div class="home-gallery" id="home-gallery"></div>
+        </div>
+        <div class="tab-content" data-tab="upload">
+            <div id="upload-container"></div>
+        </div>
+        <div class="tab-content" data-tab="favourite">
+            <div class="gallery" id="fav-gallery"></div>
+        </div>
+        <div class="tab-content" data-tab="liked">
+            <div class="gallery" id="liked-gallery"></div>
+        </div>
+    </section>
+
+    <!-- Image Detail Modal -->
+    <div id="image-modal">
+        <div class="modal-content">
+            <span class="close-image-modal">&times;</span>
+            <div class="info">
+                <div class="avatar" id="detail-uploader-pic"></div>
+                <div class="field">
+                    <label>Name</label>
+                    <div id="detail-name"></div>
+                </div>
+                <div class="field">
+                    <label>Description</label>
+                    <div id="detail-description"></div>
+                </div>
+                <div class="field">
+                    <label>Tags</label>
+                    <div id="detail-tags"></div>
+                </div>
+                <div class="buttons">
+                    <button class="save-btn" id="detail-save-btn"><i class="fa fa-bookmark"></i> Save</button>
+                    <button class="like-btn" id="detail-like-btn"><i class="fa fa-heart"></i> Like</button>
+                    <button class="download-btn" id="detail-download-btn">Download</button>
+                </div>
+            </div>
+            <div class="image-container">
+                <img id="detail-image" src="" alt="Detail">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data
+        let users = JSON.parse(localStorage.getItem('users') || '{}');
+        let currentUser = localStorage.getItem('currentUser') || null;
+        let saved = [], liked = [];
+        let images = [];
+
+        // Initialize images from storage or generate defaults
+        function initImages() {
+            const stored = JSON.parse(localStorage.getItem('images') || 'null');
+            if (stored) {
+                images = stored;
+            } else {
+                for (let i = 1; i <= 12; i++) {
+                    const h = Math.floor(Math.random() * 300) + 300;
+                    const src = `https://picsum.photos/400/${h}?random=${i}`;
+                    const uploaderPic = `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70) + 1}`;
+                    const uploaderName = `User${i}`;
+                    const name = `Random Image #${i}`;
+                    const description = `Description for image ${i}.`;
+                    const tags = [`#tag${i}`, `#sample`];
+                    images.push({ src, uploaderPic, uploaderName, name, description, tags });
+                }
+                localStorage.setItem('images', JSON.stringify(images));
+            }
+        }
+
+        // Save images to storage
+        function persistImages() {
+            localStorage.setItem('images', JSON.stringify(images));
+        }
+
+        // Create card
+        function createCard(obj) {
+            const { src, uploaderPic, uploaderName, name, description, tags } = obj;
+            const box = document.createElement('div'); box.className = 'img-box';
+            const img = document.createElement('img'); img.src = src; box.appendChild(img);
+            const overlay = document.createElement('div'); overlay.className = 'overlay';
+            const topIcons = document.createElement('div'); topIcons.className = 'top-icons';
+            // Save
+            const saveBtn = document.createElement('button');
+            const saveIcon = document.createElement('i');
+            saveIcon.className = 'fa fa-bookmark' + (saved.includes(src) ? ' saved' : '');
+            saveBtn.appendChild(saveIcon);
+            saveBtn.addEventListener('click', e => {
+                e.stopPropagation();
+                if (!currentUser) return showModal('login');
+                const idx = saved.indexOf(src);
+                if (idx < 0) saved.push(src); else saved.splice(idx, 1);
+                localStorage.setItem(currentUser + '_saved', JSON.stringify(saved));
+                renderGallery('fav-gallery', saved);
+                document.querySelectorAll(`img[src="${src}"]`).forEach(im => {
+                    const ic = im.parentElement.querySelector('.fa-bookmark');
+                    ic.classList.toggle('saved', idx < 0);
+                });
+            });
+            // Like
+            const likeBtn = document.createElement('button');
+            const likeIcon = document.createElement('i');
+            likeIcon.className = 'fa fa-heart' + (liked.includes(src) ? ' liked' : '');
+            likeBtn.appendChild(likeIcon);
+            likeBtn.addEventListener('click', e => {
+                e.stopPropagation();
+                if (!currentUser) return showModal('login');
+                const idx = liked.indexOf(src);
+                if (idx < 0) liked.push(src); else liked.splice(idx, 1);
+                localStorage.setItem(currentUser + '_liked', JSON.stringify(liked));
+                renderGallery('liked-gallery', liked);
+                document.querySelectorAll(`img[src="${src}"]`).forEach(im => {
+                    const ic = im.parentElement.querySelector('.fa-heart');
+                    ic.classList.toggle('liked', idx < 0);
+                });
+            });
+            topIcons.appendChild(saveBtn); topIcons.appendChild(likeBtn);
+            overlay.appendChild(topIcons);
+
+            const bottom = document.createElement('div'); bottom.className = 'bottom-icon';
+            const dl = document.createElement('button'); dl.textContent = 'Download';
+            dl.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                if (!currentUser) return showModal('login');
+
+                try {
+
+                    const randUrl = `https://picsum.photos/800/600?random=${Date.now()}`;
+
+
+                    const response = await fetch(randUrl);
+                    if (!response.ok) throw new Error('Failed to fetch image');
+
+
+                    const blob = await response.blob();
+                    const blobUrl = URL.createObjectURL(blob);
+
+                    const a = document.createElement('a');
+                    a.href = blobUrl;
+                    a.download = `random-image-${Date.now()}.jpg`;
+                    document.body.appendChild(a);
+                    a.click();
+
+
+                    setTimeout(() => {
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(blobUrl);
+                    }, 100);
+
+                } catch (error) {
+                    console.error('Download failed:', error);
+                    alert('Could not download the image. Please try again.');
+                }
+            });
+            bottom.appendChild(dl); overlay.appendChild(bottom);
+            box.appendChild(overlay);
+            // Detail modal
+            box.addEventListener('click', () => {
+                detailImage.src = src;
+                document.getElementById('detail-uploader-pic').style.backgroundImage = `url(${uploaderPic})`;
+                document.getElementById('detail-name').textContent = name;
+                document.getElementById('detail-description').textContent = description;
+                document.getElementById('detail-tags').textContent = tags.join(' ');
+                document.querySelector('#detail-save-btn i').classList.toggle('saved', saved.includes(src));
+                document.querySelector('#detail-like-btn i').classList.toggle('liked', liked.includes(src));
+                imageModal.style.display = 'flex';
+            });
+            return box;
+        }
+
+        // Render home with search
+        function renderHomeGallery() {
+            const term = document.querySelector('.search-bar input').value.toLowerCase();
+            const home = document.getElementById('home-gallery'); home.innerHTML = '';
+            images.filter(o => {
+                return o.name.toLowerCase().includes(term) ||
+                    o.tags.join(' ').toLowerCase().includes(term);
+            }).forEach(o => home.appendChild(createCard(o)));
+        }
+
+        // Render saved/liked
+        function renderGallery(id, arr) {
+            const cont = document.getElementById(id); cont.innerHTML = '';
+            if (!currentUser) {
+                cont.innerHTML = '<div class="placeholder">Login to use this feature</div>';
+            } else if (arr.length === 0) {
+                cont.innerHTML = '<div class="placeholder">No Images</div>';
+            } else {
+                arr.forEach(src => {
+                    const obj = images.find(i => i.src === src);
+                    if (obj) cont.appendChild(createCard(obj));
+                });
+            }
+        }
+
+        // Load collections
+        function loadCollections() {
+            if (currentUser) {
+                saved = JSON.parse(localStorage.getItem(currentUser + '_saved') || '[]');
+                liked = JSON.parse(localStorage.getItem(currentUser + '_liked') || '[]');
+            } else { saved = []; liked = []; }
+            renderGallery('fav-gallery', saved);
+            renderGallery('liked-gallery', liked);
+        }
+
+        // Upload tab
+        function renderUploadTab() {
+            const c = document.getElementById('upload-container');
+            if (!currentUser) {
+                c.innerHTML = '<div class="placeholder">Login to use this feature</div>';
+            } else {
+                c.innerHTML = `
+          <form id="upload-form">
+            <label>Image:</label><input type="file" id="upload-pic" accept="image/*" required>
+            <label>Name:</label><input type="text" id="upload-name" required>
+            <label>Description:</label><input type="text" id="upload-desc" required>
+            <label>Tags:</label><input type="text" id="upload-tags" placeholder="#tag1 #tag2" required>
+            <button type="button" id="btn-upload">Upload</button>
+          </form>`;
+                document.getElementById('btn-upload').onclick = () => {
+                    const f = document.getElementById('upload-pic').files[0];
+                    const nm = document.getElementById('upload-name').value.trim();
+                    const desc = document.getElementById('upload-desc').value.trim();
+                    const tags = document.getElementById('upload-tags').value.trim().split(/\s+/);
+                    if (!f || !nm || !desc || tags.length === 0) { alert('Fill all'); return; }
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        const src = reader.result;
+                        const uploaderPic = users[currentUser].pic;
+                        const uploaderName = users[currentUser].name;
+                        images.unshift({ src, uploaderPic, uploaderName, name: nm, description: desc, tags });
+                        persistImages();
+                        renderHomeGallery();
+                        activateTab('home');
+                        document.getElementById('upload-form').reset();
+                    };
+                    reader.readAsDataURL(f);
+                };
+            }
+        }
+
+        // Tabs
+        function activateTab(tab) {
+            document.querySelectorAll('.secondary-nav button').forEach(b =>
+                b.classList.toggle('active', b.dataset.tab === tab)
+            );
+            document.querySelectorAll('.tab-content').forEach(c =>
+                c.classList.toggle('active', c.dataset.tab === tab)
+            );
+            if (tab === 'home') renderHomeGallery();
+            if (tab === 'upload') renderUploadTab();
+            if (tab === 'favourite') renderGallery('fav-gallery', saved);
+            if (tab === 'liked') renderGallery('liked-gallery', liked);
+        }
+        document.querySelectorAll('.secondary-nav button').forEach(b =>
+            b.addEventListener('click', () => activateTab(b.dataset.tab))
+        );
+        document.querySelector('.search-bar input').addEventListener('input', () => renderHomeGallery());
+        document.querySelectorAll('.dropdown-content a').forEach(a => {
+            a.addEventListener('click', e => {
+                e.preventDefault();
+                activateTab(a.dataset.tab);
+                document.getElementById('explore').scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+
+        // Login/Signup modal
+        const modal = document.getElementById('modal');
+        const closeModal = document.querySelector('.modal-close');
+        const formLogin = document.getElementById('form-login');
+        const formSignup = document.getElementById('form-signup');
+        const modalTitle = document.getElementById('modal-title');
+        const switchSignup = document.getElementById('switch-signup');
+        const switchLogin = document.getElementById('switch-login');
+        const btnJoin = document.getElementById('btn-join');
+        const btnLogin = document.getElementById('btn-login');
+        const btnSignup = document.getElementById('btn-signup');
+        const fileUpload = document.getElementById('file-upload');
+        const fileInput = document.getElementById('signup-pic');
+
+        function showModal(form) {
+            modal.style.display = 'flex';
+            if (form === 'signup') {
+                modalTitle.textContent = 'Sign Up'; formSignup.classList.add('active'); formLogin.classList.remove('active');
+            } else {
+                modalTitle.textContent = 'Login'; formLogin.classList.add('active'); formSignup.classList.remove('active');
+            }
+        }
+        function hideModal() { modal.style.display = 'none'; }
+        btnJoin.onclick = () => showModal('login');
+        closeModal.onclick = hideModal;
+        switchSignup.onclick = () => showModal('signup');
+        switchLogin.onclick = () => showModal('login');
+        fileUpload.addEventListener('click', () => fileInput.click());
+
+        // Navbar
+        function renderNav() {
+            const nav = document.getElementById('nav-buttons');
+            nav.innerHTML = `
+        <div class="dropdown">
+          <button>Explore</button>
+          <div class="dropdown-content">
+            <a href="#" data-tab="home">Home</a>
+            <a href="#" data-tab="upload">Upload</a>
+            <a href="#" data-tab="favourite">Saved</a>
+            <a href="#" data-tab="liked">Liked</a>
+          </div>
+        </div>
+        ${currentUser ? `
+        <div class="dropdown user-dropdown">
+          <button id="user-btn"><img src="${users[currentUser].pic}" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover"/></button>
+          <div class="dropdown-content">
+            <a href="#" id="logout">Logout</a>
+          </div>
+        </div>`:
+                    `<button id="btn-join">Join</button>`}
+      `;
+            document.querySelectorAll('.dropdown-content a').forEach(a => {
+                a.onclick = e => {
+                    e.preventDefault();
+                    if (a.id === 'logout') {
+                        localStorage.removeItem('currentUser');
+                        currentUser = null;
+                        renderNav(); loadCollections(); renderUploadTab(); activateTab('home');
+                    } else {
+                        activateTab(a.dataset.tab);
+                        document.getElementById('explore').scrollIntoView({ behavior: 'smooth' });
+                    }
+                };
+            });
+            const joinBtn = document.getElementById('btn-join');
+            if (joinBtn) joinBtn.onclick = () => showModal('login');
+        }
+
+        // Signup/Login handlers
+        btnSignup.onclick = () => {
+            const pic = fileInput.files[0];
+            const name = document.getElementById('signup-name').value.trim();
+            const id = document.getElementById('signup-id').value.trim();
+            const pwd = document.getElementById('signup-password').value;
+            if (!pic || !name || !id || !pwd) { alert('Fill all'); return; }
+            if (users[id]) { alert('ID exists'); return; }
+            const reader = new FileReader();
+            reader.onload = () => {
+                users[id] = { name, password: pwd, pic: reader.result };
+                localStorage.setItem('users', JSON.stringify(users));
+                localStorage.setItem('currentUser', id);
+                currentUser = id;
+                hideModal(); renderNav(); loadCollections(); renderUploadTab(); activateTab('home');
+            };
+            reader.readAsDataURL(pic);
+        };
+        btnLogin.onclick = () => {
+            const id = document.getElementById('login-id').value.trim();
+            const pwd = document.getElementById('login-password').value;
+            if (users[id] && users[id].password === pwd) {
+                localStorage.setItem('currentUser', id);
+                currentUser = id;
+                hideModal(); renderNav(); loadCollections(); renderUploadTab(); activateTab('home');
+            } else alert('Invalid credentials');
+        };
+
+        // Image Detail Modal
+        const imageModal = document.getElementById('image-modal');
+        const detailImage = document.getElementById('detail-image');
+        const detailSaveBtn = document.getElementById('detail-save-btn');
+        const detailLikeBtn = document.getElementById('detail-like-btn');
+        const detailDownloadBtn = document.getElementById('detail-download-btn');
+        const closeImageModal = document.querySelector('.close-image-modal');
+        closeImageModal.onclick = () => imageModal.style.display = 'none';
+
+        detailSaveBtn.onclick = () => {
+            if (!currentUser) return showModal('login');
+            const src = detailImage.src;
+            const idx = saved.indexOf(src);
+            if (idx < 0) saved.push(src); else saved.splice(idx, 1);
+            localStorage.setItem(currentUser + '_saved', JSON.stringify(saved));
+            renderGallery('fav-gallery', saved);
+
+            // Toggle saved class on all bookmark icons (including detail modal)
+            document.querySelectorAll('.fa-bookmark').forEach(icon => {
+                if (icon.closest('.img-box')?.querySelector('img')?.src === src || icon === detailSaveBtn.querySelector('i')) {
+                    icon.classList.toggle('saved', idx < 0);
+                }
+            });
+        };
+
+        detailLikeBtn.onclick = () => {
+            if (!currentUser) return showModal('login');
+            const src = detailImage.src;
+            const idx = liked.indexOf(src);
+            if (idx < 0) liked.push(src); else liked.splice(idx, 1);
+            localStorage.setItem(currentUser + '_liked', JSON.stringify(liked));
+            renderGallery('liked-gallery', liked);
+
+            // Toggle liked class on all heart icons (including detail modal)
+            document.querySelectorAll('.fa-heart').forEach(icon => {
+                if (icon.closest('.img-box')?.querySelector('img')?.src === src || icon === detailLikeBtn.querySelector('i')) {
+                    icon.classList.toggle('liked', idx < 0);
+                }
+            });
+        };
+        detailDownloadBtn.onclick = async () => {
+            if (!currentUser) return showModal('login');
+
+            try {
+
+                const randUrl = `https://picsum.photos/800/600?random=${Date.now()}`;
+
+
+                const response = await fetch(randUrl);
+                if (!response.ok) throw new Error('Failed to fetch image');
+
+
+                const blob = await response.blob();
+                const blobUrl = URL.createObjectURL(blob);
+
+
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = `random-image-${Date.now()}.jpg`;
+                document.body.appendChild(a);
+                a.click();
+
+
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(blobUrl);
+                }, 100);
+
+            } catch (error) {
+                console.error('Download failed:', error);
+                alert('Failed to download image. Please try again.');
+            }
+        };
+
+        // Initialize
+        initImages();
+        loadCollections();
+        renderNav();
+        renderUploadTab();
+        renderHomeGallery();
+    </script>
+</body>
+
+</html>

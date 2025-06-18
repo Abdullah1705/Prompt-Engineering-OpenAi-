@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Generate Resumes</title>
+  <!-- Include html2canvas and jsPDF from CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    /* Global Styles */
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+    }
+
+    header {
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 2em;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Light grey background for inputs */
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="month"],
+    input[type="number"],
+    input[type="file"],
+    textarea {
+      background-color: #f0f0f0;
+      padding: 5px;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+    }
+
+    /* Two rows layout for input sections */
+    .row {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .column {
+      flex: 1;
+      min-width: 300px;
+    }
+
+    fieldset {
+      border: 1px solid #ccc;
+      padding: 10px;
+    }
+
+    legend {
+      font-weight: bold;
+      padding: 0 5px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    /* Buttons with black background and margins */
+    button {
+      padding: 10px 15px;
+      background-color: #000;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      border-radius: 4px;
+      margin: 5px;
+    }
+
+    /* The Generate Resume button: reduced horizontal padding */
+    #generateResumeButton {
+      display: block;
+      margin: 10px auto;
+      padding: 10px 5px;
+    }
+
+    button:hover {
+      background-color: #333;
+    }
+
+    .remove-btn {
+      background-color: #000;
+    }
+
+    .error-message {
+      color: red;
+      font-size: 0.8em;
+      margin-top: 5px;
+    }
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-content {
+      position: relative;
+      margin: 50px auto;
+      padding: 20px;
+      width: 90%;
+      max-width: 800px;
+      border-radius: 4px;
+      /* No background so that resume container shows white */
+      background-color: transparent;
+    }
+
+    /* Buttons container positioned above the resume container */
+    .button-container {
+      text-align: right;
+      margin-bottom: 10px;
+    }
+
+    .download-pdf,
+    .close-modal {
+      background: #000;
+      color: #fff;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 3px;
+      margin-left: 5px;
+    }
+
+    .download-pdf:hover,
+    .close-modal:hover {
+      background: #333;
+    }
+
+    /* Resume Container: white background with outline */
+    #resume-container {
+      background-color: #fff;
+      border: 1px solid #000;
+      padding: 20px;
+    }
+
+    /* Resume Preview Styles */
+    /* Header layout: name at top left, image on right, with minimal margin between name and contact details */
+    .resume-header {
+      padding: 10px;
+    }
+
+    .header-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header-left h2 {
+      margin: 0;
+      font-size: 2.5em;
+      /* Bigger font for name */
+    }
+
+    .header-right img {
+      width: 150px;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+
+    .header-contact {
+      margin-top: 0;
+      /* No extra margin between name and contact details */
+    }
+
+    .section-title {
+      font-size: 1.2em;
+      margin-top: 20px;
+      border-bottom: 2px solid #000;
+      padding-bottom: 5px;
+    }
+
+    .resume-section {
+      margin-bottom: 15px;
+    }
+
+    .resume-item {
+      margin-bottom: 10px;
+    }
+
+    /* Style the progress bar: grey background with black value, and show number next to it */
+    progress {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 200px;
+      height: 20px;
+      border-radius: 20px;
+      overflow: hidden;
+    }
+
+    progress::-webkit-progress-bar {
+      background-color: grey;
+    }
+
+    progress::-webkit-progress-value {
+      background-color: black;
+    }
+
+    progress::-moz-progress-bar {
+      background-color: black;
+    }
+
+    .skill-progress {
+      display: flex;
+      align-items: center;
+    }
+
+    .skill-progress progress {
+      margin-left: 10px;
+    }
+
+    .hide-on-screen {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Title at the top center -->
+  <header>
+    <h1>Generate Resumes</h1>
+  </header>
+
+  <!-- Main Container for Input Form -->
+  <div class="container">
+    <form id="resume-form">
+      <!-- Row 1: Personal Details and Education -->
+      <div class="row">
+        <!-- Personal Details Column -->
+        <div class="column">
+          <fieldset>
+            <legend>Personal Details</legend>
+            <label>
+              Image:
+              <input type="file" id="profileImage" accept="image/*" />
+            </label>
+            <label>
+              Name:
+              <input type="text" id="name" placeholder="Your Name" />
+            </label>
+            <label>
+              Email:
+              <input type="email" id="email" placeholder="Email" />
+            </label>
+            <label>
+              Phone:
+              <input type="tel" id="phone" placeholder="Phone Number"
+                oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
+            </label>
+            <label>
+              Address:
+              <input type="text" id="address" placeholder="Address" />
+            </label>
+            <label>
+              About:
+              <textarea id="about" placeholder="Tell something about yourself"></textarea>
+            </label>
+          </fieldset>
+        </div>
+        <!-- Education Column -->
+        <div class="column">
+          <fieldset>
+            <legend>Education</legend>
+            <div id="education-container">
+              <div class="education-entry">
+                <label>
+                  School Name:
+                  <input type="text" class="school" placeholder="School Name" />
+                </label>
+                <label>
+                  Degree:
+                  <input type="text" class="degree" placeholder="Degree" />
+                </label>
+                <label>
+                  Start Date:
+                  <input type="month" class="edu-start" />
+                </label>
+                <label>
+                  End Date:
+                  <input type="month" class="edu-end" />
+                </label>
+                <label>
+                  <input type="checkbox" class="currently-studying" onchange="toggleEndDate(this, 'edu')" />
+                  I am currently studying here
+                </label>
+              </div>
+            </div>
+            <button type="button" onclick="addEducationField()">Add Education</button>
+          </fieldset>
+        </div>
+      </div>
+
+      <!-- Row 2: Experience and Skills -->
+      <div class="row">
+        <!-- Experience Column -->
+        <div class="column">
+          <fieldset>
+            <legend>Experience</legend>
+            <div id="experience-container">
+              <div class="experience-entry">
+                <label>
+                  Company Name:
+                  <input type="text" class="company" placeholder="Company Name" />
+                </label>
+                <label>
+                  Role:
+                  <input type="text" class="role" placeholder="Role" />
+                </label>
+                <label>
+                  Start Date:
+                  <input type="month" class="exp-start" />
+                </label>
+                <label>
+                  End Date:
+                  <input type="month" class="exp-end" />
+                </label>
+                <label>
+                  <input type="checkbox" class="currently-working" onchange="toggleEndDate(this, 'exp')" />
+                  I am currently working here
+                </label>
+                <label>
+                  Description:
+                  <textarea class="description" placeholder="Description"></textarea>
+                </label>
+              </div>
+            </div>
+            <button type="button" onclick="addExperienceField()">Add Experience</button>
+          </fieldset>
+        </div>
+        <!-- Skills Column -->
+        <div class="column">
+          <fieldset>
+            <legend>Skills</legend>
+            <div id="skills-container">
+              <div class="skill-entry">
+                <label>
+                  Skill:
+                  <input type="text" class="skill-name" placeholder="Skill" />
+                </label>
+                <label>
+                  Proficiency (1-10):
+                  <input type="number" class="skill-level" min="1" max="10" value="5" />
+                </label>
+              </div>
+            </div>
+            <button type="button" onclick="addSkillField()">Add Skill</button>
+          </fieldset>
+        </div>
+      </div>
+    </form>
+    <button type="button" id="generateResumeButton" onclick="generateResume()">Generate Resume</button>
+  </div>
+
+  <!-- Modal for Resume Preview -->
+  <div id="previewModal" class="modal">
+    <div class="modal-content">
+      <div class="button-container">
+        <button id="downloadPDF" class="download-pdf">Download PDF</button>
+        <button class="close-modal" onclick="closeModal()">Close</button>
+      </div>
+      <!-- Resume container with white background and outline -->
+      <div id="resume-container">
+        <div id="resume-preview">
+          <!-- Generated resume content will appear here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Function to disable/enable end date based on checkbox state
+    function toggleEndDate(checkbox, type) {
+      const container = checkbox.closest(
+        type === "edu" ? ".education-entry" : ".experience-entry"
+      );
+      if (container) {
+        const endInput = container.querySelector(type === "edu" ? ".edu-end" : ".exp-end");
+        if (checkbox.checked) {
+          endInput.disabled = true;
+          endInput.value = "";
+          clearError(endInput);
+        } else {
+          endInput.disabled = false;
+        }
+      }
+    }
+
+    // Helper functions to show and clear error messages
+    function showError(input, message) {
+      let errorElem = input.parentElement.querySelector(".error-message");
+      if (!errorElem) {
+        errorElem = document.createElement("div");
+        errorElem.className = "error-message";
+        input.parentElement.appendChild(errorElem);
+      }
+      errorElem.textContent = message;
+    }
+
+    function clearError(input) {
+      let errorElem = input.parentElement.querySelector(".error-message");
+      if (errorElem) {
+        errorElem.textContent = "";
+      }
+    }
+
+    // Validate the form; return true if valid, else false
+    function validateForm() {
+      let valid = true;
+      // Validate Personal Details
+      const nameInput = document.getElementById("name");
+      const emailInput = document.getElementById("email");
+      const phoneInput = document.getElementById("phone");
+      const addressInput = document.getElementById("address");
+      const aboutInput = document.getElementById("about");
+      const profileImageInput = document.getElementById("profileImage");
+
+      if (nameInput.value.trim() === "") {
+        showError(nameInput, "Name is required.");
+        valid = false;
+      } else {
+        clearError(nameInput);
+      }
+
+      if (emailInput.value.trim() === "") {
+        showError(emailInput, "Email is required.");
+        valid = false;
+      } else {
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(emailInput.value.trim())) {
+          showError(emailInput, "Invalid email format.");
+          valid = false;
+        } else {
+          clearError(emailInput);
+        }
+      }
+
+      if (phoneInput.value.trim() === "") {
+        showError(phoneInput, "Phone is required.");
+        valid = false;
+      } else {
+        clearError(phoneInput);
+      }
+
+      if (addressInput.value.trim() === "") {
+        showError(addressInput, "Address is required.");
+        valid = false;
+      } else {
+        clearError(addressInput);
+      }
+
+      if (aboutInput.value.trim() === "") {
+        showError(aboutInput, "About is required.");
+        valid = false;
+      } else {
+        clearError(aboutInput);
+      }
+
+      if (!profileImageInput.files || !profileImageInput.files[0]) {
+        showError(profileImageInput, "Profile image is required.");
+        valid = false;
+      } else {
+        clearError(profileImageInput);
+      }
+
+      // Validate Education Entries
+      const educationEntries = document.getElementsByClassName("education-entry");
+      if (educationEntries.length === 0) {
+        alert("At least one education entry is required.");
+        valid = false;
+      } else {
+        for (let entry of educationEntries) {
+          const schoolInput = entry.querySelector(".school");
+          const degreeInput = entry.querySelector(".degree");
+          const eduStartInput = entry.querySelector(".edu-start");
+          const eduEndInput = entry.querySelector(".edu-end");
+          const currentlyStudyingCheckbox = entry.querySelector(".currently-studying");
+
+          if (schoolInput.value.trim() === "") {
+            showError(schoolInput, "School name is required.");
+            valid = false;
+          } else {
+            clearError(schoolInput);
+          }
+          if (degreeInput.value.trim() === "") {
+            showError(degreeInput, "Degree is required.");
+            valid = false;
+          } else {
+            clearError(degreeInput);
+          }
+          if (eduStartInput.value.trim() === "") {
+            showError(eduStartInput, "Start date is required.");
+            valid = false;
+          } else {
+            clearError(eduStartInput);
+          }
+          if (!currentlyStudyingCheckbox.checked) {
+            if (eduEndInput.value.trim() === "") {
+              showError(eduEndInput, "End date is required.");
+              valid = false;
+            } else {
+              clearError(eduEndInput);
+            }
+            if (eduStartInput.value.trim() !== "" && eduEndInput.value.trim() !== "") {
+              let startDate = new Date(eduStartInput.value + "-01");
+              let endDate = new Date(eduEndInput.value + "-01");
+              if (endDate < startDate) {
+                showError(eduEndInput, "End date cannot be before start date.");
+                valid = false;
+              }
+            }
+          } else {
+            clearError(eduEndInput);
+          }
+        }
+      }
+
+      // Validate Experience Entries
+      const experienceEntries = document.getElementsByClassName("experience-entry");
+      if (experienceEntries.length === 0) {
+        alert("At least one experience entry is required.");
+        valid = false;
+      } else {
+        for (let entry of experienceEntries) {
+          const companyInput = entry.querySelector(".company");
+          const roleInput = entry.querySelector(".role");
+          const expStartInput = entry.querySelector(".exp-start");
+          const expEndInput = entry.querySelector(".exp-end");
+          const descriptionInput = entry.querySelector(".description");
+          const currentlyWorkingCheckbox = entry.querySelector(".currently-working");
+
+          if (companyInput.value.trim() === "") {
+            showError(companyInput, "Company name is required.");
+            valid = false;
+          } else {
+            clearError(companyInput);
+          }
+          if (roleInput.value.trim() === "") {
+            showError(roleInput, "Role is required.");
+            valid = false;
+          } else {
+            clearError(roleInput);
+          }
+          if (expStartInput.value.trim() === "") {
+            showError(expStartInput, "Start date is required.");
+            valid = false;
+          } else {
+            clearError(expStartInput);
+          }
+          if (descriptionInput.value.trim() === "") {
+            showError(descriptionInput, "Description is required.");
+            valid = false;
+          } else {
+            clearError(descriptionInput);
+          }
+          if (!currentlyWorkingCheckbox.checked) {
+            if (expEndInput.value.trim() === "") {
+              showError(expEndInput, "End date is required.");
+              valid = false;
+            } else {
+              clearError(expEndInput);
+            }
+            if (expStartInput.value.trim() !== "" && expEndInput.value.trim() !== "") {
+              let startDate = new Date(expStartInput.value + "-01");
+              let endDate = new Date(expEndInput.value + "-01");
+              if (endDate < startDate) {
+                showError(expEndInput, "End date cannot be before start date.");
+                valid = false;
+              }
+            }
+          } else {
+            clearError(expEndInput);
+          }
+        }
+      }
+
+      // Validate Skill Entries
+      const skillEntries = document.getElementsByClassName("skill-entry");
+      if (skillEntries.length === 0) {
+        alert("At least one skill entry is required.");
+        valid = false;
+      } else {
+        for (let entry of skillEntries) {
+          const skillNameInput = entry.querySelector(".skill-name");
+          const skillLevelInput = entry.querySelector(".skill-level");
+          if (skillNameInput.value.trim() === "") {
+            showError(skillNameInput, "Skill name is required.");
+            valid = false;
+          } else {
+            clearError(skillNameInput);
+          }
+          if (skillLevelInput.value.trim() === "") {
+            showError(skillLevelInput, "Proficiency is required.");
+            valid = false;
+          } else {
+            let level = parseInt(skillLevelInput.value);
+            if (isNaN(level) || level < 1 || level > 10) {
+              showError(skillLevelInput, "Proficiency must be between 1 and 10.");
+              valid = false;
+            } else {
+              clearError(skillLevelInput);
+            }
+          }
+        }
+      }
+      return valid;
+    }
+
+    // Functions to add dynamic Education, Experience, and Skill fields
+    function addEducationField() {
+      var container = document.getElementById("education-container");
+      var div = document.createElement("div");
+      div.className = "education-entry";
+      div.innerHTML = `
+        <label>
+          School Name:
+          <input type="text" class="school" placeholder="School Name" />
+        </label>
+        <label>
+          Degree:
+          <input type="text" class="degree" placeholder="Degree" />
+        </label>
+        <label>
+          Start Date:
+          <input type="month" class="edu-start" />
+        </label>
+        <label>
+          End Date:
+          <input type="month" class="edu-end" />
+        </label>
+        <label>
+          <input type="checkbox" class="currently-studying" onchange="toggleEndDate(this, 'edu')" />
+          I am currently studying here
+        </label>
+        <button type="button" class="remove-btn" onclick="this.parentElement.remove()">Remove</button>
+      `;
+      container.appendChild(div);
+    }
+
+    function addExperienceField() {
+      var container = document.getElementById("experience-container");
+      var div = document.createElement("div");
+      div.className = "experience-entry";
+      div.innerHTML = `
+        <label>
+          Company Name:
+          <input type="text" class="company" placeholder="Company Name" />
+        </label>
+        <label>
+          Role:
+          <input type="text" class="role" placeholder="Role" />
+        </label>
+        <label>
+          Start Date:
+          <input type="month" class="exp-start" />
+        </label>
+        <label>
+          End Date:
+          <input type="month" class="exp-end" />
+        </label>
+        <label>
+          <input type="checkbox" class="currently-working" onchange="toggleEndDate(this, 'exp')" />
+          I am currently working here
+        </label>
+        <label>
+          Description:
+          <textarea class="description" placeholder="Description"></textarea>
+        </label>
+        <button type="button" class="remove-btn" onclick="this.parentElement.remove()">Remove</button>
+      `;
+      container.appendChild(div);
+    }
+
+    function addSkillField() {
+      var container = document.getElementById("skills-container");
+      var div = document.createElement("div");
+      div.className = "skill-entry";
+      div.innerHTML = `
+        <label>
+          Skill:
+          <input type="text" class="skill-name" placeholder="Skill" />
+        </label>
+        <label>
+          Proficiency (1-10):
+          <input type="number" class="skill-level" min="1" max="10" value="5" />
+        </label>
+        <button type="button" class="remove-btn" onclick="this.parentElement.remove()">Remove</button>
+      `;
+      container.appendChild(div);
+    }
+
+    // Generate Resume: validate first then build the preview and open modal
+    function generateResume() {
+      if (!validateForm()) {
+        return;
+      }
+
+      var preview = document.getElementById("resume-preview");
+      preview.innerHTML = ""; // Clear previous content
+
+      // Personal Details
+      var name = document.getElementById("name").value;
+      var email = document.getElementById("email").value;
+      var phone = document.getElementById("phone").value;
+      var address = document.getElementById("address").value;
+      var about = document.getElementById("about").value;
+      var profileImageInput = document.getElementById("profileImage");
+
+      // Create header div that will hold name, image, and contact info
+      var headerDiv = document.createElement("div");
+      headerDiv.className = "resume-header";
+
+      // Function to build header structure using the new layout
+      function appendHeader(imageSrc) {
+        let headerContainer = document.createElement("div");
+        headerContainer.className = "header-container";
+
+        let leftHeader = document.createElement("div");
+        leftHeader.className = "header-left";
+
+        if (name.trim() !== "") {
+          let nameElem = document.createElement("h2");
+          nameElem.textContent = name;
+          leftHeader.appendChild(nameElem);
+        }
+
+        if (email.trim() || phone.trim() || address.trim()) {
+          let contactDiv = document.createElement("div");
+          contactDiv.className = "header-contact";
+          let contactInfo = document.createElement("p");
+          contactInfo.innerHTML = [email, phone, address].filter(Boolean).join(" | ");
+          contactDiv.appendChild(contactInfo);
+
+          leftHeader.appendChild(contactDiv);
+        }
+
+        headerContainer.appendChild(leftHeader);
+
+        let rightHeader = document.createElement("div");
+        rightHeader.className = "header-right";
+        if (imageSrc) {
+          let imgElem = document.createElement("img");
+          imgElem.src = imageSrc;
+          rightHeader.appendChild(imgElem);
+        }
+        headerContainer.appendChild(rightHeader);
+
+        headerDiv.appendChild(headerContainer);
+
+        preview.appendChild(headerDiv);
+      }
+
+      // Function to append the rest of the resume sections
+      function appendResumeSections() {
+        // About Section
+        if (about.trim() !== "") {
+          let aboutSection = document.createElement("div");
+          aboutSection.className = "resume-section";
+          let aboutTitle = document.createElement("h3");
+          aboutTitle.className = "section-title";
+          aboutTitle.textContent = "About";
+          aboutSection.appendChild(aboutTitle);
+          let aboutPara = document.createElement("p");
+          aboutPara.textContent = about;
+          aboutSection.appendChild(aboutPara);
+          preview.appendChild(aboutSection);
+        }
+
+        // Education Section
+        const eduEntries = document.getElementsByClassName("education-entry");
+        if (eduEntries.length > 0) {
+          let eduSection = document.createElement("div");
+          eduSection.className = "resume-section";
+          let eduTitle = document.createElement("h3");
+          eduTitle.className = "section-title";
+          eduTitle.textContent = "Education";
+          eduSection.appendChild(eduTitle);
+          for (let i = 0; i < eduEntries.length; i++) {
+            let school = eduEntries[i].querySelector(".school").value;
+            let degree = eduEntries[i].querySelector(".degree").value;
+            let start = eduEntries[i].querySelector(".edu-start").value;
+            let end = eduEntries[i].querySelector(".edu-end").value;
+            let currentlyStudying = eduEntries[i].querySelector(".currently-studying").checked;
+            if (school.trim() || degree.trim()) {
+              let eduItem = document.createElement("div");
+              eduItem.className = "resume-item";
+              let dateStr = currentlyStudying ? start + " to Present" : start + " to " + end;
+              eduItem.innerHTML =
+                "<strong>" +
+                school +
+                "</strong> - " +
+                degree +
+                " (" +
+                dateStr +
+                ")";
+              eduSection.appendChild(eduItem);
+            }
+          }
+          preview.appendChild(eduSection);
+        }
+
+        // Experience Section
+        const expEntries = document.getElementsByClassName("experience-entry");
+        if (expEntries.length > 0) {
+          let expSection = document.createElement("div");
+          expSection.className = "resume-section";
+          let expTitle = document.createElement("h3");
+          expTitle.className = "section-title";
+          expTitle.textContent = "Experience";
+          expSection.appendChild(expTitle);
+          for (let i = 0; i < expEntries.length; i++) {
+            let company = expEntries[i].querySelector(".company").value;
+            let role = expEntries[i].querySelector(".role").value;
+            let start = expEntries[i].querySelector(".exp-start").value;
+            let end = expEntries[i].querySelector(".exp-end").value;
+            let currentlyWorking = expEntries[i].querySelector(".currently-working").checked;
+            let description = expEntries[i].querySelector(".description").value;
+            if (company.trim() || role.trim()) {
+              let expItem = document.createElement("div");
+              expItem.className = "resume-item";
+              let dateStr = currentlyWorking ? start + " to Present" : start + " to " + end;
+              expItem.innerHTML =
+                "<strong>" +
+                company +
+                "</strong> - " +
+                role +
+                " (" +
+                dateStr +
+                ")<br>" +
+                description;
+              expSection.appendChild(expItem);
+            }
+          }
+          preview.appendChild(expSection);
+        }
+
+        // Skills Section with progress bars and number display
+        const skillEntries = document.getElementsByClassName("skill-entry");
+        if (skillEntries.length > 0) {
+          let skillSection = document.createElement("div");
+          skillSection.className = "resume-section";
+          let skillTitle = document.createElement("h3");
+          skillTitle.className = "section-title";
+          skillTitle.textContent = "Skills";
+          skillSection.appendChild(skillTitle);
+          for (let i = 0; i < skillEntries.length; i++) {
+            let skillName = skillEntries[i].querySelector(".skill-name").value;
+            let skillLevel = skillEntries[i].querySelector(".skill-level").value;
+            if (skillName.trim() !== "") {
+              let skillItem = document.createElement("div");
+              skillItem.className = "resume-item skill-progress";
+              let skillLabel = document.createElement("span");
+              skillLabel.textContent = skillName;
+              let progressBar = document.createElement("progress");
+              progressBar.value = skillLevel;
+              progressBar.max = 10;
+              // Also show the numeric value next to the progress bar
+              let progressText = document.createElement("span");
+              progressText.textContent = " Proficiency level is " + skillLevel + "/10";
+              progressText.classList.add("progress-text", "hide-on-screen");
+              skillItem.appendChild(skillLabel);
+              skillItem.appendChild(progressBar);
+              skillItem.appendChild(progressText);
+              skillSection.appendChild(skillItem);
+            }
+          }
+          preview.appendChild(skillSection);
+        }
+      }
+
+      // Load image then build header and rest of resume; if no image, proceed directly.
+      if (profileImageInput.files && profileImageInput.files[0]) {
+        let reader = new FileReader();
+        reader.onload = function (e) {
+          appendHeader(e.target.result);
+          appendResumeSections();
+          openModal();
+        };
+        reader.readAsDataURL(profileImageInput.files[0]);
+      } else {
+        appendHeader(null);
+        appendResumeSections();
+        openModal();
+      }
+    }
+
+    function openModal() {
+      document.getElementById("previewModal").style.display = "block";
+    }
+
+    function closeModal() {
+      document.getElementById("previewModal").style.display = "none";
+    }
+
+    // Close modal when clicking outside modal-content
+    window.onclick = function (event) {
+      var modal = document.getElementById("previewModal");
+      if (event.target == modal) {
+        modal.style.display = "none";
+      }
+    };
+
+    // Download the resume preview as a PDF
+    document.getElementById("downloadPDF").addEventListener("click", function () {
+      const progressTexts = document.querySelectorAll(".progress-text");
+
+      progressTexts.forEach(el => el.classList.remove("hide-on-screen"));
+
+      // Use html2canvas to capture the resume container element
+      html2canvas(document.getElementById("resume-container")).then(function (canvas) {
+        const imgData = canvas.toDataURL("image/png");
+        // Create a new jsPDF instance
+        const pdf = new jspdf.jsPDF("p", "mm", "a4");
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        // Calculate image dimensions to fit A4
+        const imgWidth = pageWidth;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+        pdf.save("resume.pdf");
+
+        progressTexts.forEach(el => el.classList.add("hide-on-screen"));
+      });
+    });
+  </script>
+</body>
+
+</html>

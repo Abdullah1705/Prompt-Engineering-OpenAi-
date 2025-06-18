@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Stat Clash</title>
+    <style>
+        :root {
+            --accent: #ffcc00;
+            --text-light: #f5f5f5;
+            --text-dark: #222;
+            --modal-bg: #333;
+            --win-shadow: 0 0 20px 5px rgba(0, 255, 0, 0.6);
+            --lose-shadow: 0 0 20px 5px rgba(255, 0, 0, 0.6);
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+        }
+
+        * {
+            box‑sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to bottom, black, purple);
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            position: relative;
+            text-align: center;
+            padding: 1rem;
+        }
+
+        header h1 {
+            font-family: "Times New Roman", serif;
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .top-buttons {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            display: flex;
+            gap: .5rem;
+        }
+
+        .top-buttons button {
+            padding: .6rem 1.2rem;
+            font-size: .9rem;
+            cursor: pointer;
+            color: var(--text-light);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            transition: background .2s;
+        }
+
+        .top-buttons button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .controls {
+            display: inline-flex;
+            gap: .5rem;
+            padding: .5rem 1rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            margin: 0 auto;
+        }
+
+        .controls label {
+            font-size: .9rem
+        }
+
+        .controls input,
+        .controls select {
+            margin-left: .3rem;
+            padding: .4rem;
+            border: none;
+            border-radius: 4px;
+            font-size: .9rem;
+        }
+
+        #pokemon-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+            padding: 1rem;
+            flex: 1;
+        }
+
+        .card {
+            position: relative;
+            text-align: center;
+            padding: .8rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            color: var(--text-dark);
+            transition: transform .1s, box-shadow .3s;
+            align-self: start;
+        }
+
+        .card:hover {
+            transform: translateY(-4px)
+        }
+
+        .card img {
+            display: block;
+            width: 96px;
+            height: 96px;
+            margin: 0 auto .5rem;
+        }
+
+        .card h3 {
+            margin: .3rem 0;
+            font-size: 1rem;
+            text-transform: capitalize;
+        }
+
+        .types {
+            display: flex;
+            justify-content: center;
+            gap: .3rem;
+            flex-wrap: wrap;
+        }
+
+        .type {
+            padding: .2rem .5rem;
+            background: #eee;
+            border-radius: 12px;
+            font-size: .75rem;
+            text-transform: capitalize;
+        }
+
+        .favorite-icon {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            font-size: 1.2rem;
+            color: lightgray;
+            cursor: pointer;
+            transition: color .2s;
+        }
+
+        .favorite-icon.favorited {
+            color: var(--accent)
+        }
+
+        /* single‑search detail */
+        .card.detail {
+            grid-column: 1/-1;
+            max-width: 800px;
+            margin: 1rem auto;
+            cursor: default;
+        }
+
+        .card.detail img {
+            width: 120px;
+            height: 120px
+        }
+
+        .card.detail .sprites {
+            display: flex;
+            justify-content: center;
+            gap: .5rem;
+            overflow-x: auto;
+            margin-top: 1rem;
+        }
+
+        .card.detail .info,
+        .card.detail .stats {
+            text-align: left;
+            margin-top: 1rem;
+        }
+
+        /* clash‑prompt */
+        .clash-prompt {
+            max-width: 300px;
+            margin: 2rem auto;
+            text-align: center;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 1rem;
+        }
+
+        .clash-prompt select {
+            width: 100%;
+            padding: .4rem;
+            margin: 1rem 0;
+            border: none;
+            border-radius: 4px;
+        }
+
+        .clash-prompt button {
+            padding: .6rem 1.2rem;
+            border: none;
+            border-radius: 4px;
+            background: var(--accent);
+            color: #222;
+            cursor: pointer;
+        }
+
+        .clash-question {
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 1.2rem;
+        }
+
+        #clashCards {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 2rem;
+            margin: 1rem 0;
+        }
+
+        .clash-card {
+            width: 200px
+        }
+
+        .clash-card img {
+            width: 96px;
+            height: 96px;
+            margin-bottom: .5rem;
+        }
+
+        .clash-card h3 {
+            font-size: 1rem;
+            margin-bottom: .5rem
+        }
+
+        .stat-value {
+            visibility: hidden;
+            margin-top: .5rem;
+            font-weight: bold
+        }
+
+        .winner {
+            box-shadow: var(--win-shadow) !important
+        }
+
+        .loser {
+            box-shadow: var(--lose-shadow) !important
+        }
+
+        /* modal (unchanged) */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+            z-index: 100;
+        }
+
+        .modal-content {
+            position: relative;
+            background: var(--modal-bg);
+            border-radius: 12px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90%;
+            overflow-y: auto;
+            padding: 1rem 1.5rem 1.5rem;
+            color: var(--text-light);
+            overflow: hidden;
+        }
+
+        .modal-panel {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 50%;
+            background: var(--modal-bg);
+            transition: transform .5s ease-out;
+        }
+
+        .modal-panel.left {
+            left: 0
+        }
+
+        .modal-panel.right {
+            right: 0
+        }
+
+        .modal-panel.open-left {
+            transform: translateX(-100%)
+        }
+
+        .modal-panel.open-right {
+            transform: translateX(100%)
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-light);
+            z-index: 20;
+        }
+
+        .modal-header {
+            border-bottom: 1px solid #555;
+            padding-bottom: .5rem;
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            text-transform: capitalize
+        }
+
+        .sprites {
+            display: flex;
+            gap: .5rem;
+            overflow-x: auto;
+            z-index: 1
+        }
+
+        .info p {
+            margin: .3rem 0;
+            font-size: .95rem
+        }
+
+        .stats h3 {
+            margin-bottom: .5rem
+        }
+
+        .stat {
+            display: flex;
+            align-items: center;
+            margin: .3rem 0;
+            font-size: .9rem;
+        }
+
+        .stat-bar {
+            flex: 1;
+            height: 8px;
+            background: #555;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 0 .5rem;
+        }
+
+        .stat-bar-inner {
+            height: 100%;
+            background: var(--accent)
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>Stat Clash</h1>
+        <div class="top-buttons">
+            <button id="favoritesBtn">Favorite Anime</button>
+            <button id="seeClashBtn">See the Clash</button>
+        </div>
+        <div class="controls">
+            <label>Search:
+                <input type="text" id="searchInput" placeholder="Name or ID">
+            </label>
+            <label>Type:
+                <select id="typeFilter">
+                    <option value="all">All</option>
+                </select>
+            </label>
+        </div>
+    </header>
+
+    <div id="pokemon-container"></div>
+
+    <!-- Modal -->
+    <div id="modal" class="modal">
+        <div class="modal-content" id="modalContent">
+            <div class="modal-panel left" id="panelLeft"></div>
+            <div class="modal-panel right" id="panelRight"></div>
+            <span class="close-btn">&times;</span>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <script>
+        const apiBase = 'https://pokeapi.co/api/v2';
+        const container = document.getElementById('pokemon-container');
+        const searchInput = document.getElementById('searchInput');
+        const typeFilter = document.getElementById('typeFilter');
+        const favoritesBtn = document.getElementById('favoritesBtn');
+        const seeClashBtn = document.getElementById('seeClashBtn');
+        const modal = document.getElementById('modal');
+        const panelL = document.getElementById('panelLeft');
+        const panelR = document.getElementById('panelRight');
+        const closeBtn = document.querySelector('.close-btn');
+        const modalBody = document.getElementById('modal-body');
+
+        let favorites = JSON.parse(localStorage.getItem('favoritePokemon') || '[]');
+        const saveFav = () => localStorage.setItem('favoritePokemon', JSON.stringify(favorites));
+        const isFav = n => favorites.includes(n);
+        function toggleFav(name, el) {
+            if (isFav(name)) favorites = favorites.filter(x => x !== name);
+            else favorites.push(name);
+            saveFav();
+            el.classList.toggle('favorited', isFav(name));
+        }
+        const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+        async function fetchPokemon(q) {
+            const id = String(q).toLowerCase();
+            try {
+                const res = await fetch(`${apiBase}/pokemon/${id}`);
+                if (!res.ok) throw '';
+                return await res.json();
+            } catch { return null }
+        }
+
+        // GRID
+        async function loadPokemons(list) {
+            container.innerHTML = `<p style="text-align:center;color:white">Loading…</p>`;
+            const all = await Promise.all(list.map(i => fetchPokemon(i)));
+            container.innerHTML = '';
+            all.filter(p => p).forEach(createGridCard);
+        }
+        function createGridCard(p) {
+            const c = document.createElement('div');
+            c.className = 'card';
+            const fav = document.createElement('span');
+            fav.className = 'favorite-icon' + (isFav(p.name) ? ' favorited' : '');
+            fav.textContent = '★';
+            fav.onclick = e => { e.stopPropagation(); toggleFav(p.name, fav); };
+            const img = new Image(); img.src = p.sprites.front_default; img.alt = p.name;
+            const h3 = document.createElement('h3'); h3.textContent = `#${p.id} ${p.name}`;
+            const types = document.createElement('div'); types.className = 'types';
+            p.types.forEach(t => {
+                const sp = document.createElement('span');
+                sp.className = 'type';
+                sp.textContent = t.type.name;
+                types.append(sp);
+            });
+            c.append(fav, img, h3, types);
+            c.onclick = () => showModal(p);
+            container.append(c);
+        }
+
+        // SINGLE‐SEARCH
+        async function showSingle(q) {
+            const p = await fetchPokemon(q);
+            if (!p) { alert('Not found'); return; }
+            container.innerHTML = '';
+            const c = document.createElement('div');
+            c.className = 'card detail';
+            const fav = document.createElement('span');
+            fav.className = 'favorite-icon' + (isFav(p.name) ? ' favorited' : '');
+            fav.textContent = '★';
+            fav.onclick = e => { e.stopPropagation(); toggleFav(p.name, fav); };
+            const h3 = document.createElement('h3'); h3.textContent = `#${p.id} ${p.name}`;
+            const sprites = document.createElement('div'); sprites.className = 'sprites';
+            [p.sprites.front_default, p.sprites.back_default, p.sprites.front_shiny, p.sprites.back_shiny]
+                .filter(u => u).forEach(u => {
+                    const im = new Image(); im.src = u; sprites.append(im);
+                });
+            const info = document.createElement('div'); info.className = 'info';
+            info.innerHTML = `
+        <p><strong>Height:</strong> ${p.height}</p>
+        <p><strong>Weight:</strong> ${p.weight}</p>
+        <p><strong>Types:</strong> ${p.types.map(t => t.type.name).join(', ')}</p>
+        <p><strong>Abilities:</strong> ${p.abilities.map(a => a.ability.name).join(', ')}</p>`;
+            const stats = document.createElement('div'); stats.className = 'stats';
+            stats.innerHTML = '<h3>Base Stats</h3>';
+            p.stats.forEach(s => {
+                const row = document.createElement('div'); row.className = 'stat';
+                const nm = document.createElement('span'); nm.textContent = s.stat.name;
+                const bar = document.createElement('div'); bar.className = 'stat-bar';
+                const inner = document.createElement('div'); inner.className = 'stat-bar-inner';
+                inner.style.width = Math.min(s.base_stat, 100) + '%';
+                bar.append(inner);
+                const val = document.createElement('span'); val.textContent = s.base_stat;
+                row.append(nm, bar, val);
+                stats.append(row);
+            });
+            c.append(fav, h3, sprites, info, stats);
+            container.append(c);
+        }
+
+        // FAVORITES
+        favoritesBtn.onclick = () => {
+            if (!favorites.length) alert('No favorites yet!');
+            else loadPokemons(favorites);
+        };
+
+        // TYPE FILTER
+        typeFilter.onchange = () => {
+            if (typeFilter.value === 'all') loadDefault();
+            else fetch(`${apiBase}/type/${typeFilter.value}`)
+                .then(r => r.json())
+                .then(b => loadPokemons(b.pokemon.map(x => x.pokemon.name).slice(0, 20)));
+        };
+
+        // CLASH PROMPT
+        seeClashBtn.onclick = () => {
+            container.innerHTML = '';
+            delete container.dataset.clashed;
+            container.style.display = 'flex';
+            container.style.flexDirection = 'column';
+            container.style.justifyContent = 'flex-start';
+            container.style.alignItems = 'center';
+
+            const prompt = document.createElement('div');
+            prompt.className = 'clash-prompt';
+            prompt.innerHTML = `
+        <p>Select a stat to clash on:</p>
+        <select id="clashStatSelect">
+          <option value="hp">HP</option>
+          <option value="attack">Attack</option>
+          <option value="defense">Defense</option>
+          <option value="special-attack">Sp. Attack</option>
+          <option value="special-defense">Sp. Defense</option>
+          <option value="speed">Speed</option>
+        </select>
+        <button id="startClashBtn">Start Clash</button>
+      `;
+            container.append(prompt);
+            prompt.querySelector('#startClashBtn').onclick = () => {
+                const stat = prompt.querySelector('#clashStatSelect').value;
+                runClash(stat);
+            };
+        };
+
+        // RUN CLASH
+        async function runClash(statName) {
+            container.innerHTML = `<p style="text-align:center;color:white">Loading clash…</p>`;
+            delete container.dataset.clashed;
+            const ids = new Set();
+            while (ids.size < 2) ids.add(Math.floor(Math.random() * 150) + 1);
+            const [i1, i2] = [...ids];
+            const [p1, p2] = await Promise.all([fetchPokemon(i1), fetchPokemon(i2)]);
+            if (!p1 || !p2) { alert('Error fetching clash'); return; }
+            const v1 = p1.stats.find(s => s.stat.name === statName).base_stat;
+            const v2 = p2.stats.find(s => s.stat.name === statName).base_stat;
+            container.innerHTML = `
+        <h2 class="clash-question">Who has higher ${capitalize(statName)}?</h2>
+        <div id="clashCards"></div>
+      `;
+            const cardsDiv = document.getElementById('clashCards');
+            createClashCard(p1, v1, cardsDiv);
+            createClashCard(p2, v2, cardsDiv);
+        }
+
+        function createClashCard(p, statValue, parent) {
+            const c = document.createElement('div');
+            c.className = 'card clash-card';
+            c.dataset.stat = statValue;
+            const img = new Image(); img.src = p.sprites.front_default; img.alt = p.name;
+            const h3 = document.createElement('h3'); h3.textContent = `#${p.id} ${p.name}`;
+            const val = document.createElement('p'); val.className = 'stat-value'; val.textContent = statValue;
+            c.append(img, h3, val);
+            c.onclick = () => {
+                if (container.dataset.clashed === 'true') return;
+                container.dataset.clashed = 'true';
+                const others = Array.from(parent.children).filter(x => x !== c);
+                const o = others[0];
+                const v1 = +c.dataset.stat, v2 = +o.dataset.stat;
+                if (v1 > v2) { c.classList.add('winner'); o.classList.add('loser'); }
+                else if (v2 > v1) { o.classList.add('winner'); c.classList.add('loser'); }
+                else { c.classList.add('winner'); o.classList.add('winner'); }
+                parent.querySelectorAll('.stat-value').forEach(el => el.style.visibility = 'visible');
+            };
+            parent.append(c);
+        }
+
+        // MODAL
+        function showModal(p) {
+            modal.style.display = 'flex';
+            panelL.className = 'modal-panel left';
+            panelR.className = 'modal-panel right';
+            requestAnimationFrame(_ => {
+                panelL.classList.add('open-left');
+                panelR.classList.add('open-right');
+            });
+            panelL.addEventListener('transitionend', () => {
+                panelL.style.display = panelR.style.display = 'none';
+            }, { once: true });
+
+            modalBody.innerHTML = '';
+            const hdiv = document.createElement('div'); hdiv.className = 'modal-header';
+            const h2 = document.createElement('h2'); h2.textContent = `#${p.id} ${p.name}`;
+            hdiv.append(h2);
+            const sprites = document.createElement('div'); sprites.className = 'sprites';
+            [p.sprites.front_default, p.sprites.back_default, p.sprites.front_shiny, p.sprites.back_shiny]
+                .filter(u => u).forEach(u => { let im = new Image(); im.src = u; sprites.append(im); });
+            const info = document.createElement('div'); info.className = 'info';
+            info.innerHTML = `
+        <p><strong>Height:</strong> ${p.height}</p>
+        <p><strong>Weight:</strong> ${p.weight}</p>
+        <p><strong>Types:</strong> ${p.types.map(t => t.type.name).join(', ')}</p>
+        <p><strong>Abilities:</strong> ${p.abilities.map(a => a.ability.name).join(', ')}</p>`;
+            const stats = document.createElement('div'); stats.className = 'stats';
+            stats.innerHTML = '<h3>Base Stats</h3>';
+            p.stats.forEach(s => {
+                const row = document.createElement('div'); row.className = 'stat';
+                const nm = document.createElement('span'); nm.textContent = s.stat.name;
+                const bar = document.createElement('div'); bar.className = 'stat-bar';
+                const inner = document.createElement('div'); inner.className = 'stat-bar-inner';
+                inner.style.width = Math.min(s.base_stat, 100) + '%';
+                bar.append(inner);
+                const vs = document.createElement('span'); vs.textContent = s.base_stat;
+                row.append(nm, bar, vs); stats.append(row);
+            });
+            modalBody.append(hdiv, sprites, info, stats);
+        }
+        function closeModal() {
+            modal.style.display = 'none';
+            panelL.style.display = panelR.style.display = 'block';
+        }
+        closeBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+
+        // SINGLE‐SEARCH and INIT
+        searchInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                const q = searchInput.value.trim();
+                if (q) showSingle(q);
+            }
+        });
+
+        async function loadTypes() {
+            const t = await fetch(`${apiBase}/type`).then(r => r.json());
+            t.results
+                .filter(x => x.name !== 'shadow' && x.name !== 'unknown')
+                .forEach(x => {
+                    const o = document.createElement('option');
+                    o.value = x.name; o.textContent = capitalize(x.name);
+                    typeFilter.append(o);
+                });
+        }
+        function loadDefault() {
+            loadPokemons([...Array(20)].map((_, i) => i + 1));
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTypes();
+            loadDefault();
+        });
+    </script>
+</body>
+
+</html>

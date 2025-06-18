@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Falling Words</title>
+  <style>
+    /* Reset and base styles */
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: Arial, sans-serif;
+    }
+    /* Start Screen Styles */
+    #startScreen {
+      width: 100vw;
+      height: 100vh;
+      background: url('https://images.pexels.com/photos/278887/pexels-photo-278887.jpeg') no-repeat center center;
+      background-size: cover;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #startForm {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 20px;
+      border: 1px solid black;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(5px);
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+    #startForm input,
+    #startForm button {
+      width: 220px;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 24px;
+      border: 1px solid #333;
+    }
+    #startForm button {
+      cursor: pointer;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+    }
+    /* Game Screen Styles */
+    #gameScreen {
+      display: none;
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+    #gameArea {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      transition: background-color 1s ease;
+      background-color: #ffffff;
+    }
+    #fallingWord {
+      position: absolute;
+      top: 0;
+      font-size: 36px;
+      font-weight: bold;
+      /* left and transform will be set dynamically */
+    }
+    #wordInput {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 20px;
+      padding: 10px;
+      width: 300px;
+      border: 2px solid #333;
+      border-radius: 24px;
+    }
+    #message {
+      position: absolute;
+      top: 20px;
+      width: 100%;
+      text-align: center;
+      font-size: 24px;
+      color: red;
+      pointer-events: none;
+    }
+    /* Result Screen Styles */
+    #resultScreen {
+      display: none;
+      padding: 20px;
+      text-align: center;
+      position: relative;
+    }
+    /* Fixed buttons at top–right */
+    #resultButtons {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      gap: 10px;
+    }
+    #resultButtons button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 24px;
+      border: none;
+      color: white;
+    }
+    #restartButton {
+      background-color: #f44336;
+    }
+    #downloadButton {
+      background-color: #2196F3;
+    }
+    /* Main result content, vertically aligned */
+    #resultContent {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      margin-top: 60px; /* to avoid overlap with fixed buttons */
+    }
+    /* New container for player cards (name and age) horizontally aligned */
+    #playerCardsContainer {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      width: 100%;
+    }
+    .card {
+      background-color: #fff;
+      border: 1px solid #333;
+      border-radius: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      padding: 15px;
+      width: 80%;
+      max-width: 600px;
+      text-align: center;
+    }
+    /* Button hover effects */
+#startForm button:hover,
+#resultButtons button:hover {
+  transform: scale(1.05);
+  filter: brightness(0.9);
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+/* Card styles with headings and hover effect */
+.card {
+  background-color: #fff;
+  border: 1px solid #333;
+  border-radius: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  padding: 15px;
+  width: 200px; /* Reduced width */
+  max-width: 300px;
+  text-align: center;
+  transition: transform 0.2s ease;
+}
+
+.card:hover {
+  transform: scale(1.03);
+}
+
+/* Add headings to cards */
+#nameCard::before {
+  content: "Name";
+  display: block;
+  font-weight: bold;
+  margin-bottom: 10px;
+  font-size: 1.2em;
+}
+
+#ageCard::before {
+  content: "Age";
+  display: block;
+  font-weight: bold;
+  margin-bottom: 10px;
+  font-size: 1.2em;
+}
+
+#ortCard::before {
+  content: "Overall Response Time";
+  display: block;
+  font-weight: bold;
+  margin-bottom: 10px;
+  font-size: 1.2em;
+}
+    #graphContainer {
+      margin: 0 auto;
+    }
+    table {
+      margin: 0 auto;
+      border-collapse: collapse;
+      width: 80%;
+      max-width: 600px;
+    }
+    table, th, td {
+      border: 1px solid #333;
+    }
+    th, td {
+      padding: 8px 12px;
+      text-align: center;
+    }
+  </style>
+  <!-- Include html2canvas and jsPDF libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+  <!-- Start Screen -->
+  <div id="startScreen">
+    <form id="startForm">
+      <h1>Falling Words</h1>
+      <input type="text" id="playerName" placeholder="Enter your name" required />
+      <input type="number" id="playerAge" placeholder="Enter your age" required min="1" />
+      <button type="button" id="startButton">Start</button>
+    </form>
+  </div>
+
+  <!-- Game Screen -->
+  <div id="gameScreen">
+    <div id="gameArea">
+      <div id="fallingWord"></div>
+      <input type="text" id="wordInput" placeholder="Type the word here" autocomplete="off" />
+      <div id="message"></div>
+    </div>
+  </div>
+
+  <!-- Result Screen -->
+  <div id="resultScreen">
+    <div id="resultButtons">
+      <button id="restartButton">Restart</button>
+      <button id="downloadButton">Download Report</button>
+    </div>
+    <div id="resultContent">
+      <h1>Response Time Report</h1>
+      <div id="playerCardsContainer">
+        <div class="card" id="nameCard"></div>
+        <div class="card" id="ageCard"></div>
+      </div>
+      <div class="card" id="ortCard"></div>
+      <h2>Response Time Graph</h2>
+      <div id="graphContainer">
+        <canvas id="graphCanvas" width="600" height="300"></canvas>
+      </div>
+      <h2>Detailed Results Table</h2>
+      <table id="resultTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Word</th>
+            <th>Fall Time (ms)</th>
+            <th>Response Time (ms)</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // Global variables for player info
+    let playerName = "";
+    let playerAge = 0;
+
+    // DOM element references
+    const startButton = document.getElementById('startButton');
+    const restartButton = document.getElementById('restartButton');
+    const downloadButton = document.getElementById('downloadButton');
+    const playerNameInput = document.getElementById('playerName');
+    const playerAgeInput = document.getElementById('playerAge');
+    const startScreen = document.getElementById('startScreen');
+    const gameScreen = document.getElementById('gameScreen');
+    const resultScreen = document.getElementById('resultScreen');
+    const nameCard = document.getElementById('nameCard');
+    const ageCard = document.getElementById('ageCard');
+    const ortCard = document.getElementById('ortCard');
+    const gameArea = document.getElementById('gameArea');
+    const fallingWordEl = document.getElementById('fallingWord');
+    const wordInput = document.getElementById('wordInput');
+    const messageEl = document.getElementById('message');
+    const resultTableBody = document.getElementById('resultTable').getElementsByTagName('tbody')[0];
+    const graphCanvas = document.getElementById('graphCanvas');
+    const ctx = graphCanvas.getContext('2d');
+
+    // Game variables
+    const words = [
+      "apple", "banana", "cherry", "orange", "grape", "lemon", "mango", "peach", "pear", "plum",
+      "strawberry", "blueberry", "watermelon", "pineapple", "kiwi", "papaya", "guava", "apricot",
+      "blackberry", "cantaloupe", "coconut", "cranberry", "fig", "lychee", "nectarine", "pomegranate",
+      "raspberry", "tangerine", "passionfruit", "dragonfruit", "durian", "elderberry", "gooseberry",
+      "jackfruit", "kumquat", "mulberry", "persimmon", "quince", "starfruit", "tomato", "avocado"
+    ];
+    let currentRound = 0;
+    let currentFallDuration = 5000; // in ms
+    const fallingSpeedFactor = 0.95;
+    let gameResults = [];
+    let wordStartTime = 0;
+    let wordAnswered = false;
+    let animationTimeout;
+    let gameActive = false;
+
+    // Event listeners
+    startButton.addEventListener('click', startGame);
+    restartButton.addEventListener('click', restartGame);
+    downloadButton.addEventListener('click', downloadPDF);
+    wordInput.addEventListener('keydown', function(e) {
+      if(e.key === "Enter"){
+        checkInput();
+      }
+    });
+
+    function startGame(){
+      playerName = playerNameInput.value.trim();
+      playerAge = parseInt(playerAgeInput.value);
+      if(playerName === "" || isNaN(playerAge) || playerAge <= 0){
+        alert("Please enter a valid name and age.");
+        return;
+      }
+      startScreen.style.display = "none";
+      gameScreen.style.display = "block";
+      currentRound = 0;
+      currentFallDuration = 5000;
+      gameResults = [];
+      gameActive = true;
+      wordInput.value = "";
+      wordInput.disabled = false;
+      wordInput.focus();
+      nextWord();
+    }
+
+    function nextWord(){
+      if(!gameActive) return;
+      messageEl.textContent = "";
+      wordInput.value = "";
+      // Pick a random word
+      const word = words[Math.floor(Math.random() * words.length)];
+      fallingWordEl.textContent = word;
+      fallingWordEl.style.opacity = "1";
+      fallingWordEl.style.transition = "none";
+      fallingWordEl.style.top = "0px";
+      // Random color and background transition
+      const wordColor = randomColor();
+      fallingWordEl.style.color = wordColor;
+      gameArea.style.backgroundColor = hexToRGBA(wordColor, 0.2);
+      // Set random horizontal position and rotation
+      fallingWordEl.style.left = "0px";
+      fallingWordEl.style.transform = "";
+      fallingWordEl.offsetWidth; // force reflow
+      const gameAreaWidth = gameArea.clientWidth;
+      const wordWidth = fallingWordEl.offsetWidth;
+      const maxX = gameAreaWidth - wordWidth;
+      const randomX = Math.random() * maxX;
+      fallingWordEl.style.left = randomX + "px";
+      const randomAngle = Math.random() * 30 - 15;
+      fallingWordEl.style.transform = `rotate(${randomAngle}deg)`;
+      // Calculate falling distance and animate
+      const gameAreaHeight = gameArea.clientHeight;
+      const wordHeight = fallingWordEl.offsetHeight;
+      const distance = gameAreaHeight - wordHeight;
+      fallingWordEl.style.transition = `top ${currentFallDuration}ms linear`;
+      setTimeout(() => {
+        fallingWordEl.style.top = distance + "px";
+      }, 50);
+      wordStartTime = performance.now();
+      wordAnswered = false;
+      fallingWordEl.addEventListener('transitionend', onFallEnd);
+      animationTimeout = setTimeout(onFallEnd, currentFallDuration + 100);
+    }
+
+    function onFallEnd(){
+      fallingWordEl.removeEventListener('transitionend', onFallEnd);
+      clearTimeout(animationTimeout);
+      if(!wordAnswered && gameActive){
+        // Word missed
+        gameResults.push({
+          round: currentRound + 1,
+          word: fallingWordEl.textContent,
+          fallTime: currentFallDuration,
+          responseTime: null,
+          status: "Missed"
+        });
+        messageEl.textContent = "Missed!";
+        gameOver();
+      }
+    }
+
+    function checkInput(){
+      if(!gameActive) return;
+      const userInput = wordInput.value.trim();
+      const currentWord = fallingWordEl.textContent;
+      if(userInput === currentWord){
+        wordAnswered = true;
+        const respTime = Math.round(performance.now() - wordStartTime);
+        gameResults.push({
+          round: currentRound + 1,
+          word: currentWord,
+          fallTime: currentFallDuration,
+          responseTime: respTime,
+          status: "Correct"
+        });
+        messageEl.textContent = "Correct!";
+        fallingWordEl.removeEventListener('transitionend', onFallEnd);
+        clearTimeout(animationTimeout);
+        fallingWordEl.style.transition = "none";
+        fallingWordEl.style.opacity = "0";
+        currentRound++;
+        currentFallDuration = Math.max(1000, currentFallDuration * fallingSpeedFactor);
+        setTimeout(nextWord, 300);
+      } else if(userInput !== ""){
+        // Wrong input
+        const respTime = Math.round(performance.now() - wordStartTime);
+        gameResults.push({
+          round: currentRound + 1,
+          word: currentWord,
+          fallTime: currentFallDuration,
+          responseTime: respTime,
+          status: "Wrong"
+        });
+        messageEl.textContent = "Wrong!";
+        gameOver();
+      }
+    }
+
+    function gameOver(){
+      gameActive = false;
+      wordInput.disabled = true;
+      setTimeout(endGame, 500);
+    }
+
+    function endGame(){
+      gameScreen.style.display = "none";
+      resultScreen.style.display = "block";
+      // Set separate cards for player name and age
+      document.getElementById("nameCard").textContent = "Player Name: " + playerName;
+      document.getElementById("ageCard").textContent = "Player Age: " + playerAge;
+      // Calculate Overall Response Time (ORT)
+      let totalResponseTime = 0;
+      let totalFallTime = 0;
+      gameResults.forEach(result => {
+        totalFallTime += result.fallTime;
+        totalResponseTime += result.responseTime ? result.responseTime : 0;
+      });
+      let ort = totalFallTime ? ((totalResponseTime / totalFallTime) * 100).toFixed(2) : 0;
+      ortCard.textContent = `Overall Response Time (ORT): ${ort}%`;
+      // Populate results table
+      resultTableBody.innerHTML = "";
+      gameResults.forEach(result => {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td>${result.round}</td>
+                         <td>${result.word}</td>
+                         <td>${result.fallTime}</td>
+                         <td>${result.responseTime !== null ? result.responseTime : "No response"}</td>
+                         <td>${result.status}</td>`;
+        resultTableBody.appendChild(row);
+      });
+      drawGraph();
+    }
+
+    function restartGame(){
+      resultScreen.style.display = "none";
+      startScreen.style.display = "flex";
+    }
+
+    // Utility functions
+    function randomColor(){
+      const r = Math.floor(Math.random() * 256);
+      const g = Math.floor(Math.random() * 256);
+      const b = Math.floor(Math.random() * 256);
+      const hr = ("0" + r.toString(16)).slice(-2);
+      const hg = ("0" + g.toString(16)).slice(-2);
+      const hb = ("0" + b.toString(16)).slice(-2);
+      return "#" + hr + hg + hb;
+    }
+    function hexToRGBA(hex, alpha){
+      hex = hex.replace('#', '');
+      const r = parseInt(hex.substring(0,2), 16);
+      const g = parseInt(hex.substring(2,4), 16);
+      const b = parseInt(hex.substring(4,6), 16);
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+    function drawGraph(){
+  ctx.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
+  const padding = 40;
+  const canvasWidth = graphCanvas.width;
+  const canvasHeight = graphCanvas.height;
+  const graphHeight = canvasHeight - padding;
+  const n = gameResults.length;
+  if(n === 0) return;
+  
+  // Find max response time for Y-axis scaling
+  let maxTime = 0;
+  gameResults.forEach(result => {
+    const t = result.responseTime !== null ? result.responseTime : 0;
+    if(t > maxTime) maxTime = t;
+  });
+  if(maxTime === 0) maxTime = 1;
+  
+  const spacing = (canvasWidth - 2 * padding) / (n - 1);
+  
+  // Draw Y-axis label only ("Response Time (ms)")
+  ctx.font = "14px Arial";
+  ctx.fillStyle = "#000";
+  ctx.save();
+  ctx.translate(10, canvasHeight / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText("Response Time (ms)", 0, 0);
+  ctx.restore();
+  
+  // Draw the response time line
+  ctx.beginPath();
+  const firstT = gameResults[0].responseTime !== null ? gameResults[0].responseTime : 0;
+  let x = padding;
+  let y = graphHeight - (firstT / maxTime) * (graphHeight - 20);
+  ctx.moveTo(x, y);
+  for(let i = 1; i < n; i++){
+    const t = gameResults[i].responseTime !== null ? gameResults[i].responseTime : 0;
+    x = padding + i * spacing;
+    y = graphHeight - (t / maxTime) * (graphHeight - 20);
+    ctx.lineTo(x, y);
+  }
+  ctx.strokeStyle = "#4CAF50";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  
+  // Draw data points and X-axis labels
+  for(let i = 0; i < n; i++){
+    const t = gameResults[i].responseTime !== null ? gameResults[i].responseTime : 0;
+    const x = padding + i * spacing;
+    const y = graphHeight - (t / maxTime) * (graphHeight - 20);
+    
+    // Draw data point
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = "#4CAF50";
+    ctx.fill();
+    
+    // Draw response time above point
+    ctx.fillStyle = "#000";
+    ctx.font = "10px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(t + "ms", x, y - 10);
+    
+    // Draw word label below X-axis (abbreviate if too many words)
+    let wordLabel = gameResults[i].word;
+    if(n > 10 && wordLabel.length > 3) {
+      wordLabel = wordLabel.substring(0, 3) + ".";
+    }
+    ctx.fillText(wordLabel, x, graphHeight + 15);
+  }
+  
+  // Draw axes
+  ctx.beginPath();
+  ctx.moveTo(padding, 10);
+  ctx.lineTo(padding, graphHeight);
+  ctx.lineTo(canvasWidth - padding, graphHeight);
+  ctx.strokeStyle = "#000";
+  ctx.stroke();
+  
+  // Add X-axis label
+  ctx.font = "14px Arial";
+  ctx.fillStyle = "#000";
+  ctx.textAlign = "center";
+  ctx.fillText("Words", canvasWidth / 2, canvasHeight - 5);
+}
+    async function downloadPDF(){
+      // Capture the report (heading, cards, graph, and table) from the resultContent container
+      const resultContent = document.getElementById("resultContent");
+      const canvasElem = await html2canvas(resultContent);
+      const imgData = canvasElem.toDataURL("image/png");
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF('p', 'pt', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvasElem.height * pdfWidth) / canvasElem.width;
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save("report.pdf");
+    }
+  </script>
+</body>
+</html>

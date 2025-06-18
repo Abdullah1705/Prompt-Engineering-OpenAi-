@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Guess the Country</title>
+    <!-- Import Winky Sans font from Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Winky+Sans&display=swap" rel="stylesheet">
+    <style>
+        /* Apply Winky Sans to all text */
+        body,
+        h1,
+        h2,
+        h3,
+        input,
+        button,
+        div,
+        p,
+        span,
+        li,
+        ul {
+            font-family: 'Winky Sans', sans-serif;
+        }
+
+        /* Global styling */
+        body {
+            background-color: #F5EBDD;
+            /* Light brown background */
+            margin: 0;
+            padding: 20px;
+            color: #5D4037;
+            /* Dark brown text */
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+        }
+
+        #scoreboard {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        #left-column,
+        #right-column {
+            flex: 1;
+        }
+
+        #left-column {
+            text-align: left;
+        }
+
+        #right-column {
+            text-align: right;
+        }
+
+
+        /* Interactive row styling */
+        .game-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        /* Guess form styling */
+        #guessForm {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #guessInput {
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #5D4037;
+            border-radius: 4px;
+            color: #5D4037;
+        }
+
+        #guessForm button {
+            padding: 10px 15px;
+            font-size: 16px;
+            border: none;
+            background: brown;
+            color: #fff;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #guessForm button:hover {
+            background: #8B4513;
+        }
+
+        /* Flag styling */
+        #flag-container img {
+            max-height: 100px;
+            border: 1px solid #5D4037;
+            border-radius: 4px;
+        }
+
+        /* Next icon styling */
+        #next-icon {
+            cursor: pointer;
+            font-size: 30px;
+            user-select: none;
+        }
+
+        /* Fact container styling */
+        #fact-container {
+            border: 2px solid #5D4037;
+            padding: 10px;
+            border-radius: 4px;
+            max-width: 300px;
+            text-align: left;
+        }
+
+        #fact-container h3 {
+            margin: 0 0 5px 0;
+            font-size: 18px;
+        }
+
+        #fact-container ul {
+            list-style-type: disc;
+            padding-left: 20px;
+            margin: 0;
+        }
+
+        /* Feedback & final message styling */
+        #feedback {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        #finalMessage {
+            margin-top: 20px;
+            font-size: 20px;
+            color: #5D4037;
+        }
+
+        /* Guess Again button styling */
+        #guessAgainButton {
+            padding: 10px 15px;
+            font-size: 16px;
+            border: none;
+            background: brown;
+            color: #fff;
+            border-radius: 4px;
+            cursor: pointer;
+            display: none;
+            /* initially hidden */
+            margin-top: 20px;
+        }
+
+        #guessAgainButton:hover {
+            background: #8B4513;
+        }
+
+        /* Fade animations for the flag */
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+
+            to {
+                opacity: 0;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .fade-out {
+            animation: fadeOut 0.5s forwards;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s forwards;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Guess the Country</h1>
+        <div id="scoreboard">
+            <div id="left-column">
+                <div id="score">Correct Guesses: 0</div>
+                <div id="highScore">High Score: 0</div>
+            </div>
+            <div id="right-column">
+                <div id="timer">Time: 60s</div>
+            </div>
+        </div>
+
+        <!-- Interactive row: guess input, submit button, flag, next icon, fact container -->
+        <div class="game-row">
+            <form id="guessForm">
+                <input type="text" id="guessInput" placeholder="Enter country name" autocomplete="off">
+                <button type="submit">Submit</button>
+            </form>
+            <div id="flag-container"></div>
+            <div id="next-icon" title="Next Country">➡</div>
+            <div id="fact-container">
+                <h3>Do you Know 💡</h3>
+                <ul id="fact">
+                    <li>Loading country data...</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="feedback"></div>
+        <div id="finalMessage"></div>
+        <button id="guessAgainButton">Guess Again</button>
+    </div>
+
+    <script>
+        // List of countries to choose from.
+        const countriesList = [
+            "France", "Germany", "Brazil", "Japan", "Canada",
+            "Australia", "Nigeria", "India", "Italy", "Spain",
+            "United Kingdom", "United States", "China", "Russia", "Mexico",
+            "Argentina", "South Africa", "Egypt", "Sweden", "Norway"
+        ];
+
+        let currentCountryData = null;
+        let currentFacts = [];
+        let lastGuessCorrect = false;
+        let correctGuesses = 0;
+        let timeRemaining = 60;
+        let timerInterval = null;
+
+        // Element references.
+        const timerEl = document.getElementById("timer");
+        const scoreEl = document.getElementById("score");
+        const flagContainer = document.getElementById("flag-container");
+        const factListEl = document.getElementById("fact");
+        const guessForm = document.getElementById("guessForm");
+        const guessInput = document.getElementById("guessInput");
+        const nextIcon = document.getElementById("next-icon");
+        const feedbackEl = document.getElementById("feedback");
+        const finalMessageEl = document.getElementById("finalMessage");
+        const guessAgainButton = document.getElementById("guessAgainButton");
+        const highScoreEl = document.getElementById("highScore");
+
+        // Start the countdown timer.
+        function startTimer() {
+            timerEl.textContent = `Time: ${timeRemaining}s`;
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                timerEl.textContent = `Time: ${timeRemaining}s`;
+                if (timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    gameOver();
+                }
+            }, 1000);
+        }
+
+        function updateHighScoreDisplay() {
+            const storedHighScore = parseInt(localStorage.getItem("highScore")) || 0;
+            highScoreEl.textContent = `High Score: ${storedHighScore}`;
+        }
+
+        // When time is up, disable inputs, show final results, and display the Guess Again button.
+        function gameOver() {
+            guessInput.disabled = true;
+            guessForm.querySelector("button[type='submit']").disabled = true;
+            nextIcon.style.pointerEvents = "none";
+
+            let storedHighScore = parseInt(localStorage.getItem("highScore")) || 0;
+            if (correctGuesses > storedHighScore) {
+                storedHighScore = correctGuesses;
+                localStorage.setItem("highScore", storedHighScore);
+            }
+
+            finalMessageEl.textContent = `Time's up! You correctly guessed ${correctGuesses} ${correctGuesses === 1 ? "country" : "countries"}.Highest score: ${storedHighScore}`;
+            updateHighScoreDisplay();
+            guessAgainButton.style.display = "inline-block";
+        }
+
+        // Generate complete-sentence facts for a country.
+        function generateCompleteFacts(country) {
+            const facts = [];
+            if (country.population) {
+                facts.push(`This country has a population of ${country.population.toLocaleString()} people.`);
+            }
+            if (country.continents && country.continents.length > 0) {
+                facts.push(`It is located in ${country.continents.join(" and ")}.`);
+            }
+            if (country.timezones && country.timezones.length > 0) {
+                const randomTimezone = country.timezones[Math.floor(Math.random() * country.timezones.length)];
+                facts.push(`One of its time zones is ${randomTimezone}.`);
+            }
+            if (country.startOfWeek) {
+                facts.push(`In this country, the week starts on ${country.startOfWeek}.`);
+            }
+            if (country.languages) {
+                const languages = Object.values(country.languages);
+                if (languages.length === 1) {
+                    facts.push(`The official language is ${languages[0]}.`);
+                } else {
+                    facts.push(`The official languages are ${languages.join(" and ")}.`);
+                }
+            }
+            return facts;
+        }
+
+        // Load a new country. If factCount === 2, display two facts for the new country; otherwise, display one.
+        function loadNewCountry(factCount = 1) {
+            feedbackEl.textContent = "";
+            guessInput.value = "";
+            guessInput.disabled = false;
+            // Fade out current flag if present.
+            const flagImg = flagContainer.querySelector("img");
+            if (flagImg) {
+                flagImg.classList.remove("fade-in");
+                flagImg.classList.add("fade-out");
+                flagImg.addEventListener("animationend", function handler() {
+                    flagImg.removeEventListener("animationend", handler);
+                    flagContainer.innerHTML = "";
+                    fetchCountry(factCount);
+                });
+            } else {
+                flagContainer.innerHTML = "";
+                fetchCountry(factCount);
+            }
+        }
+
+        // Fetch country data from the API and display flag and facts.
+        function fetchCountry(factCount) {
+            // Set fact list to "Loading..."
+            factListEl.innerHTML = "<li>Loading country data...</li>";
+            currentCountryData = null;
+            currentFacts = [];
+
+            const randomIndex = Math.floor(Math.random() * countriesList.length);
+            const countryName = countriesList[randomIndex];
+
+            fetch(`https://restcountries.com/v3.1/name/${encodeURIComponent(countryName)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Network response was not ok");
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const country = data[0];
+                    currentCountryData = country;
+                    currentFacts = generateCompleteFacts(country);
+
+                    // Create flag image with fade-in.
+                    const flagUrl = country.flags && country.flags.png ? country.flags.png : "";
+                    if (flagUrl) {
+                        const img = document.createElement("img");
+                        img.src = flagUrl;
+                        img.alt = `Flag of ${country.name.common}`;
+                        img.classList.add("fade-in");
+                        flagContainer.innerHTML = "";
+                        flagContainer.appendChild(img);
+                    } else {
+                        flagContainer.textContent = "Flag not available";
+                    }
+
+                    // Display facts as bullet points.
+                    if (currentFacts.length > 0) {
+                        if (factCount === 2 && currentFacts.length >= 2) {
+                            const shuffled = currentFacts.sort(() => 0.5 - Math.random());
+                            const selected = shuffled.slice(0, 2);
+                            factListEl.innerHTML = "";
+                            selected.forEach(fact => {
+                                const li = document.createElement("li");
+                                li.textContent = fact;
+                                factListEl.appendChild(li);
+                            });
+                        } else {
+                            const randomFact = currentFacts[Math.floor(Math.random() * currentFacts.length)];
+                            factListEl.innerHTML = "";
+                            const li = document.createElement("li");
+                            li.textContent = randomFact;
+                            factListEl.appendChild(li);
+                        }
+                    } else {
+                        factListEl.innerHTML = "<li>No fact available.</li>";
+                    }
+                })
+                .catch(error => {
+                    factListEl.innerHTML = "<li>Error fetching country data.</li>";
+                    console.error("Error:", error);
+                });
+        }
+
+        // Check the user's guess.
+        function checkGuess() {
+            if (!currentCountryData) return;
+            const userGuess = guessInput.value.trim().toLowerCase();
+            const actualName = currentCountryData.name && currentCountryData.name.common ? currentCountryData.name.common.toLowerCase() : "";
+            if (userGuess === actualName && userGuess !== "") {
+                feedbackEl.textContent = `Correct! It is ${currentCountryData.name.common}.`;
+                correctGuesses++;
+                scoreEl.textContent = `Correct Guesses: ${correctGuesses}`;
+                lastGuessCorrect = true;
+            } else {
+                feedbackEl.textContent = "Incorrect guess. Try again or click the next icon to skip.";
+                lastGuessCorrect = false;
+            }
+        }
+
+        // Handle guess form submission.
+        guessForm.addEventListener("submit", function (e) {
+            e.preventDefault();
+            if (timeRemaining <= 0) return;
+            checkGuess();
+        });
+
+        // When the next icon is clicked, load the next country.
+        nextIcon.addEventListener("click", function () {
+            if (timeRemaining <= 0) return;
+            loadNewCountry(lastGuessCorrect ? 2 : 1);
+            lastGuessCorrect = false;
+            feedbackEl.textContent = "";
+        });
+
+        // Restart the game when the Guess Again button is clicked.
+        guessAgainButton.addEventListener("click", function () {
+            // Reset timer and score.
+            timeRemaining = 60;
+            correctGuesses = 0;
+            scoreEl.textContent = `Correct Guesses: ${correctGuesses}`;
+            finalMessageEl.textContent = "";
+            guessAgainButton.style.display = "none";
+            guessInput.disabled = false;
+            nextIcon.style.pointerEvents = "auto";
+            updateHighScoreDisplay();
+            startTimer();
+            loadNewCountry(1);
+        });
+
+        // Initialize the game.
+        window.onload = function () {
+            updateHighScoreDisplay();
+            startTimer();
+            loadNewCountry(1);
+        };
+    </script>
+</body>
+
+</html>

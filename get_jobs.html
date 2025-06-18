@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Get Jobs Portal</title>
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <!-- Font Awesome -->
+  <script src="https://kit.fontawesome.com/a2d9d6c590.js" crossorigin="anonymous"></script>
+  <style>
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body {
+      font-family:'Inter',sans-serif;
+      background: url('https://images.pexels.com/photos/140945/pexels-photo-140945.jpeg') center/cover no-repeat;
+      background-size: cover;
+    }
+    a { text-decoration:none; color:inherit; }
+    button { cursor:pointer; }
+
+    /* -- LOGIN/SIGNUP FORM -- */
+    .form-container {
+      margin:auto;
+      background: rgba(255,255,255,0.6);
+      padding:2rem;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,0.8);
+      backdrop-filter: blur(10px);
+      box-shadow:0 4px 12px rgba(0,0,0,0.1);
+      max-width:400px; width:100%;
+    }
+    .form-container h2 { text-align:center; color:#4a76a8; margin-bottom:1rem; }
+    .form-group { margin-bottom:1rem; }
+    .form-group label { display:block; margin-bottom:.3rem; font-weight:600; }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width:100%; padding:.5rem; border:1px solid #ccc; border-radius:4px;
+      background:inherit; color:#333;
+    }
+    .form-footer { text-align:center; margin-top:1rem; }
+    .form-footer a { font-size:.9rem; color:#4a76a8; }
+
+    /* -- LIGHT MODE DASHBOARD -- */
+    .view { display:none; width:100vw; height:100vh; }
+    .view.active { display:flex; }
+    .dash-container { display:flex; width:100%; height:100%; }
+    .sidebar {
+      width:240px; background:#fff; color:#000;
+      display:flex; flex-direction:column; padding:1rem 0;
+      border-right: 1px solid #ccc;
+    }
+    .sidebar h3 { text-align:center; margin-bottom:1rem; font-weight:400; }
+    .sidebar a {
+      padding:.75rem 1rem; display:flex; align-items:center;
+      color:#000; font-size:.95rem;
+    }
+    body.dark-mode .sidebar {
+  border-right: 1px solid #444; /* Dark mode border color */
+}
+    .sidebar a:hover,
+    .sidebar a.active { background:#eee; }
+    .sidebar i { margin-right:.75rem; }
+
+    .main-content {
+      flex:1; padding:2rem; overflow-y:auto; background:#fff; color:#000;
+    }
+    .welcome {
+      display:flex; justify-content:space-between; align-items:center;
+      background:#fff; padding:1rem; border-radius:6px;
+       margin-bottom:1.5rem;
+      position:relative; color:#000;
+    }
+    .profile-container { position:relative; display:flex; align-items:center; }
+    .profile-info { text-align:right; margin-right:.75rem; }
+    .profile-name { display:block; font-weight:600; }
+    .profile-role { display:block; font-size:.85rem; color:#555; }
+    .profile-image {
+      width:40px; height:40px; border-radius:50%; object-fit:cover;
+      border:2px solid #4a76a8; cursor:pointer;
+    }
+    .profile-menu {
+      position:absolute; top:calc(100% + .5rem); right:0;
+      background:#fff; border-radius:4px; box-shadow:0 2px 6px rgba(0,0,0,0.1);
+      overflow:hidden; display:none; z-index:1001;
+    }
+    .profile-menu a { display:block; padding:.5rem 1rem; white-space:nowrap; color:#000; }
+    .profile-menu a:hover { background:#eee; }
+
+    .search-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .search-input {
+    padding: 12px 16px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+    flex: 1;
+  }
+  
+  #search-btn, #clear-search {
+    padding: 12px 24px;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    min-width: 100px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 44px;
+  }
+  
+  .btn-primary {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    transition: background-color 0.2s;
+  }
+  
+  .btn-primary:hover {
+    background-color: #0069d9;
+  }
+  
+  .btn-secondary {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    transition: background-color 0.2s;
+  }
+  
+  .btn-secondary:hover {
+    background-color: #5a6268;
+  }
+    /* -- Modal popups -- */
+    .modal-overlay {
+      position:fixed; top:0; left:0; width:100%; height:100%;
+      background:rgba(0,0,0,0.5); display:none;
+      align-items:center; justify-content:center; z-index:1000;
+    }
+    .modal {
+      background:#fff; padding:1.5rem; border-radius:6px;
+      max-width:400px; width:90%; box-shadow:0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    /* -- Cards -- */
+    .cards { display:flex; flex-wrap:wrap; gap:1rem; }
+    .job-card, .user-card, .app-card {
+      background:#fff; padding:1rem; border-radius:6px;
+      box-shadow:0 2px 6px rgba(0,0,0,0.1);
+      flex:1 1 calc(45% - 1rem); min-width:200px; position:relative;
+      color:#000;
+    }
+    .job-card h4,
+    .user-card h4,
+    .app-card h4 { margin-bottom:.5rem; color:#4a76a8; }
+    .job-card p,
+    .user-card p,
+    .app-card p { margin-bottom:.5rem; line-height:1.4; }
+    .user-card .user-info,
+    .job-card .job-info,
+    .app-card .app-info { display:flex; align-items:center; }
+    .user-card img,
+    .app-card img { width:40px; height:40px; border-radius:50%; object-fit:cover; margin-right:.5rem; }
+
+    .user-menu,
+    .job-menu {
+      position:absolute; top:.5rem; right:.5rem;
+      background:#fff; border:1px solid #ccc; border-radius:4px;
+      display:none; z-index:1002;
+    }
+    .user-menu a,
+    .job-menu a {
+      display:block; padding:.5rem 1rem; white-space:nowrap; color:#000;
+    }
+    .user-menu a:hover,
+    .job-menu a:hover { background:#eee; }
+
+    /* -- Messages -- */
+    .messages-container { display:flex; height:calc(100% - 2rem); }
+    .chat-list {
+      width:30%; border-right:1px solid #ccc; overflow-y:auto; padding-right:.5rem; color:#000;
+    }
+    .chat-list div {
+      padding:.5rem; border-bottom:1px solid #eee; cursor:pointer;
+    }
+    .chat-list div:hover,
+    .chat-list div.active { background:#eee; }
+    .chat-window { flex:1; display:flex; flex-direction:column; padding-left:1rem; }
+    .chat-window .messages {
+      flex:1; overflow-y:auto; margin-bottom:.5rem;
+    }
+    .chat-window .messages div {
+      margin-bottom:.5rem; padding:.5rem; border-radius:4px; max-width:70%;
+    }
+    .chat-window .messages .sent {
+      background:#4a76a8; color:#fff; margin-left:auto;
+    }
+    .chat-window .messages .received {
+      background:#eee; color:#000; margin-right:auto;
+    }
+    .chat-window form { display:flex; }
+    .chat-window input {
+      flex:1; padding:.5rem; border:1px solid #ccc; border-radius:4px;
+    }
+    .chat-window button {
+      margin-left:.5rem; padding:.5rem 1rem; border:none;
+      background:#4a76a8; color:#fff; border-radius:4px;
+    }
+
+    /* -- Buttons -- */
+    .btn-primary { background:#4a76a8; color:#fff; border:none; padding:.5rem 1rem; border-radius:4px; }
+    .btn-success { background:#27ae60; color:#fff; border:none; padding:.5rem 1rem; border-radius:4px; }
+    .btn-secondary { background:#7f8c8d; color:#fff; border:none; padding:.5rem 1rem; border-radius:4px; margin-left:.5rem; }
+
+    /* -- DARK MODE OVERRIDES -- */
+    body.dark-mode {
+      background:url('https://images.pexels.com/photos/140945/pexels-photo-140945.jpeg') center/cover no-repeat;
+      background-size: cover;; color:#000000;
+    }
+    body.dark-mode .sidebar {
+      background:#000; color:#fff;
+    }
+    body.dark-mode .sidebar a {
+      color:#fff;
+    }
+    body.dark-mode .sidebar a:hover,
+    body.dark-mode .sidebar a.active {
+      background:#222;
+    }
+    body.dark-mode .main-content {
+      background:#000; color:#fff;
+    }
+    body.dark-mode .welcome {
+      background:#000; color:#fff;
+    }
+    body.dark-mode .profile-menu {
+      background:#000;
+    }
+    body.dark-mode .profile-menu a {
+      color:#fff;
+    }
+    body.dark-mode .profile-menu a:hover {
+      background:#222;
+    }
+    body.dark-mode .job-card,
+    body.dark-mode .user-card,
+    body.dark-mode .app-card {
+      background:#111; color:#fff;
+    }
+    body.dark-mode .job-menu,
+    body.dark-mode .user-menu {
+      background:#000;
+    }
+    body.dark-mode .job-menu a,
+    body.dark-mode .user-menu a {
+      color:#fff;
+    }
+    body.dark-mode .job-menu a:hover,
+    body.dark-mode .user-menu a:hover {
+      background:#222;
+    }
+    body.dark-mode .chat-list {
+      border-color:#444;
+    }
+    body.dark-mode .chat-list div:hover,
+    body.dark-mode .chat-list div.active {
+      background:#222;
+    }
+    body.dark-mode .chat-window .messages .received {
+      background:#222; color:#fff;
+    }
+    body.dark-mode .form-group input,
+    body.dark-mode .form-group select,
+    body.dark-mode .form-group textarea {
+      background:inherit; color:#fff; border:1px solid #555;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LOGIN -->
+  <div id="login-view" class="view active">
+    <div class="form-container">
+      <h2>Login</h2>
+      <form id="login-form">
+        <div class="form-group">
+          <label for="login-id">User ID</label>
+          <input type="text" id="login-id" required>
+        </div>
+        <div class="form-group">
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" required>
+        </div>
+        <button type="submit" class="btn-primary" style="width:100%;">Login</button>
+      </form>
+      <div class="form-footer">
+        <p>Don't have an account? <a href="#" id="show-signup">Sign up</a></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIGNUP -->
+  <div id="signup-view" class="view">
+    <div class="form-container">
+      <h2>Sign Up</h2>
+      <form id="signup-form">
+        <div class="form-group">
+          <label for="role">I am a</label>
+          <select id="role" required>
+            <option value="">Select role</option>
+            <option value="seeker">Job Seeker</option>
+            <option value="provider">Job Provider</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="pic">Profile Picture</label>
+          <input type="file" id="pic" accept="image/*" required>
+          <img id="pic-preview" src="" alt="" style="display:none;width:60px;height:60px;border-radius:50%;margin-top:.5rem;">
+        </div>
+        <div class="form-group">
+          <label for="name">Full Name</label>
+          <input type="text" id="name" required>
+        </div>
+        <div class="form-group">
+          <label for="signup-id">User ID</label>
+          <input type="text" id="signup-id" required>
+        </div>
+        <div class="form-group">
+          <label for="signup-password">Password</label>
+          <input type="password" id="signup-password" required>
+        </div>
+        <button type="submit" class="btn-success" style="width:100%;">Create Account</button>
+      </form>
+      <div class="form-footer">
+        <p>Already have an account? <a href="#" id="show-login">Log in</a></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROVIDER DASHBOARD -->
+  <div id="provider-dashboard" class="view">
+    <div class="dash-container">
+      <nav class="sidebar">
+        <h3>Provider</h3>
+        <a href="#" data-section="add-job"><i class="fas fa-plus-circle"></i>Add Job</a>
+        <a href="#" data-section="see-talent"><i class="fas fa-users"></i>See Talent</a>
+        <a href="#" data-section="messages"><i class="fas fa-envelope"></i>Messages</a>
+        <a href="#" data-section="applications"><i class="fas fa-file-alt"></i>Applications</a>
+      </nav>
+      <main class="main-content">
+        <div class="welcome">
+          <div class="search-container">
+            <input type="text" id="global-search" placeholder="Search jobs, talent..." class="search-input">
+            <button id="search-btn" class="btn-primary">
+              <i class="fas fa-search"></i> Search
+            </button>
+            <button id="clear-search" class="btn-secondary" style="display:none;">
+              <i class="fas fa-times"></i> Clear
+            </button>
+          </div>
+          <div class="profile-container">
+            <div class="profile-info">
+              <span class="profile-name provider-name"></span>
+              <small class="profile-role">Job Provider</small>
+            </div>
+            <img class="profile-image provider-pic" src="" alt="Profile">
+            <div class="profile-menu">
+              <a href="#" class="menu-logout">Logout</a>
+              <a href="#" class="menu-darkmode">Dark mode</a>
+            </div>
+          </div>
+        </div>
+        <div id="provider-content"></div>
+      </main>
+    </div>
+  </div>
+
+  <!-- SEEKER DASHBOARD -->
+  <div id="seeker-dashboard" class="view">
+    <div class="dash-container">
+      <nav class="sidebar">
+        <h3>Seeker</h3>
+        <a href="#" data-section="search-jobs"><i class="fas fa-search"></i>Search Jobs</a>
+        <a href="#" data-section="see-recruiters"><i class="fas fa-building"></i>See Recruiters</a>
+        <a href="#" data-section="messages"><i class="fas fa-envelope"></i>Messages</a>
+        <a href="#" data-section="applications"><i class="fas fa-file-alt"></i>Applications</a>
+      </nav>
+      <main class="main-content">
+        <div class="welcome">
+          <div class="search-container">
+            <input type="text" id="global-search" placeholder="Search jobs, talent..." class="search-input">
+            <button id="search-btn" class="btn-primary">
+              <i class="fas fa-search"></i> Search
+            </button>
+            <button id="clear-search" class="btn-secondary" style="display:none;">
+              <i class="fas fa-times"></i> Clear
+            </button>
+          </div>
+          <div class="profile-container">
+            <div class="profile-info">
+              <span class="profile-name seeker-name"></span>
+              <small class="profile-role">Job Seeker</small>
+            </div>
+            <img class="profile-image seeker-pic" src="" alt="Profile">
+            <div class="profile-menu">
+              <a href="#" class="menu-logout">Logout</a>
+              <a href="#" class="menu-darkmode">Dark mode</a>
+            </div>
+          </div>
+        </div>
+        <div id="seeker-content"></div>
+      </main>
+    </div>
+  </div>
+
+  <!-- ADD JOB MODAL -->
+  <div id="job-modal" class="modal-overlay">
+    <div class="modal">
+      <h3>Add New Job</h3>
+      <form id="job-form">
+        <div class="form-group">
+          <label for="job-name">Name of the Job</label>
+          <input type="text" id="job-name" required>
+        </div>
+        <div class="form-group">
+          <label for="job-desc">Description</label>
+          <textarea id="job-desc" rows="3" required></textarea>
+        </div>
+        <div class="form-group">
+          <label for="job-salary">Salary</label>
+          <input type="text" id="job-salary" required>
+        </div>
+        <div class="form-group">
+          <label for="job-tags">Tags (comma‑separated)</label>
+          <input type="text" id="job-tags" required>
+        </div>
+        <div class="form-group">
+          <label for="job-duration">Duration</label>
+          <input type="text" id="job-duration" required>
+        </div>
+        <button type="submit" class="btn-success">Add Job</button>
+        <button type="button" id="job-cancel" class="btn-secondary">Cancel</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- APPLY JOB MODAL -->
+  <div id="apply-modal" class="modal-overlay">
+    <div class="modal">
+      <h3>Apply for Job</h3>
+      <form id="apply-form">
+        <div class="form-group">
+          <label for="apply-intro">Brief Intro</label>
+          <textarea id="apply-intro" rows="3" required></textarea>
+        </div>
+        <div class="form-group">
+          <label for="apply-salary">Expected Salary</label>
+          <input type="text" id="apply-salary" required>
+        </div>
+        <div class="form-group">
+          <label for="apply-cv">Upload CV</label>
+          <input type="file" id="apply-cv" accept=".pdf,.doc,.docx" required>
+        </div>
+        <button type="submit" class="btn-success">Apply</button>
+        <button type="button" id="apply-cancel" class="btn-secondary">Cancel</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Storage helpers
+    const getUsers = ()=> JSON.parse(localStorage.getItem('users')||'[]');
+    const getJobs  = ()=> JSON.parse(localStorage.getItem('jobs')||'[]');
+    const getApps  = ()=> JSON.parse(localStorage.getItem('applications')||'[]');
+    const getMsgs  = ()=> JSON.parse(localStorage.getItem('messages')||'[]');
+    const saveJobs = j=> localStorage.setItem('jobs', JSON.stringify(j));
+    const saveApps = a=> localStorage.setItem('applications', JSON.stringify(a));
+    const saveMsgs = m=> localStorage.setItem('messages', JSON.stringify(m));
+
+    // View switching
+    function showView(id){
+      document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+    document.getElementById('show-signup').onclick = e=>{ e.preventDefault(); showView('signup-view'); };
+    document.getElementById('show-login').onclick  = e=>{ e.preventDefault(); showView('login-view'); };
+
+    // Signup / Login
+    document.getElementById('pic').onchange = e=>{
+      const f=e.target.files[0]; if(!f) return;
+      const r=new FileReader();
+      r.onload=()=>{ let img=document.getElementById('pic-preview'); img.src=r.result; img.style.display='block'; };
+      r.readAsDataURL(f);
+    };
+    document.getElementById('signup-form').onsubmit = e=>{
+      e.preventDefault();
+      const role=document.getElementById('role').value,
+            pic =document.getElementById('pic-preview').src,
+            name=document.getElementById('name').value.trim(),
+            id  =document.getElementById('signup-id').value.trim(),
+            pw  =document.getElementById('signup-password').value;
+      let users=getUsers();
+      if(users.some(u=>u.id===id)) return alert('User ID taken.');
+      users.push({role,pic,name,id,pw});
+      localStorage.setItem('users', JSON.stringify(users));
+      alert('Account created! Please log in.');
+      e.target.reset();
+      document.getElementById('pic-preview').style.display='none';
+      showView('login-view');
+    };
+    document.getElementById('login-form').onsubmit = e=>{
+      e.preventDefault();
+      const id =document.getElementById('login-id').value.trim(),
+            pw =document.getElementById('login-password').value;
+      const u =getUsers().find(u=>u.id===id && u.pw===pw);
+      if(!u) return alert('Invalid credentials.');
+      sessionStorage.setItem('currentUser', JSON.stringify(u));
+      loadDashboard(u);
+    };
+
+    // Load & setup Dashboard
+    function loadDashboard(user){
+      if(user.role==='provider'){
+        setupDashboard('provider', user);
+        showView('provider-dashboard');
+      } else {
+        setupDashboard('seeker', user);
+        showView('seeker-dashboard');
+      }
+    }
+    function logout(){
+      sessionStorage.removeItem('currentUser');
+      showView('login-view');
+    }
+    window.onload = ()=>{
+      const u = JSON.parse(sessionStorage.getItem('currentUser')||'null');
+      if(u) loadDashboard(u);
+    };
+
+
+    // Add this with your other event listeners
+document.getElementById('clear-search').addEventListener('click', () => {
+  document.getElementById('global-search').value = '';
+  document.querySelectorAll('.job-card, .user-card, .app-card').forEach(card => {
+    card.style.display = '';
+  });
+  document.getElementById('clear-search').style.display = 'none';
+});
+
+// Update the search input event listener to show/hide clear button
+document.getElementById('global-search').addEventListener('input', (e) => {
+  const clearBtn = document.getElementById('clear-search');
+  clearBtn.style.display = e.target.value ? '' : 'none';
+});
+    function setupDashboard(role,user){
+      const dash = document.getElementById(role+'-dashboard');
+      // Profile info
+      dash.querySelector('.profile-name').textContent = user.name;
+      dash.querySelector('.profile-image').src = user.pic;
+      // Sidebar: reset & attach
+      const links = dash.querySelectorAll('.sidebar a');
+      links.forEach(l=>l.classList.remove('active'));
+      if(links[0]) links[0].classList.add('active');
+      links.forEach(link=>{
+        link.onclick = e=>{
+          e.preventDefault();
+          links.forEach(l=>l.classList.remove('active'));
+          link.classList.add('active');
+          const sec = link.dataset.section;
+          const cont= dash.querySelector('#'+role+'-content');
+          if(role==='provider' && sec==='add-job')          buildProviderAdd(cont);
+          else if(role==='provider' && sec==='see-talent')  buildProviderTalent(cont);
+          else if(sec==='messages')                         buildMessages(cont,role);
+          else if(role==='provider' && sec==='applications')buildProviderApplications(cont);
+          else if(role==='seeker'  && sec==='search-jobs')  buildSeekerSearch(cont);
+          else if(role==='seeker'  && sec==='see-recruiters')buildSeekerRecruiters(cont);
+          else if(role==='seeker'  && sec==='applications')buildSeekerApplications(cont);
+          else cont.innerHTML=`<h2>${sec.replace(/-/g,' ')}</h2><p>Coming soon…</p>`;
+        };
+      });
+      // trigger default
+      links[0] && links[0].click();
+      // Profile dropdown
+      const img  = dash.querySelector('.profile-image');
+      const menu = dash.querySelector('.profile-menu');
+      img.onclick = ()=> menu.style.display = menu.style.display==='block'?'none':'block';
+      menu.querySelector('.menu-logout').onclick = e=>{ e.preventDefault(); logout(); };
+      menu.querySelector('.menu-darkmode').onclick = e=>{
+        e.preventDefault();
+        document.body.classList.toggle('dark-mode');
+        menu.style.display='none';
+      };
+      document.addEventListener('click',ev=>{
+        if(!dash.contains(ev.target) || ev.target===img) return;
+        if(!ev.target.closest('.profile-menu')) menu.style.display='none';
+      });
+    }
+
+    // PROVIDER: Add Job
+    function buildProviderAdd(cont){
+      cont.innerHTML=`
+        <button id="add-job-btn" class="btn-success"><i class="fas fa-plus-circle"></i> Add Job</button>
+        <div id="provider-job-cards" class="cards" style="margin-top:1rem"></div>`;
+      document.getElementById('add-job-btn').onclick = ()=>{
+        document.getElementById('job-modal').style.display='flex';
+      };
+      renderProviderJobs();
+      document.getElementById('job-cancel').onclick = ()=>{
+        document.getElementById('job-modal').style.display='none';
+      };
+      document.getElementById('job-form').onsubmit = e=>{
+        e.preventDefault();
+        const j = getJobs(), cur = JSON.parse(sessionStorage.getItem('currentUser'));
+        const now = Date.now().toString();
+        j.push({
+          id:now,
+          name:document.getElementById('job-name').value.trim(),
+          desc:document.getElementById('job-desc').value.trim(),
+          salary:document.getElementById('job-salary').value.trim(),
+          tags:document.getElementById('job-tags').value.split(',').map(t=>t.trim()),
+          duration:document.getElementById('job-duration').value.trim(),
+          providerId:cur.id
+        });
+        saveJobs(j);
+        e.target.reset();
+        document.getElementById('job-modal').style.display='none';
+        renderProviderJobs();
+      };
+    }
+
+    // Add this with your other JavaScript code
+document.getElementById('search-btn').addEventListener('click', performSearch);
+document.getElementById('global-search').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') performSearch();
+});
+
+// Replace the performSearch function with this:
+function performSearch() {
+  const searchTerm = document.getElementById('global-search').value.trim().toLowerCase();
+  const cards = document.querySelectorAll('.job-card, .user-card, .app-card');
+  
+  if (!searchTerm) {
+    // If search is empty, show all cards
+    cards.forEach(card => card.style.display = '');
+    return;
+  }
+
+  cards.forEach(card => {
+    const cardText = card.textContent.toLowerCase();
+    card.style.display = cardText.includes(searchTerm) ? '' : 'none';
+  });
+}
+
+function renderSearchResults(container, results, type, role) {
+  if (type === 'jobs') {
+    container.innerHTML = results.map(job => `
+      <div class="job-card">
+        <h4>${job.name}</h4>
+        <p>${job.desc}</p>
+        <p><strong>Salary:</strong> ${job.salary}</p>
+        <p><strong>Tags:</strong> ${job.tags.join(', ')}</p>
+      </div>
+    `).join('') || '<p>No matching jobs found.</p>';
+  }
+  else if (type === 'users') {
+    container.innerHTML = results.map(user => `
+      <div class="user-card">
+        <div class="user-info">
+          <img src="${user.pic}" alt="${user.name}">
+          <h4>${user.name}</h4>
+        </div>
+      </div>
+    `).join('') || '<p>No matching users found.</p>';
+  }
+  else if (type === 'applications') {
+    const jobs = getJobs();
+    const users = getUsers();
+    container.innerHTML = results.map(app => {
+      const job = jobs.find(j => j.id === app.jobId);
+      const user = users.find(u => u.id === (role === 'provider' ? app.seekerId : app.providerId));
+      return `
+        <div class="app-card">
+          <h4>${job?.name || 'Deleted Job'}</h4>
+          <p>${role === 'provider' ? 'Applicant: ' + user?.name : 'Recruiter: ' + user?.name}</p>
+          <p><strong>Expected Salary:</strong> ${app.expectedSalary}</p>
+        </div>
+      `;
+    }).join('') || '<p>No matching applications found.</p>';
+  }
+}
+    function renderProviderJobs(){
+      const cur = JSON.parse(sessionStorage.getItem('currentUser'));
+      const cards = document.getElementById('provider-job-cards');
+      const js = getJobs().filter(j=>j.providerId===cur.id);
+      cards.innerHTML = js.map(j=>`
+        <div class="job-card">
+          <h4>${j.name}</h4>
+          <p>${j.desc}</p>
+          <p><strong>Salary:</strong> ${j.salary}</p>
+          <p><strong>Tags:</strong> ${j.tags.join(', ')}</p>
+          <p><strong>Duration:</strong> ${j.duration}</p>
+        </div>
+      `).join('')||'<p>No jobs posted yet.</p>';
+    }
+
+    // SEEKER: Search & Apply
+    function buildSeekerSearch(cont){
+      cont.innerHTML = `<div id="seeker-job-cards" class="cards"></div>`;
+      const cards = document.getElementById('seeker-job-cards');
+      const cur   = JSON.parse(sessionStorage.getItem('currentUser'));
+      const apps  = getApps();
+      const js    = getJobs();
+      cards.innerHTML = js.map(j=>{
+        const applied = apps.some(a=>a.jobId===j.id && a.seekerId===cur.id);
+        return `
+          <div class="job-card" data-id="${j.id}" data-provider="${j.providerId}">
+            <h4>${j.name}</h4>
+            <p>${j.desc}</p>
+            <p><strong>Salary:</strong> ${j.salary}</p>
+            <p><strong>Tags:</strong> ${j.tags.join(', ')}</p>
+            <p><strong>Duration:</strong> ${j.duration}</p>
+            <div class="job-menu">
+              <a href="#" class="apply-job">${applied?'Applied':'Apply'}</a>
+            </div>
+          </div>
+        `;
+      }).join('')||'<p>No jobs available.</p>';
+      // attach
+      document.querySelectorAll('.job-card').forEach(card=>{
+        const menu = card.querySelector('.job-menu');
+        card.onclick = e=>{
+          e.stopPropagation();
+          document.querySelectorAll('.job-menu').forEach(m=>m.style.display='none');
+          menu.style.display='block';
+        };
+        card.querySelector('.apply-job').onclick = e=>{
+          e.stopPropagation();
+          if(card.querySelector('.apply-job').textContent==='Applied'){
+            alert('Already applied');
+            menu.style.display='none';
+            return;
+          }
+          const fm = document.getElementById('apply-form');
+          fm.dataset.jobId = card.dataset.id;
+          fm.dataset.providerId = card.dataset.provider;
+          document.getElementById('apply-modal').style.display='flex';
+          menu.style.display='none';
+        };
+      });
+      document.addEventListener('click',e=>{
+        if(!e.target.closest('.job-card'))
+          document.querySelectorAll('.job-menu').forEach(m=>m.style.display='none');
+      });
+    }
+    // APPLY modal logic
+    document.getElementById('apply-cancel').onclick = ()=>{
+      document.getElementById('apply-modal').style.display='none';
+    };
+    document.getElementById('apply-form').onsubmit = e=>{
+      e.preventDefault();
+      const fm = e.target;
+      const jobId = fm.dataset.jobId;
+      const providerId = fm.dataset.providerId;
+      const cur = JSON.parse(sessionStorage.getItem('currentUser'));
+      const intro = document.getElementById('apply-intro').value.trim();
+      const expSal= document.getElementById('apply-salary').value.trim();
+      const file  = document.getElementById('apply-cv').files[0];
+      if(!file) return alert('Upload your CV');
+      const reader = new FileReader();
+      reader.onload = ()=>{
+        let apps = getApps();
+        apps.push({
+          id: Date.now().toString(),
+          jobId, providerId,
+          seekerId: cur.id,
+          intro, expectedSalary: expSal,
+          cv: reader.result, cvName: file.name,
+          time: Date.now()
+        });
+        saveApps(apps);
+        alert('Applied successfully!');
+        fm.reset();
+        document.getElementById('apply-modal').style.display='none';
+        // refresh search & applications
+        const seekerDash = document.getElementById('seeker-dashboard');
+        if(seekerDash.classList.contains('active')){
+          const sLink = seekerDash.querySelector('.sidebar a[data-section="search-jobs"]');
+          if(sLink.classList.contains('active'))
+            buildSeekerSearch(seekerDash.querySelector('#seeker-content'));
+        }
+        // if provider is active and applications tab selected, refresh
+        const provDash = document.getElementById('provider-dashboard');
+        if(provDash.classList.contains('active')){
+          const pLink = provDash.querySelector('.sidebar a[data-section="applications"]');
+          if(pLink.classList.contains('active'))
+            buildProviderApplications(provDash.querySelector('#provider-content'));
+        }
+      };
+      reader.readAsDataURL(file);
+    };
+
+    // PROVIDER: See Talent
+    function buildProviderTalent(cont){
+      const seekers = getUsers().filter(u=>u.role==='seeker');
+      cont.innerHTML = `<div class="cards" id="talent-cards"></div>`;
+      const apps = getApps();
+      const div  = document.getElementById('talent-cards');
+      div.innerHTML = seekers.map(u=>{
+        const count = apps.filter(a=>a.seekerId===u.id).length;
+        return `
+          <div class="user-card" data-id="${u.id}">
+            <div class="user-info">
+              <img src="${u.pic}" alt="">
+              <div>
+                <h4>${u.name}</h4>
+                <p>Total Jobs Applied: ${count}</p>
+              </div>
+            </div>
+            <div class="user-menu">
+              <a href="#" class="msg-user">Message</a>
+            </div>
+          </div>`;
+      }).join('')||'<p>No talent found.</p>';
+      attachUserCardHandlers('provider');
+    }
+
+    // SEEKER: See Recruiters
+    function buildSeekerRecruiters(cont){
+      const provs = getUsers().filter(u=>u.role==='provider');
+      cont.innerHTML = `<div class="cards" id="recr-cards"></div>`;
+      const js  = getJobs();
+      const div = document.getElementById('recr-cards');
+      div.innerHTML = provs.map(u=>{
+        const count = js.filter(j=>j.providerId===u.id).length;
+        return `
+          <div class="user-card" data-id="${u.id}">
+            <div class="user-info">
+              <img src="${u.pic}" alt="">
+              <div>
+                <h4>${u.name}</h4>
+                <p>Total Jobs Posted: ${count}</p>
+              </div>
+            </div>
+            <div class="user-menu">
+              <a href="#" class="msg-user">Message</a>
+            </div>
+          </div>`;
+      }).join('')||'<p>No recruiters found.</p>';
+      attachUserCardHandlers('seeker');
+    }
+
+    // APPLICATIONS: Seeker
+    function buildSeekerApplications(cont){
+  const cur = JSON.parse(sessionStorage.getItem('currentUser'));
+  const apps = getApps().filter(a=>a.seekerId===cur.id);
+  const jobs = getJobs();
+  
+  cont.innerHTML = `<div class="cards">${
+    apps.map(a=>{
+      const job = jobs.find(j=>j.id===a.jobId);
+      if (!job) return ''; // Skip if job not found
+      return `
+        <div class="app-card">
+          <h4>${job.name}</h4>
+          <p><strong>Job Salary:</strong> ${job.salary}</p>
+          <p><strong>Your Expected Salary:</strong> ${a.expectedSalary}</p>
+          <p><strong>Job Description:</strong> ${job.desc}</p>
+          <p><strong>Application Date:</strong> ${new Date(parseInt(a.time)).toLocaleString()}</p>
+          <button class="btn-secondary"><a href="${a.cv}" download="${a.cvName}">Download Your CV</a></button>
+        </div>`;
+    }).join('') || '<p>No applications yet.</p>'
+  }</div>`;
+}
+    // APPLICATIONS: Provider
+    function buildProviderApplications(cont){
+  const cur = JSON.parse(sessionStorage.getItem('currentUser'));
+  const apps = getApps().filter(a=>a.providerId===cur.id);
+  const jobs = getJobs();
+  const users = getUsers();
+  
+  cont.innerHTML = `<div class="cards">${
+    apps.map(a=>{
+      const job = jobs.find(j=>j.id===a.jobId);
+      const seeker = users.find(u=>u.id===a.seekerId);
+      if (!job || !seeker) return ''; // Skip if job or seeker not found
+      return `
+        <div class="app-card">
+          <div class="user-info">
+            <img src="${seeker.pic}" alt="${seeker.name}">
+            <div>
+              <h4>${seeker.name}</h4>
+              <p>Applied for: ${job.name}</p>
+            </div>
+          </div>
+          <p><strong>Job Salary:</strong> ${job.salary}</p>
+          <p><strong>Expected Salary:</strong> ${a.expectedSalary}</p>
+          <p><strong>Job Description:</strong> ${job.desc}</p>
+          <p><strong>Application Date:</strong> ${new Date(parseInt(a.time)).toLocaleString()}</p>
+          <p><strong>Introduction:</strong> ${a.intro}</p>
+          <button class="btn-secondary"><a href="${a.cv}" download="${seeker.name}-CV-${a.cvName}">Download CV</a></button>
+        </div>`;
+    }).join('') || '<p>No applications yet.</p>'
+  }</div>`;
+}
+
+    // Messaging...
+    function buildMessages(cont,role,selectedId){
+      const cur = JSON.parse(sessionStorage.getItem('currentUser'));
+      cont.innerHTML=`
+        <div class="messages-container">
+          <div class="chat-list" id="chat-list"></div>
+          <div class="chat-window">
+            <div class="messages" id="chat-window"></div>
+            <form id="chat-form">
+              <input id="chat-input" type="text" placeholder="Type a message" required>
+              <button>Send</button>
+            </form>
+          </div>
+        </div>`;
+      renderChatList();
+      if(selectedId) selectChat(selectedId);
+      else {
+        const first = document.querySelector('#chat-list div');
+        if(first) selectChat(first.dataset.id);
+      }
+      document.getElementById('chat-form').onsubmit = e=>{
+        e.preventDefault();
+        const toId=e.target.dataset.to;
+        let msgs=getMsgs();
+        msgs.push({
+          from:cur.id, to:toId,
+          text:document.getElementById('chat-input').value.trim(),
+          time:Date.now()
+        });
+        saveMsgs(msgs);
+        document.getElementById('chat-input').value='';
+        renderChatWindow(toId);
+      };
+
+      function renderChatList(){
+        let msgs=getMsgs(), ids=new Set();
+        msgs.forEach(m=>{
+          if(m.from===cur.id) ids.add(m.to);
+          if(m.to===cur.id)   ids.add(m.from);
+        });
+        const users=getUsers().filter(u=>ids.has(u.id));
+        const list=document.getElementById('chat-list');
+        list.innerHTML=users.map(u=>`<div data-id="${u.id}">${u.name}</div>`).join('')||'<p>No chats yet.</p>';
+        list.querySelectorAll('div').forEach(d=>d.onclick=()=>selectChat(d.dataset.id));
+      }
+      function renderChatWindow(toId){
+        const pane=document.getElementById('chat-window');
+        const msgs=getMsgs().filter(m=>
+          (m.from===cur.id&&m.to===toId)||(m.from===toId&&m.to===cur.id)
+        ).sort((a,b)=>a.time-b.time);
+        pane.innerHTML=msgs.map(m=>`
+          <div class="${m.from===cur.id?'sent':'received'}">${m.text}</div>
+        `).join('');
+        pane.scrollTop=pane.scrollHeight;
+      }
+      function selectChat(toId){
+        document.querySelectorAll('#chat-list div').forEach(d=>d.classList.remove('active'));
+        const sel=document.querySelector(`#chat-list div[data-id="${toId}"]`);
+        sel && sel.classList.add('active');
+        document.getElementById('chat-form').dataset.to=toId;
+        renderChatWindow(toId);
+      }
+    }
+    function openChat(role,partnerId){
+      const dash=document.getElementById(role+'-dashboard');
+      dash.querySelectorAll('.sidebar a').forEach(a=>a.classList.remove('active'));
+      const msgLink=dash.querySelector('.sidebar a[data-section="messages"]');
+      msgLink.classList.add('active');
+      buildMessages(dash.querySelector('#'+role+'-content'),role,partnerId);
+      showView(role+'-dashboard');
+    }
+
+    function attachUserCardHandlers(role){
+      document.querySelectorAll('.user-card').forEach(card=>{
+        const menu = card.querySelector('.user-menu');
+        card.onclick = e=>{
+          e.stopPropagation();
+          document.querySelectorAll('.user-menu').forEach(m=>m.style.display='none');
+          menu.style.display = 'block';
+        };
+        card.querySelector('.msg-user').onclick = e=>{
+          e.stopPropagation();
+          openChat(role, card.dataset.id);
+          menu.style.display='none';
+        };
+      });
+      document.addEventListener('click',e=>{
+        if(!e.target.closest('.user-card'))
+          document.querySelectorAll('.user-menu').forEach(m=>m.style.display='none');
+      });
+    }
+  </script>
+</body>
+</html>

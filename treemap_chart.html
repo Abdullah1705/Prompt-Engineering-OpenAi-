@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dynamic Treemap</title>
+  <!-- Include D3 from a CDN -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    /* Treemap container styling with extra padding and border-radius */
+    #treemap-container {
+      margin: 20px;
+      padding: 20px;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      border-radius: 15px;
+    }
+    /* Controls container styling with width equal to treemap container */
+    #controls {
+      width: 600px;
+      min-height: 150px;
+      margin: 20px;
+      padding: 20px;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      border-radius: 15px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    th, td {
+      padding: 10px 16px; /* Decreased vertical padding */
+      /* Removed borders */
+    }
+    th {
+      text-align: center; /* Center the headings */
+      background-color: transparent; /* Remove any header background */
+    }
+    .circle {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 5px;
+    }
+    input[type="number"] {
+      width: 60px;
+      height: 30px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Treemap container -->
+    <div id="treemap-container">
+      <svg id="treemap-svg"></svg>
+    </div>
+    <!-- Controls container -->
+    <div id="controls">
+      <table>
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Value</th>
+            <th>Category</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="circle" style="background-color: #8B4513;"></span> Category A</td>
+            <td><input type="number" id="value-A" min="1" value="51"></td>
+            <td><span class="circle" style="background-color: #00008B;"></span> Category E</td>
+            <td><input type="number" id="value-E" min="1" value="55"></td>
+          </tr>
+          <tr>
+            <td><span class="circle" style="background-color: #A0522D;"></span> Category B</td>
+            <td><input type="number" id="value-B" min="1" value="65"></td>
+            <td><span class="circle" style="background-color: #0000CD;"></span> Category F</td>
+            <td><input type="number" id="value-F" min="1" value="56"></td>
+          </tr>
+          <tr>
+            <td><span class="circle" style="background-color: #CD853F;"></span> Category C</td>
+            <td><input type="number" id="value-C" min="1" value="34"></td>
+            <td><span class="circle" style="background-color: #191970;"></span> Category G</td>
+            <td><input type="number" id="value-G" min="1" value="13"></td>
+          </tr>
+          <tr>
+            <td><span class="circle" style="background-color: #D2691E;"></span> Category D</td>
+            <td><input type="number" id="value-D" min="1" value="72"></td>
+            <td><span class="circle" style="background-color: #000080;"></span> Category H</td>
+            <td><input type="number" id="value-H" min="1" value="88"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      // Set up the dimensions for the treemap
+      const width = 600, height = 400;
+      const svg = d3.select("#treemap-svg")
+                    .attr("width", width)
+                    .attr("height", height);
+
+      // Define colors for each category (shades of brown for A–D and dark blue for E–H)
+      const categoryColors = {
+        "A": "#8B4513",  // SaddleBrown
+        "B": "#A0522D",  // Sienna
+        "C": "#CD853F",  // Peru
+        "D": "#D2691E",  // Chocolate
+        "E": "#00008B",  // DarkBlue
+        "F": "#0000CD",  // MediumBlue
+        "G": "#191970",  // MidnightBlue
+        "H": "#000080"   // Navy
+      };
+
+      // Function to determine display text based on available space
+      function getDisplayText(d) {
+        const rectWidth = d.x1 - d.x0;
+        const rectHeight = d.y1 - d.y0;
+        // Show full text if there is enough space; otherwise, just show the letter.
+        if (rectWidth >= 100 && rectHeight >= 40) {
+          return "Category " + d.data.name;
+        } else {
+          return d.data.name;
+        }
+      }
+
+      // Function to update (or redraw) the treemap
+      function updateTreemap() {
+        const categories = ["A", "B", "C", "D", "E", "F", "G", "H"];
+        const childrenData = categories.map(cat => {
+          const val = parseInt(document.getElementById("value-" + cat).value) || 0;
+          return { name: cat, value: val, color: categoryColors[cat] };
+        });
+        const data = { name: "root", children: childrenData };
+
+        // Create a hierarchy and compute the treemap layout
+        const root = d3.hierarchy(data).sum(d => d.value);
+        d3.treemap().size([width, height]).padding(2)(root);
+
+        // Bind data to group elements (each group holds a rectangle and text)
+        const nodes = svg.selectAll("g.node")
+                         .data(root.leaves(), d => d.data.name);
+
+        // Remove old nodes
+        nodes.exit().remove();
+
+        // Enter new nodes
+        const enterNodes = nodes.enter().append("g")
+                                .attr("class", "node");
+
+        enterNodes.append("rect")
+          .attr("x", d => d.x0)
+          .attr("y", d => d.y0)
+          .attr("width", d => d.x1 - d.x0)
+          .attr("height", d => d.y1 - d.y0)
+          .attr("fill", d => d.data.color)
+          .attr("stroke", "#fff");
+
+        enterNodes.append("text")
+          .attr("x", d => (d.x0 + d.x1) / 2)
+          .attr("y", d => (d.y0 + d.y1) / 2)
+          .attr("text-anchor", "middle")
+          .attr("dominant-baseline", "middle")
+          .attr("fill", "#fff")
+          .attr("font-size", "14px")
+          .text(d => getDisplayText(d));
+
+        // Update existing nodes with transitions
+        nodes.select("rect")
+          .transition().duration(500)
+          .attr("x", d => d.x0)
+          .attr("y", d => d.y0)
+          .attr("width", d => d.x1 - d.x0)
+          .attr("height", d => d.y1 - d.y0)
+          .attr("fill", d => d.data.color);
+
+        nodes.select("text")
+          .transition().duration(500)
+          .attr("x", d => (d.x0 + d.x1) / 2)
+          .attr("y", d => (d.y0 + d.y1) / 2)
+          .text(d => getDisplayText(d));
+      }
+
+      // Initialize the input fields and update the treemap on change
+      ["A", "B", "C", "D", "E", "F", "G", "H"].forEach(cat => {
+        const input = document.getElementById("value-" + cat);
+        // The value attributes are set in HTML, so no need to randomize.
+        input.addEventListener("input", updateTreemap);
+      });
+
+      // Draw the initial treemap
+      updateTreemap();
+    });
+  </script>
+</body>
+</html>

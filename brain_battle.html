@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brain Battle</title>
+  <style>
+     * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif
+    }
+
+    body {
+      background: white;
+      background-size: cover;
+    }
+
+    /* Auth */
+    #auth-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: url('https://images.pexels.com/photos/256468/pexels-photo-256468.jpeg') no-repeat center center fixed;
+      background-size: cover;
+    }
+    .auth-card {
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      padding: 2rem;
+      border-radius: 8px;
+      border: 1px solid black;
+      width: 320px
+    }
+
+    .auth-form {
+      display: none
+    }
+
+    .auth-form.active {
+      display: block
+    }
+
+    .auth-form label {
+      display: block;
+      margin: .5rem 0 .25rem;
+      color: white;
+      text-shadow: 1px 1px 1px black;
+    }
+
+    .auth-form input {
+      width: 100%;
+      padding: .5rem;
+      margin-bottom: .75rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.8);
+    }
+
+    .auth-form button {
+      width: 100%;
+      padding: .75rem;
+      background: #6200ea;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer
+    }
+
+    .switch-link {
+      text-align: center;
+      margin-top: .5rem;
+      font-size: .9rem;
+      color: white;
+      text-shadow: 1px 1px 1px black;
+    }
+
+    .switch-link a {
+      color: #e0e0e0;
+      text-decoration: none;
+      cursor: pointer
+    }
+
+    .error {
+      color: red;
+      font-size: .9rem;
+      margin-bottom: .5rem;
+      text-shadow: 1px 1px 1px black;
+    }
+
+    
+    /* Dashboard */
+    #dashboard-container {
+      display: none;
+      flex-direction: column;
+      height: 100vh
+    }
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #6200ea;
+      color: #fff;
+      padding: 0 1rem;
+      height: 60px
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: bold
+    }
+
+    .tabs {
+      display: flex;
+      gap: 1rem
+    }
+
+    .tabs button {
+      background: transparent;
+      border: none;
+      color: #ddd;
+      font-size: 1rem;
+      cursor: pointer;
+      padding: .5rem 1rem;
+      border-bottom: 2px solid transparent;
+      transition: .2s
+    }
+
+    .tabs button.active {
+      color: #fff;
+      border-bottom-color: #fff
+    }
+
+    .profile {
+      position: relative;
+      cursor: pointer
+    }
+
+    .profile img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 2px solid #fff
+    }
+
+    .dropdown {
+      position: absolute;
+      top: 60px;
+      right: 0;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      display: none;
+      min-width: 120px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2)
+    }
+
+    .dropdown button {
+      width: 100%;
+      padding: .5rem;
+      background: transparent;
+      border: none;
+      text-align: left;
+      cursor: pointer
+    }
+
+    .dropdown button:hover {
+      background: #f5f5f5
+    }
+
+    .content {
+      flex: 1;
+      padding: 1rem;
+      overflow-y: auto
+    }
+
+   
+.overall-charts {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      margin: 0 auto;
+      justify-content: center;
+      max-width: 1200px;
+    }
+
+    .chart-card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 1rem;
+      flex: 0 0 300px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+         min-width: 600ox;
+      text-align: center;
+    }
+
+.line-card {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center; 
+  width: 100%; 
+}
+
+.line-card h4 {
+  text-align: center; 
+  margin-bottom: 1rem;
+}
+
+.line-card canvas {
+  height: 180px !important;
+  width: 100% !important; 
+  max-width: 600px; 
+}
+   
+
+.chart-card canvas {
+  height: 160px !important;
+  
+}
+
+    /* smaller */
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1rem;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1)
+    }
+
+    .avg-card {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem
+    }
+
+   
+   
+    /* smaller */
+    .streak-card {
+      display: flex;
+      justify-content: space-between;
+      background: #fff;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1rem;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1)
+    }
+
+    .streak-card .day {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: #e0e0e0;
+      color: #555;
+      font-weight: bold
+    }
+
+    .streak-card .day.active {
+      background: #6200ea;
+      color: #fff
+    }
+
+    /* Quiz */
+    .quiz-cards {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem
+    }
+
+    .quiz-card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 1rem;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      flex: 1 1 150px;
+      cursor: pointer;
+      text-align: center;
+      transition: .1s
+    }
+
+    .quiz-card:hover {
+      transform: translateY(-2px)
+    }
+
+    #mode-selection {
+      display: none;
+      position: relative;
+      text-align: center;
+      margin-top: 2rem
+    }
+
+    #mode-selection button {
+      margin: 0 .5rem;
+      padding: .75rem 1.5rem;
+      background: #6200ea;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer
+    }
+
+    #btn-mode-back {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      margin: 1rem;
+      background: #ccc;
+      color: #000
+    }
+
+    #btn-mode-back:hover {
+      background: #bbb
+    }
+
+    #random-quiz {
+      display: none;
+      text-align: center;
+      margin-top: 2rem
+    }
+
+    #rq-question {
+      font-size: 1.2rem;
+      margin-bottom: 1rem
+    }
+
+    .answers {
+      list-style: none;
+      padding: 0;
+      max-width: 600px;
+      margin: 0 auto
+    }
+
+    .answers li {
+      background: #fff;
+      margin: .5rem 0;
+      padding: .75rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: .1s
+    }
+
+    .answers li:hover {
+      background: #e8eaf6
+    }
+
+    .answers li.correct {
+      border: 2px solid #4CAF50;
+      box-shadow: 0 0 10px rgba(76, 175, 80, 0.6)
+    }
+
+    .answers li.wrong {
+      border: 2px solid #F44336;
+      box-shadow: 0 0 10px rgba(244, 67, 54, 0.6)
+    }
+
+    #quiz-result {
+      display: none;
+      text-align: center;
+      margin-top: 2rem
+    }
+
+    #quiz-result p {
+      font-size: 1.3rem;
+      margin-bottom: 1rem
+    }
+
+    #quiz-result button {
+      margin: 0 .5rem;
+      padding: .75rem 1.5rem;
+      background: #6200ea;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Auth -->
+  <div id="auth-container">
+    <div class="auth-card">
+      <div class="auth-toggle">
+        <button id="login-toggle" class="active"></button>
+        <button id="signup-toggle"></button>
+      </div>
+      <div id="login-form" class="auth-form active">
+        <div id="login-error" class="error"></div>
+        <label>User ID</label><input id="login-id" type="text" />
+        <label>Password</label><input id="login-password" type="password" />
+        <button id="login-btn">Log In</button>
+        <div class="switch-link">Don't have an account? <a id="to-signup">Sign Up</a></div>
+      </div>
+      <div id="signup-form" class="auth-form">
+        <div id="signup-error" class="error"></div>
+        <label>Profile Picture</label><input id="signup-pic" type="file" accept="image/*" />
+        <label>Name</label><input id="signup-name" type="text" />
+        <label>Age</label><input id="signup-age" type="number" />
+        <label>User ID</label><input id="signup-id" type="text" />
+        <label>Password</label><input id="signup-password" type="password" />
+        <button id="signup-btn">Sign Up</button>
+        <div class="switch-link">Already have an account? <a id="to-login">Login</a></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard-container">
+    <header class="top-bar">
+      <div class="logo">Brain Battle</div>
+      <div class="tabs">
+        <button id="tab-overall" class="active">Overall</button>
+        <button id="tab-quiz">Quiz</button>
+      </div>
+      <div class="profile" id="profile-btn">
+        <img id="profile-pic" src="" alt="Profile" />
+        <div class="dropdown" id="profile-dropdown">
+          <button id="logout-btn">Logout</button>
+        </div>
+      </div>
+    </header>
+    <main class="content">
+      <!-- Overall -->
+      <div id="content-overall">
+        <div class="overall-charts">
+          <div class="chart-card">
+            <h4>Total Questions Solved</h4><canvas id="chart-questions"></canvas>
+          </div>
+          <div class="chart-card">
+            <h4>Total Quizzes Solved</h4><canvas id="chart-quizzes"></canvas>
+          </div>
+        </div>
+        <div class="card avg-card">Average Score per Quiz: <strong id="avg-score">0%</strong></div>
+        <div class="card line-card">
+          <h4>Last 5 Quizzes</h4><canvas id="chart-line"></canvas>
+        </div>
+        <div class="streak-card">
+          <div class="day" data-day="Mon">Mon</div>
+          <div class="day" data-day="Tue">Tue</div>
+          <div class="day" data-day="Wed">Wed</div>
+          <div class="day" data-day="Thu">Thu</div>
+          <div class="day" data-day="Fri">Fri</div>
+          <div class="day" data-day="Sat">Sat</div>
+          <div class="day" data-day="Sun">Sun</div>
+        </div>
+      </div>
+
+      <!-- Quiz -->
+      <div id="content-quiz" style="display:none;">
+        <!-- 1) Category Selection -->
+        <div id="quiz-selection">
+          <div class="quiz-cards">
+            <div class="quiz-card" data-cat="15" data-name="Video Games">
+              <h4>Video Games</h4>
+            </div>
+            <div class="quiz-card" data-cat="17" data-name="Nature">
+              <h4>Nature</h4>
+            </div>
+            <div class="quiz-card" data-cat="18" data-name="Computers">
+              <h4>Computers</h4>
+            </div>
+            <div class="quiz-card" data-cat="14" data-name="Television">
+              <h4>Television</h4>
+            </div>
+            <div class="quiz-card" data-cat="11" data-name="Film">
+              <h4>Film</h4>
+            </div>
+            <div class="quiz-card" data-cat="9" data-name="General Knowledge">
+              <h4>General Knowledge</h4>
+            </div>
+          </div>
+        </div>
+        <!-- 2) Mode Selection -->
+        <div id="mode-selection">
+          <button id="btn-random">Random</button>
+          <button id="btn-survival">Survival</button>
+          <button id="btn-mode-back">Back</button>
+        </div>
+        <!-- 3) Quiz Area -->
+        <div id="random-quiz">
+          <div id="rq-question"></div>
+          <ul id="rq-answers" class="answers"></ul>
+        </div>
+        <!-- 4) Result -->
+        <div id="quiz-result">
+          <p id="result-score"></p>
+          <button id="btn-restart">Restart</button>
+          <button id="btn-back">Back to Main</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    // --- Persistence Helpers ---
+    function getUsers() { return JSON.parse(localStorage.getItem('brainBattleUsers') || '{}') }
+    function saveUsers(u) { localStorage.setItem('brainBattleUsers', JSON.stringify(u)) }
+    function setCurrentUser(id) { localStorage.setItem('brainBattleCurrentUser', id) }
+    function getCurrentUser() { return localStorage.getItem('brainBattleCurrentUser') }
+
+    // Initial stats template
+    const initialStats = {
+      totalCorrect: 0,
+      totalIncorrect: 0,
+      totalQuizzes: 0,
+      quizzesPassed: 0,
+      quizzesFailed: 0,
+      totalScoreSum: 0,
+      quizScores: []
+    };
+
+    function ensureUserStats(user) {
+      if (!user.stats) user.stats = JSON.parse(JSON.stringify(initialStats));
+    }
+
+    function updateStats(correctCount, incorrectCount) {
+      const users = getUsers();
+      const uid = getCurrentUser();
+      const user = users[uid];
+      ensureUserStats(user);
+      const s = user.stats;
+      const total = correctCount + incorrectCount;
+      const pct = total > 0 ? Math.round((correctCount / total) * 100) : 0;
+      s.totalCorrect += correctCount;
+      s.totalIncorrect += incorrectCount;
+      s.totalQuizzes += 1;
+      s.totalScoreSum += pct;
+      if (pct >= 50) s.quizzesPassed += 1; else s.quizzesFailed += 1;
+      s.quizScores.push({ date: Date.now(), score: pct });
+      if (s.quizScores.length > 50) s.quizScores.shift();
+      users[uid] = user;
+      saveUsers(users);
+    }
+
+    // --- Overall Charts ---
+    function initOverall() {
+      const users = getUsers();
+      const uid = getCurrentUser();
+      if (!uid) return;
+      const user = users[uid];
+      ensureUserStats(user);
+      users[uid] = user; saveUsers(users);
+      const s = user.stats;
+
+      new Chart(document.getElementById('chart-questions'), {
+        type: 'pie',
+        data: {
+          labels: ['Correct', 'Incorrect'],
+          datasets: [{ data: [s.totalCorrect, s.totalIncorrect], backgroundColor: ['#4CAF50', '#F44336'] }]
+        }
+      });
+
+      new Chart(document.getElementById('chart-quizzes'), {
+        type: 'pie',
+        data: {
+          labels: ['Passed', 'Failed'],
+          datasets: [{ data: [s.quizzesPassed, s.quizzesFailed], backgroundColor: ['#2196F3', '#9E9E9E'] }]
+        }
+      });
+
+      const avg = s.totalQuizzes ? Math.round(s.totalScoreSum / s.totalQuizzes) : 0;
+      document.getElementById('avg-score').textContent = avg + '%';
+
+      const last5 = s.quizScores.slice(-5);
+      const labels = last5.map((_, i) => `Q${i + 1}`);
+      const data = last5.map(e => e.score);
+      new Chart(document.getElementById('chart-line'), {
+        type: 'line',
+        data: {
+          labels, datasets: [{
+            label: 'Score', data,
+            borderColor: '#6200ea', backgroundColor: 'rgba(98,0,234,0.2)',
+            fill: true, tension: 0.4
+          }]
+        },
+        options: { scales: { y: { beginAtZero: true, max: 100 } } }
+      });
+
+      const oneWeek = 7 * 24 * 60 * 60 * 1000, now = Date.now();
+      const streak = { Mon: false, Tue: false, Wed: false, Thu: false, Fri: false, Sat: false, Sun: false };
+      s.quizScores.forEach(e => {
+        if (now - e.date <= oneWeek) {
+          const d = new Date(e.date).getDay();
+          const dayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d];
+          streak[dayName] = true;
+        }
+      });
+      document.querySelectorAll('.streak-card .day').forEach(el => {
+        el.classList.toggle('active', !!streak[el.dataset.day]);
+      });
+    }
+
+    // --- DOM Refs & Auth ---
+    const loginToggle = document.getElementById('login-toggle'),
+      signupToggle = document.getElementById('signup-toggle'),
+      loginForm = document.getElementById('login-form'),
+      signupForm = document.getElementById('signup-form'),
+      toSignup = document.getElementById('to-signup'),
+      toLogin = document.getElementById('to-login'),
+      loginBtn = document.getElementById('login-btn'),
+      signupBtn = document.getElementById('signup-btn'),
+      loginError = document.getElementById('login-error'),
+      signupError = document.getElementById('signup-error'),
+      authContainer = document.getElementById('auth-container'),
+      dashboard = document.getElementById('dashboard-container'),
+      profileBtn = document.getElementById('profile-btn'),
+      profileDropdown = document.getElementById('profile-dropdown'),
+      logoutBtn = document.getElementById('logout-btn'),
+      profilePic = document.getElementById('profile-pic'),
+      tabOverall = document.getElementById('tab-overall'),
+      tabQuiz = document.getElementById('tab-quiz'),
+      contentOverall = document.getElementById('content-overall'),
+      contentQuiz = document.getElementById('content-quiz'),
+      quizCards = document.querySelectorAll('.quiz-card'),
+      quizSelection = document.getElementById('quiz-selection'),
+      modeSelection = document.getElementById('mode-selection'),
+      btnRandom = document.getElementById('btn-random'),
+      btnSurvival = document.getElementById('btn-survival'),
+      btnModeBack = document.getElementById('btn-mode-back'),
+      randomQuiz = document.getElementById('random-quiz'),
+      rqQuestion = document.getElementById('rq-question'),
+      rqAnswers = document.getElementById('rq-answers'),
+      quizResult = document.getElementById('quiz-result'),
+      resultScore = document.getElementById('result-score'),
+      btnRestart = document.getElementById('btn-restart'),
+      btnBack = document.getElementById('btn-back');
+
+    signupToggle.onclick = () => {
+      loginToggle.classList.remove('active'); signupToggle.classList.add('active');
+      loginForm.classList.remove('active'); signupForm.classList.add('active');
+    };
+    loginToggle.onclick = () => {
+      signupToggle.classList.remove('active'); loginToggle.classList.add('active');
+      signupForm.classList.remove('active'); loginForm.classList.add('active');
+    };
+    toSignup.onclick = () => signupToggle.click();
+    toLogin.onclick = () => loginToggle.click();
+
+    signupBtn.onclick = () => {
+      signupError.textContent = '';
+      const pic = document.getElementById('signup-pic').files[0],
+        name = document.getElementById('signup-name').value.trim(),
+        age = document.getElementById('signup-age').value.trim(),
+        id = document.getElementById('signup-id').value.trim(),
+        pw = document.getElementById('signup-password').value;
+      if (!name || !age || !id || !pw) { signupError.textContent = 'All fields required'; return }
+      const users = getUsers();
+      if (users[id]) { signupError.textContent = 'ID exists'; return }
+      const finish = picData => {
+        users[id] = { name, age, pw, pic: picData || '', stats: JSON.parse(JSON.stringify(initialStats)) };
+        saveUsers(users);
+        alert('Sign up successful!'); loginToggle.click();
+      };
+      if (pic) { let r = new FileReader(); r.onload = () => finish(r.result); r.readAsDataURL(pic) }
+      else finish('');
+    };
+
+    loginBtn.onclick = () => {
+      loginError.textContent = '';
+      const id = document.getElementById('login-id').value.trim(),
+        pw = document.getElementById('login-password').value,
+        users = getUsers();
+      if (!users[id] || users[id].pw !== pw) { loginError.textContent = 'Invalid'; return }
+      setCurrentUser(id); showDashboard();
+    };
+
+    function showDashboard() {
+      authContainer.style.display = 'none';
+      dashboard.style.display = 'flex';
+      // always show Overall
+      tabOverall.classList.add('active');
+      tabQuiz.classList.remove('active');
+      contentOverall.style.display = 'block';
+      contentQuiz.style.display = 'none';
+      const u = getUsers()[getCurrentUser()];
+      profilePic.src = u.pic || 'https://via.placeholder.com/40?text=?';
+      initOverall();
+    }
+
+    logoutBtn.onclick = () => {
+      localStorage.removeItem('brainBattleCurrentUser');
+      dashboard.style.display = 'none';
+      authContainer.style.display = 'flex';
+    };
+    profileBtn.onclick = e => { e.stopPropagation(); profileDropdown.style.display = profileDropdown.style.display === 'block' ? 'none' : 'block'; };
+    document.addEventListener('click', () => profileDropdown.style.display = 'none');
+
+    tabOverall.onclick = () => {
+      tabOverall.classList.add('active'); tabQuiz.classList.remove('active');
+      contentOverall.style.display = 'block'; contentQuiz.style.display = 'none';
+      initOverall();
+    };
+    tabQuiz.onclick = () => {
+      tabQuiz.classList.add('active'); tabOverall.classList.remove('active');
+      contentQuiz.style.display = 'block'; contentOverall.style.display = 'none';
+      resetQuizUI();
+    };
+
+    // --- Quiz Logic ---
+    let currentCat = 0, currentName = '', allQs = [], quizQs = [], qIndex = 0, score = 0;
+    let survivalQs = [], svIndex = 0, svScore = 0, mode = '';
+
+    function resetQuizUI() {
+      quizSelection.style.display = 'block';
+      modeSelection.style.display = 'none';
+      randomQuiz.style.display = 'none';
+      quizResult.style.display = 'none';
+    }
+
+    quizCards.forEach(card => {
+      card.onclick = () => {
+        currentCat = card.dataset.cat;
+        currentName = card.dataset.name;
+        quizSelection.style.display = 'none';
+        modeSelection.style.display = 'block';
+      };
+    });
+    btnModeBack.onclick = () => resetQuizUI();
+
+    btnRandom.onclick = async () => {
+      mode = 'Random';
+      modeSelection.style.display = 'none';
+      try {
+        let res = await fetch(`https://opentdb.com/api.php?amount=200&category=${currentCat}&difficulty=easy`);
+        let data = await res.json();
+        allQs = data.results;
+        quizQs = []; let used = new Set();
+        while (quizQs.length < 10) {
+          let i = Math.floor(Math.random() * allQs.length);
+          if (!used.has(i)) { used.add(i); quizQs.push(allQs[i]); }
+        }
+        qIndex = 0; score = 0;
+        showNextRandom();
+      } catch (e) {
+        alert('Failed to load questions'); resetQuizUI();
+      }
+    };
+
+    function showNextRandom() {
+      if (qIndex >= quizQs.length) {
+        updateStats(score, quizQs.length - score);
+        showResults();
+        return;
+      }
+      const q = quizQs[qIndex];
+      randomQuiz.style.display = 'block';
+      rqQuestion.innerHTML = `<strong>Q${qIndex + 1}.</strong> ${q.question}`;
+      let opts = [q.correct_answer, ...q.incorrect_answers].sort(() => Math.random() - .5);
+      rqAnswers.innerHTML = opts.map(o => `<li>${o}</li>`).join('');
+      document.querySelectorAll('#rq-answers li').forEach(li => {
+        li.onclick = () => {
+          document.querySelectorAll('#rq-answers li').forEach(x => x.onclick = null);
+          if (li.textContent === q.correct_answer) {
+            li.classList.add('correct'); score++;
+          } else {
+            li.classList.add('wrong');
+            document.querySelectorAll('#rq-answers li').forEach(x => { if (x.textContent === q.correct_answer) x.classList.add('correct'); });
+          }
+          setTimeout(() => { qIndex++; showNextRandom(); }, 700);
+        };
+      });
+    }
+
+    btnSurvival.onclick = async () => {
+      mode = 'Survival';
+      modeSelection.style.display = 'none';
+      try {
+        let res = await fetch(`https://opentdb.com/api.php?amount=200&category=${currentCat}&difficulty=easy`);
+        let data = await res.json();
+        survivalQs = data.results.sort(() => Math.random() - .5);
+        svIndex = 0; svScore = 0;
+        showNextSurvival();
+      } catch (e) {
+        alert('Failed to load'); resetQuizUI();
+      }
+    };
+
+    function showNextSurvival() {
+      const q = survivalQs[svIndex];
+      randomQuiz.style.display = 'block';
+      rqQuestion.innerHTML = `<strong>Q${svScore + 1}.</strong> ${q.question}`;
+      let opts = [q.correct_answer, ...q.incorrect_answers].sort(() => Math.random() - .5);
+      rqAnswers.innerHTML = opts.map(o => `<li>${o}</li>`).join('');
+      document.querySelectorAll('#rq-answers li').forEach(li => {
+        li.onclick = () => {
+          document.querySelectorAll('#rq-answers li').forEach(x => x.onclick = null);
+          if (li.textContent === q.correct_answer) {
+            li.classList.add('correct'); svScore++; svIndex++;
+            setTimeout(() => showNextSurvival(), 700);
+          } else {
+            li.classList.add('wrong');
+            document.querySelectorAll('#rq-answers li').forEach(x => { if (x.textContent === q.correct_answer) x.classList.add('correct'); });
+            updateStats(svScore, 1);
+            showSurvivalResults();
+          }
+        };
+      });
+    }
+
+    function showResults() {
+      randomQuiz.style.display = 'none';
+      quizResult.style.display = 'block';
+      resultScore.textContent = `You scored ${score} / ${quizQs.length}`;
+      // reload to update overall
+      setTimeout(() => location.reload(), 800);
+    }
+    function showSurvivalResults() {
+      randomQuiz.style.display = 'none';
+      quizResult.style.display = 'block';
+      resultScore.textContent = `Survival ended after ${svScore} correct in a row`;
+      setTimeout(() => location.reload(), 800);
+    }
+
+    btnRestart.onclick = () => {
+      quizResult.style.display = 'none';
+      if (mode === 'Random') btnRandom.click();
+      else btnSurvival.click();
+    };
+    btnBack.onclick = () => resetQuizUI();
+
+    // Auto-login
+    if (getCurrentUser()) showDashboard();
+  </script>
+</body>
+
+</html>

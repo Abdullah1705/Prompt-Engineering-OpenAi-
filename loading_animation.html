@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Splitting Loading Animation Builder</title>
+  <style>
+    * { box‑sizing: border‑box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; font-family: Arial, sans-serif; }
+    #container {
+      display: flex;
+      height: 99vh;
+     
+      border: 3px solid black;    /* Outer border */
+      background: white;
+    }
+
+    /* LEFT (70%) and RIGHT (30%) */
+    #left {
+      flex: 7;
+      display: flex;
+      flex-direction: column;
+      border-right: 2px solid black;
+    }
+    #right {
+      flex: 3;
+      display: flex;
+      flex-direction: column;
+      background: white;
+      border-left: 2px solid black;
+      padding: 10px;
+      overflow: hidden;
+    }
+
+    /* TOP CONTROLS (30% of left) */
+    #controls {
+      flex: 3;
+      background: white;
+      border-bottom: 2px solid black;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px;
+    }
+    #controls h2 {
+      margin-bottom: 10px;
+      font-size: 1.5rem;
+    }
+    .controls-row {
+      display: flex;
+      margin-top: 25px;
+      gap: 20px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      justify-content: center;
+      width: 100%;
+    }
+    .control-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      
+    }
+    .control-item label {
+      margin-bottom: 4px;
+      font-weight: bold;
+    }
+    #controls select,
+    #controls input[type="color"] {
+      width: 150px;       
+      height: 35px;       
+      padding: 8px 12px;
+      font-size: 1rem;
+      border: 2px solid #000000;
+      border-radius: 24px;
+      background: white;
+      cursor: pointer;
+    }
+    #controls input[type="color"]:hover {
+  color: white;
+  background-color: black;
+}
+
+    #controls button {
+      padding: 8px 12px;
+      font-size: 1rem;
+      border: 2px solid black;
+      border-radius: 24px;
+      background: white;
+      color: black;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    #controls button:hover {
+      background: black;
+      color: white;
+    }
+    #controls select:hover {
+      background: black;
+      color: white;
+    }
+    #toggleBtn {
+  height: 35px; 
+  width: 70px;
+}
+
+   
+
+    /* BOTTOM CANVAS (70% of left) */
+    #canvas {
+      flex: 7;
+      border-top: 2px solid black;
+border-right: none;
+border-bottom: none;
+border-left: none;
+
+      background: white;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* SHAPES */
+    .shape {
+      position: absolute;
+      transform-origin: center center;
+      transition: opacity 1s ease;
+    }
+
+    /* RIGHT PANE */
+    #right h3 {
+      margin-bottom: 8px;
+    }
+    #codeBox {
+      flex: 1;
+      width: 95%;
+      resize: vertical;
+      font-family: monospace;
+      font-size: 0.85rem;
+      padding: 10px;
+      background: white;
+      border: 2px solid black;
+      overflow: auto;
+      white-space: pre;
+    }
+    #downloadBtn {
+      margin-top: 10px;
+      padding: 8px 16px;
+      font-size: 1rem;
+      border: 2px solid black;
+      border-radius: 24px;
+      background: white;
+      color: black;
+      cursor: pointer;
+      align-self: center;        /* center horizontally */
+      transition: background 0.2s, color 0.2s;
+    }
+    #downloadBtn:hover {
+      background: black;
+      color: white;
+    }
+    @media (max-width: 320px) {
+  #container {
+    flex-direction: column;
+    height: auto;
+  }
+
+  #left, #right {
+    flex: none;
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-left: none;
+  }
+
+  #left {
+    border-bottom: 2px solid black;
+  }
+
+  #controls, #canvas, #right {
+    width: 100%;
+  }
+
+  #codeBox {
+    width: 100%;
+  }
+}
+
+
+   
+  </style>
+</head>
+<body>
+
+<div id="container">
+  <!-- LEFT COLUMN -->
+  <div id="left">
+    <!-- TOP CONTROLS -->
+    <div id="controls">
+      <h2>Loading Animations</h2>
+      <div class="controls-row">
+        <div class="control-item">
+          <label for="shapeSelector">Shape</label>
+          <select id="shapeSelector">
+            <option value="triangle">Triangle</option>
+            <option value="circle">Circle</option>
+            <option value="square">Square</option>
+          </select>
+        </div>
+        <div class="control-item">
+          <label for="colorPicker">Color</label>
+          <input type="color" id="colorPicker" value="#007bff">
+        </div>
+        <div class="control-item">
+          <button id="toggleBtn">Start</button>
+        </div>
+      </div>
+    </div>
+    <!-- BOTTOM CANVAS -->
+    <div id="canvas"></div>
+  </div>
+
+  <!-- RIGHT COLUMN -->
+  <div id="right">
+    <h3>Animation Snippet</h3>
+    <textarea id="codeBox"></textarea>
+    <button id="downloadBtn">Download Code</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const GRAVITY      = 0.5;
+  const SPLIT_DEPTH  = 3;
+  const INITIAL_SIZE = 60;
+
+  const canvas      = document.getElementById('canvas');
+  const toggleBtn   = document.getElementById('toggleBtn');
+  const shapeSel    = document.getElementById('shapeSelector');
+  const colorPick   = document.getElementById('colorPicker');
+  const codeBox     = document.getElementById('codeBox');
+  const downloadBtn = document.getElementById('downloadBtn');
+
+  let shapes = [], frameId = null;
+  let running = false, paused = false, cycleCount = 0;
+
+  function spawnShape({x,y,vx,vy,size,depth,cycleId,type,color}) {
+    const el = document.createElement('div');
+    el.className = 'shape';
+    // draw shape
+    if (type === 'triangle') {
+      el.style.width  = '0';
+      el.style.height = '0';
+      el.style.borderLeft   = (size/2)+'px solid transparent';
+      el.style.borderRight  = (size/2)+'px solid transparent';
+      el.style.borderBottom = size+'px solid '+color;
+    } else {
+      el.style.width  = size+'px';
+      el.style.height = size+'px';
+      el.style.backgroundColor = color;
+      if (type === 'circle') el.style.borderRadius = '50%';
+    }
+    // random rotation
+    const rot = Math.random()*360, rotV = (Math.random()*2 - 1);
+    el.style.transform = 'rotate(' + rot + 'deg)';
+    // position
+    el.style.left = x + 'px';
+    el.style.top  = y + 'px';
+    canvas.appendChild(el);
+
+    shapes.push({el, x, y, vx, vy, size, depth, cycleId, type, color, rotation: rot, rotV});
+  }
+
+  function splitShape(s) {
+    canvas.removeChild(s.el);
+    shapes = shapes.filter(o => o !== s);
+    const nd = s.depth + 1, ns = s.size / 2;
+    const bx = s.x + (s.size - ns)/2, by = s.y;
+    [-1,1].forEach(dir => {
+      spawnShape({
+        x: bx, y: by,
+        vx: dir*(2 + Math.random()*2),
+        vy: -(8 + Math.random()*4),
+        size: ns, depth: nd,
+        cycleId: s.cycleId,
+        type: s.type, color: s.color
+      });
+    });
+  }
+
+  function scheduleRestart(s) {
+    if (s.cycleId !== cycleCount) return;
+    const nextCycle = ++cycleCount;
+    spawnShape({
+      x: canvas.clientWidth/2 - INITIAL_SIZE/2,
+      y: -INITIAL_SIZE, vx: 0, vy: 0,
+      size: INITIAL_SIZE, depth: 0,
+      cycleId: nextCycle,
+      type: shapeSel.value, color: colorPick.value
+    });
+    shapes
+      .filter(o => o.cycleId < nextCycle)
+      .forEach(o => {
+        o.el.style.opacity = '0';
+        o.el.addEventListener('transitionend', () => {
+          if (o.el.parentNode) canvas.removeChild(o.el);
+          shapes = shapes.filter(x => x !== o);
+        }, { once: true });
+      });
+  }
+
+  function animate() {
+    frameId = requestAnimationFrame(animate);
+    const ground = canvas.clientHeight;
+    shapes.forEach(s => {
+      s.vy += GRAVITY;
+      s.x += s.vx; s.y += s.vy;
+      s.rotation += s.rotV;
+      if (s.y + s.size >= ground) {
+        s.y = ground - s.size;
+        if (s.depth < SPLIT_DEPTH) splitShape(s);
+        else scheduleRestart(s);
+      }
+      s.el.style.left = s.x + 'px';
+      s.el.style.top  = s.y + 'px';
+      s.el.style.transform = 'rotate(' + s.rotation + 'deg)';
+    });
+  }
+
+  function startCycle() {
+    cancelAnimationFrame(frameId);
+    shapes.forEach(s => { if (s.el.parentNode) canvas.removeChild(s.el); });
+    shapes = [];
+    cycleCount = 1;
+    spawnShape({
+      x: canvas.clientWidth/2 - INITIAL_SIZE/2,
+      y: -INITIAL_SIZE, vx: 0, vy: 0,
+      size: INITIAL_SIZE, depth: 0,
+      cycleId: cycleCount,
+      type: shapeSel.value, color: colorPick.value
+    });
+    animate();
+  }
+
+  toggleBtn.addEventListener('click', () => {
+    if (!running) {
+      startCycle();
+      running = true; paused = false;
+      toggleBtn.textContent = 'Pause';
+    } else if (!paused) {
+      cancelAnimationFrame(frameId);
+      paused = true;
+      toggleBtn.textContent = 'Resume';
+    } else {
+      animate();
+      paused = false;
+      toggleBtn.textContent = 'Pause';
+    }
+  });
+
+  function resetAll() {
+    cancelAnimationFrame(frameId);
+    shapes.forEach(s => { if (s.el.parentNode) canvas.removeChild(s.el); });
+    shapes = [];
+    running = paused = false;
+    toggleBtn.textContent = 'Start';
+    updateSnippet();
+  }
+  shapeSel.addEventListener('change', resetAll);
+  colorPick.addEventListener('change', resetAll);
+
+  function updateSnippet() {
+    const type = shapeSel.value, color = colorPick.value;
+    const snippet = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Splitting Loading Animation</title>
+<style>
+  html,body{margin:0;padding:0;height:100%;}
+  #canvas{position:relative;width:100%;height:100%;overflow:hidden;background:#fff;}
+  .shape{position:absolute;transform-origin:center;transition:opacity 1s ease;}
+</style>
+</head>
+<body>
+<div id="canvas"></div>
+<script>
+const GRAVITY=0.5,SPLIT_DEPTH=3,INITIAL_SIZE=60;
+let shapes=[],cycle=1;
+const canvas=document.getElementById('canvas');
+function spawn({x,y,vx,vy,size,depth,cycleId}) {
+  const el=document.createElement('div');
+  el.className='shape';
+  if('${type}'==='triangle') {
+    el.style.width='0';el.style.height='0';
+    el.style.borderLeft=(size/2)+'px solid transparent';
+    el.style.borderRight=(size/2)+'px solid transparent';
+    el.style.borderBottom=size+'px solid ${color}';
+  } else {
+    el.style.width=size+'px';el.style.height=size+'px';
+    el.style.backgroundColor='${color}';
+    if('${type}'==='circle')el.style.borderRadius='50%';
+  }
+  const rot=Math.random()*360,rotV=(Math.random()*2-1);
+  el.style.transform='rotate('+rot+'deg)';
+  el.style.left=x+'px';el.style.top=y+'px';
+  canvas.appendChild(el);
+  shapes.push({el,x,y,vx,vy,size,depth,cycleId,rotation:rot,rotV});
+}
+function splitShape(s){
+  canvas.removeChild(s.el);
+  shapes=shapes.filter(o=>o!==s);
+  const nd=s.depth+1,ns=s.size/2;
+  const bx=s.x+(s.size-ns)/2,by=s.y;
+  [-1,1].forEach(dir=>spawn({
+    x:bx,y:by,
+    vx:dir*(2+Math.random()*2),
+    vy:-(8+Math.random()*4),
+    size:ns,depth:nd,cycleId:s.cycleId
+  }));
+}
+function schedule(s){
+  if(s.cycleId!==cycle)return;
+  const next=++cycle;
+  spawn({
+    x:canvas.clientWidth/2-INITIAL_SIZE/2,
+    y:-INITIAL_SIZE,vx:0,vy:0,
+    size:INITIAL_SIZE,depth:0,cycleId:next
+  });
+  shapes.filter(o=>o.cycleId<next).forEach(o=>{
+    o.el.style.opacity='0';
+    o.el.addEventListener('transitionend',()=>{
+      if(o.el.parentNode)canvas.removeChild(o.el);
+      shapes=shapes.filter(x=>x!==o);
+    },{once:true});
+  });
+}
+function animate(){
+  requestAnimationFrame(animate);
+  const ground=canvas.clientHeight;
+  shapes.forEach(s=>{
+    s.vy+=GRAVITY;s.x+=s.vx;s.y+=s.vy;
+    s.rotation+=s.rotV;
+    if(s.y+s.size>=ground){
+      s.y=ground-s.size;
+      if(s.depth<SPLIT_DEPTH)splitShape(s);
+      else schedule(s);
+    }
+    s.el.style.left=s.x+'px';
+    s.el.style.top=s.y+'px';
+    s.el.style.transform='rotate('+s.rotation+'deg)';
+  });
+}
+spawn({
+  x:canvas.clientWidth/2-INITIAL_SIZE/2,
+  y:-INITIAL_SIZE,vx:0,vy:0,
+  size:INITIAL_SIZE,depth:0,cycleId:1
+});
+animate();
+<\/script>
+</body>
+</html>`;
+    codeBox.value = snippet;
+  }
+  updateSnippet();
+
+  downloadBtn.addEventListener('click', () => {
+    const blob = new Blob([codeBox.value], { type: 'text/html' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = 'splitting-loading-animation.html';
+    document.body.appendChild(a);
+    a.click();
+    URL.revokeObjectURL(url);
+    a.remove();
+  });
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Smart Sprouts</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    /* General Reset and Base Styles */
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .auth-bg {
+      background: url('https://images.pexels.com/photos/1337387/pexels-photo-1337387.jpeg') no-repeat center center fixed;
+      background-size: cover;
+      min-height: 100vh;
+    }
+
+    /* Centering Containers on Screen */
+    .container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 90%;
+      max-width: 350px;
+    }
+
+    /* Transparent Containers and Adjusted Text */
+    .auth-container {
+      color: white;
+    }
+
+    .main-container {
+      background: transparent;
+      box-shadow: none;
+      color: black;
+    }
+
+    /* Form Wrapper with extra margin on top for signup form */
+    .form-wrapper {
+      background: transparent;
+      border: 2px solid white;
+      border-radius: 24px;
+      padding: 20px;
+      margin-top: 20px;
+      color: white;
+    }
+
+    /* Extra margin top only for the signup form */
+    #signupView .form-wrapper {
+      transform: translateY(40px);
+      margin-top: 80px;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-top: 0;
+      font-size: clamp(1.5rem, 4vw, 2rem);
+    }
+
+    label {
+      margin-top: 10px;
+      font-weight: bold;
+      display: block;
+      font-size: clamp(0.9rem, 3vw, 1rem);
+    }
+
+    input,
+    select {
+      padding: 8px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 24px;
+      width: 100%;
+      font-size: clamp(0.9rem, 3vw, 1rem);
+    }
+
+    input[type="file"] {
+      padding: 3px;
+    }
+
+    button {
+      padding: 10px;
+      margin-top: 15px;
+      border: none;
+      border-radius: 24px;
+      background: #00796b;
+      color: #fff;
+      font-size: 1em;
+      cursor: pointer;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease-in-out;
+    }
+
+    button:hover {
+      background: #00695c;
+      transform: scale(1.03);
+    }
+
+    a {
+      color: #0288d1;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    /* Views */
+    .view {
+      display: none;
+    }
+
+    .active {
+      display: block;
+    }
+
+    /* Profile Picture Preview */
+    .profile-pic-preview {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      border: 2px solid white;
+      margin: 0 auto 20px auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      cursor: pointer;
+      background-color: #ccc;
+      color: white;
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    .profile-pic-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Main Menu Buttons – Enlarged & Vertical */
+    .main-menu-buttons {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 20px 0;
+    }
+
+    .main-menu-buttons button {
+      width: 90%;
+      max-width: 280px;
+      margin: 12px 0;
+      font-size: clamp(1.2rem, 4.5vw, 1.5em);
+      padding: 18px;
+    }
+
+    .main-menu-buttons button:hover {
+      transform: scale(1.05);
+    }
+
+    /* Subcategory Buttons – Vertical Layout */
+    .subcategory-buttons {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Items Container Base */
+    .button-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    /* Grid Layouts for Items - Updated sizes */
+    .alphabet-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+      gap: 20px;
+      justify-items: center;
+    }
+
+    .three-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 12px;
+    }
+
+    .two-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 12px;
+    }
+
+    /* Shape buttons specifically - make them larger */
+    .shape-button {
+      min-width: 130px;
+      min-height: 130px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* User Menu in Upper Right Corner (placed outside containers) */
+    .user-menu {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      cursor: pointer;
+      z-index: 1000;
+      display: none;
+    }
+
+    .user-menu img {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: 2px solid #00796b;
+      transition: all 0.2s ease-in-out;
+    }
+
+    .user-menu img:hover {
+      transform: scale(1.05);
+      border-color: #00695c;
+    }
+
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      right: 0;
+      background-color: white;
+      min-width: 120px;
+      box-shadow: none;
+      z-index: 1000;
+      border-radius: 24px;
+      overflow: hidden;
+    }
+
+    .dropdown-content div {
+      padding: 8px 12px;
+      cursor: pointer;
+      color: #333;
+    }
+
+    .dropdown-content div:hover {
+      background-color: #ddd;
+    }
+
+    .user-menu.show .dropdown-content {
+      display: block;
+    }
+
+    /* Back Button Outside Container (Lower Right Corner) */
+    #backButton {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #00796b;
+      color: #fff;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 24px;
+      font-size: 1em;
+      cursor: pointer;
+      display: none;
+      z-index: 1000;
+      width: auto;
+      transition: all 0.2s ease-in-out;
+    }
+
+    #backButton:hover {
+      background: #00695c;
+      transform: scale(1.05);
+    }
+
+    /* Enlarged voice buttons in items view */
+    #itemsView .button-container button {
+      font-size: clamp(1.2rem, 4.5vw, 1.5em);
+      padding: 18px;
+    }
+
+    #itemsView .button-container button:hover {
+      transform: scale(1.05);
+    }
+
+    /* Dark Mode Styles */
+    .dark-mode {
+      background-color: #000000 !important;
+      color: #f1f1f1;
+    }
+
+    .dark-mode .main-container {
+      color: white;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .dark-mode .form-wrapper {
+      border-color: #f1f1f1;
+      color: #f1f1f1;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .container {
+        width: 95%;
+      }
+
+      .alphabet-grid {
+        grid-template-columns: repeat(auto-fill, minmax(32px, 1fr));
+      }
+
+      .three-grid {
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      }
+
+      .two-grid {
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      }
+
+      .shape-button {
+        min-width: 120px;
+        min-height: 120px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .profile-pic-preview {
+        width: 100px;
+        height: 100px;
+      }
+
+      .main-menu-buttons button {
+        width: 95%;
+        max-width: 240px;
+        padding: 16px;
+      }
+
+      #signupView .form-wrapper {
+        margin-top: 40px;
+        transform: translateY(20px);
+      }
+
+      .user-menu img {
+        width: 40px;
+        height: 40px;
+      }
+
+      .alphabet-grid {
+        grid-template-columns: repeat(auto-fill, minmax(28px, 1fr));
+        gap: 8px;
+      }
+
+      .three-grid {
+        grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+      }
+
+      .two-grid {
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      }
+
+      .shape-button {
+        min-width: 100px;
+        min-height: 100px;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .form-wrapper {
+        padding: 15px;
+      }
+
+      .main-menu-buttons button {
+        padding: 14px;
+      }
+
+      .alphabet-grid {
+        grid-template-columns: repeat(auto-fill, minmax(24px, 1fr));
+      }
+
+      .three-grid {
+        grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+      }
+
+      .two-grid {
+        grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+      }
+
+      .shape-button {
+        min-width: 90px;
+        min-height: 90px;
+      }
+    }
+</style>
+</head>
+
+<body class="auth-bg">
+  <!-- Authentication Container (Centered) -->
+  <div id="authContainer" class="container auth-container">
+    <!-- Sign Up View -->
+    <div id="signupView" class="view active">
+      <div class="form-wrapper">
+        <h1>Sign Up</h1>
+        <!-- Profile Picture Preview (Click to Upload) -->
+        <div id="profilePicPreview" class="profile-pic-preview" onclick="triggerFileInput()">
+          <span>Add Photo</span>
+        </div>
+        <!-- Hidden File Input -->
+        <input type="file" id="pic" accept="image/*" style="display:none;">
+        <form id="signupForm">
+          <label for="name">Name:</label>
+          <input type="text" id="name" required>
+
+          <label for="age">Age:</label>
+          <input type="number" id="age" required>
+
+          <label for="gender">Gender:</label>
+          <select id="gender">
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+
+          <label for="userId">User ID:</label>
+          <input type="text" id="userId" required>
+
+          <label for="password">Password:</label>
+          <input type="password" id="password" required>
+
+          <button type="submit">Sign Up</button>
+        </form>
+        <p style="text-align:center;">Already have an account? <a onclick="showAuthView('loginView')">Log In</a></p>
+      </div>
+    </div>
+    <!-- Log In View -->
+    <div id="loginView" class="view">
+      <div class="form-wrapper">
+        <h1>Log In</h1>
+        <form id="loginForm">
+          <label for="loginUserId">User ID:</label>
+          <input type="text" id="loginUserId" required>
+
+          <label for="loginPassword">Password:</label>
+          <input type="password" id="loginPassword" required>
+
+          <button type="submit">Log In</button>
+        </form>
+        <p style="text-align:center;">Don't have an account? <a onclick="showAuthView('signupView')">Sign Up</a></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Menu (Upper Right Corner, Outside Containers) -->
+  <div id="userMenu" class="user-menu" onclick="toggleUserDropdown()">
+    <img id="userMenuImg" src="" alt="User Image">
+    <div id="userDropdown" class="dropdown-content">
+      <div onclick="logout()">Logout</div>
+      <div onclick="toggleDarkMode()">Dark Mode</div>
+    </div>
+  </div>
+
+  <!-- Main Container (After Login, Centered) -->
+  <div id="mainContainer" class="container main-container" style="display:none;">
+    <!-- Main Menu View -->
+    <div id="mainMenuView" class="view active">
+      <h1>Main Menu</h1>
+      <div class="main-menu-buttons">
+        <button onclick="selectMainCategory('Zero')">Zero</button>
+        <button onclick="selectMainCategory('One')">One</button>
+        <button onclick="selectMainCategory('Two')">Two</button>
+      </div>
+    </div>
+    <!-- Subcategory View (Vertical Buttons) -->
+    <div id="subcategoryView" class="view">
+      <h1 id="subcategoryHeader"></h1>
+      <div id="subcategoryButtons" class="subcategory-buttons"></div>
+    </div>
+    <!-- Items View -->
+    <div id="itemsView" class="view">
+      <h1 id="itemsHeader"></h1>
+      <div id="itemsContainer" class="button-container"></div>
+    </div>
+  </div>
+
+  <!-- Back Button (Outside Containers, Lower Right) -->
+  <button id="backButton" onclick="goBack()">Back</button>
+
+  <script>
+    // Utility functions for switching views
+    function showAuthView(viewId) {
+      const views = document.querySelectorAll('#authContainer .view');
+      views.forEach(view => view.classList.remove('active'));
+      document.getElementById(viewId).classList.add('active');
+    }
+    function showMainView(viewId) {
+      const views = document.querySelectorAll('#mainContainer .view');
+      views.forEach(view => view.classList.remove('active'));
+      document.getElementById(viewId).classList.add('active');
+      updateBackButtonVisibility();
+    }
+
+    // Profile Picture Handling
+    let profilePicDataUrl = "";
+    function triggerFileInput() {
+      document.getElementById('pic').click();
+    }
+    document.getElementById('pic').addEventListener('change', function (e) {
+      const file = e.target.files[0];
+      if (file) {
+        let reader = new FileReader();
+        reader.onload = function (e) {
+          profilePicDataUrl = e.target.result;
+          document.getElementById('profilePicPreview').innerHTML = '<img src="' + profilePicDataUrl + '" alt="Profile Picture">';
+        }
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Sign Up Handling
+    function completeSignup(picDataUrl) {
+      const name = document.getElementById('name').value;
+      const age = document.getElementById('age').value;
+      const gender = document.getElementById('gender').value;
+      const userId = document.getElementById('userId').value;
+      const password = document.getElementById('password').value;
+      const userProfile = { name, age, gender, pic: picDataUrl, userId, password };
+      localStorage.setItem('userProfile', JSON.stringify(userProfile));
+      showAuthView('loginView');
+    }
+    document.getElementById('signupForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const picFile = document.getElementById('pic').files[0];
+      if (picFile) {
+        let reader = new FileReader();
+        reader.onload = function (e) {
+          completeSignup(e.target.result);
+        };
+        reader.readAsDataURL(picFile);
+      } else {
+        completeSignup("");
+      }
+    });
+
+    // Log In Handling
+    document.getElementById('loginForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const loginUserId = document.getElementById('loginUserId').value;
+      const loginPassword = document.getElementById('loginPassword').value;
+      const storedProfile = JSON.parse(localStorage.getItem('userProfile'));
+      if (storedProfile && storedProfile.userId === loginUserId && storedProfile.password === loginPassword) {
+        document.body.classList.remove('auth-bg');
+        document.getElementById('authContainer').style.display = 'none';
+        document.getElementById('mainContainer').style.display = 'block';
+        // Show user menu
+        document.getElementById('userMenu').style.display = 'block';
+        const userImg = document.getElementById('userMenuImg');
+        if (storedProfile.pic) {
+          userImg.src = storedProfile.pic;
+        } else {
+          userImg.src = 'data:image/svg+xml;base64,' + btoa('<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50"><rect width="50" height="50" fill="#00796b"/></svg>');
+        }
+      } else {
+        alert('Invalid credentials. Please try again or sign up.');
+      }
+    });
+
+    // Logout Handling
+    function logout() {
+      document.body.classList.add('auth-bg');
+      document.getElementById('authContainer').style.display = 'block';
+      document.getElementById('mainContainer').style.display = 'none';
+      document.getElementById('userMenu').classList.remove('show');
+      document.getElementById('userMenu').style.display = 'none';
+      showAuthView('loginView');
+    }
+
+    // Main Menu and Category Navigation
+    let currentMainCategory = "";
+    let currentSubcategory = "";
+    const subcategories = {
+      "Zero": ["Alphabets", "Numbers"],
+      "One": ["Colors", "Shapes"],
+      "Two": ["Words", "Sentences"]
+    };
+    const itemsData = {
+      "Alphabets": Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)),
+      "Numbers": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+      "Colors": ["Red", "Blue", "Green", "Yellow", "Orange", "Purple"],
+      "Shapes": ["Circle", "Square", "Triangle", "Rectangle", "Oval"],
+      "Words": ["Apple", "Banana", "Cat", "Dog", "Elephant", "Fish", "Grapes", "House", "Igloo", "Juice"],
+      "Sentences": [
+        "Hello, how are you?",
+        "Welcome to Smart Sprouts",
+        "Have a nice day",
+        "Learning is fun!",
+        "Practice makes perfect.",
+        "Smart Sprouts helps you grow."
+      ]
+    };
+    function selectMainCategory(category) {
+      currentMainCategory = category;
+      document.getElementById('subcategoryHeader').innerText = 'Choose a subcategory for ' + category;
+      const btnContainer = document.getElementById('subcategoryButtons');
+      btnContainer.innerHTML = "";
+      subcategories[category].forEach(function (sub) {
+        const btn = document.createElement('button');
+        btn.innerText = sub;
+        btn.onclick = function () {
+          selectSubcategory(sub);
+        };
+        btnContainer.appendChild(btn);
+      });
+      showMainView('subcategoryView');
+    }
+    function selectSubcategory(subcat) {
+      currentSubcategory = subcat;
+      document.getElementById('itemsHeader').innerText = 'Select an item from ' + subcat;
+      const container = document.getElementById('itemsContainer');
+      container.innerHTML = "";
+      // Reset classes
+      container.className = "button-container";
+      if (subcat === "Alphabets") {
+        container.classList.add("alphabet-grid");
+      } else if (["Numbers", "Colors", "Words", "Shapes"].includes(subcat)) {
+        container.classList.add("three-grid");
+      } else if (subcat === "Sentences") {
+        container.classList.add("two-grid");
+      }
+      itemsData[subcat].forEach(function (item) {
+        const btn = document.createElement('button');
+        btn.innerText = item;
+        
+        // For Colors: set button background to match the color name
+        if (subcat === "Colors") {
+          btn.style.backgroundColor = item.toLowerCase();
+          btn.style.color = (item.toLowerCase() === "yellow") ? "black" : "white";
+        }
+        
+        // For Shapes: style the button to mimic the shape with smaller text
+        if (subcat === "Shapes") {
+          btn.style.fontSize = "0.8em";
+          switch (item.toLowerCase()) {
+            case "circle":
+              btn.style.width = "100px";  
+              btn.style.height = "100px"; 
+              btn.style.borderRadius = "50%";
+              break;
+            case "square":
+              btn.style.width = "100px";  
+              btn.style.height = "100px"; 
+              btn.style.borderRadius = "0%";
+              break;
+            case "triangle":
+              btn.style.width = "130px"; 
+              btn.style.height = "106.6px"; 
+              btn.style.clipPath = "polygon(50% 0%, 0% 100%, 100% 100%)";
+              btn.style.borderRadius = "0";
+              break;
+            case "rectangle":
+              btn.style.width = "125px";  
+              btn.style.height = "75px"; 
+              btn.style.borderRadius = "0%";
+              break;
+            case "oval":
+              btn.style.width = "125px";  
+              btn.style.height = "75px"; 
+              btn.style.borderRadius = "50% / 50%";
+              break;
+          }
+        }
+        
+        btn.onclick = function () {
+          speakItem(item);
+        };
+        container.appendChild(btn);
+      });
+      showMainView('itemsView');
+    }
+    function speakItem(text) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      window.speechSynthesis.speak(utterance);
+    }
+
+    // Back Button Handling
+    function updateBackButtonVisibility() {
+      let activeViewId;
+      const views = document.querySelectorAll('#mainContainer .view');
+      views.forEach(function (v) {
+        if (v.classList.contains('active')) {
+          activeViewId = v.id;
+        }
+      });
+      const backButton = document.getElementById('backButton');
+      // Show back button only if not in main menu view
+      if (activeViewId === 'mainMenuView') {
+        backButton.style.display = 'none';
+      } else {
+        backButton.style.display = 'block';
+      }
+    }
+    function goBack() {
+      let activeViewId;
+      const views = document.querySelectorAll('#mainContainer .view');
+      views.forEach(function (v) {
+        if (v.classList.contains('active')) {
+          activeViewId = v.id;
+        }
+      });
+      if (activeViewId === 'itemsView') {
+        showMainView('subcategoryView');
+      } else if (activeViewId === 'subcategoryView') {
+        showMainView('mainMenuView');
+      }
+    }
+
+    // User Dropdown and Dark Mode
+    function toggleUserDropdown() {
+      document.getElementById('userMenu').classList.toggle('show');
+    }
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+      document.getElementById('userMenu').classList.remove('show');
+    }
+    window.onclick = function (event) {
+      if (!event.target.matches('#userMenu, #userMenu *')) {
+        document.getElementById('userMenu').classList.remove('show');
+      }
+    }
+  </script>
+</body>
+
+</html>

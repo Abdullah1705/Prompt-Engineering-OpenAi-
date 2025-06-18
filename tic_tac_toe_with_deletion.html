@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Tic Tac Toe</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 2em;
+      background-color: #f0f0f0; /* Slightly darker white background */
+    }
+    h1 {
+      margin-bottom: 1em;
+    }
+    #game-container {
+      display: inline-block;
+    }
+    /* Increased board size, box shadow added, and keep bold black outer border */
+    #board {
+      border: 3px solid black;
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-template-rows: repeat(3, 100px);
+      gap: 0;
+      margin-bottom: 1em;
+      background-color: #fff; /* Keep board background white */
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    /* Inner separation color changed to gray */
+    .cell {
+      width: 100px;
+      height: 100px;
+      border: 1px solid gray;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3em; /* Increased the symbol size */
+      cursor: pointer;
+      user-select: none;
+    }
+    .cell:hover {
+      background-color: #e9e9e9; /* darken a bit on hover */
+    }
+    .x-symbol {
+      color: red;
+    }
+    .o-symbol {
+      color: blue;
+    }
+    /* Blinking animation for the “oldest” piece */
+    @keyframes blink {
+      50% {
+        opacity: 0;
+      }
+    }
+    .blinking {
+      animation: blink 1s infinite;
+    }
+    /* Turn text should not be bold */
+    #status {
+      margin-bottom: 1em;
+      font-weight: normal;
+      min-height: 1.5em;
+    }
+    /* Blue button, darken a bit on hover */
+    #resetBtn {
+      cursor: pointer;
+      padding: 0.5em 1em;
+      font-size: 1em;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+    }
+    #resetBtn:hover {
+      background-color: #006ad6; /* slightly darker blue on hover */
+    }
+  </style>
+</head>
+<body>
+  <h1>Tic Tac Toe</h1>
+  <div id="game-container">
+    <div id="board"></div>
+    <div id="status"></div>
+    <button id="resetBtn">Reset Game</button>
+  </div>
+
+  <script>
+    const boardElement = document.getElementById('board');
+    const statusElement = document.getElementById('status');
+    const resetBtn = document.getElementById('resetBtn');
+
+    // Game state
+    let board = Array(9).fill(null); // Each cell: 'X', 'O', or null
+    let currentPlayer = 'X';
+    // Keep track of the order in which cells were filled
+    let placedOrder = Array(9).fill(null); 
+    let globalOrderCount = 0; // incremented every time a symbol is placed
+
+    let blinkingCell = -1;        // index of the cell that is blinking, or -1 if none
+    let turnsToRemoveBlink = 0;   // how many clicks remain before removing the blinking piece
+
+    let gameOver = false; // set true when there's a winner
+
+    // Winning combinations for Tic Tac Toe
+    const winningCombos = [
+      [0,1,2], [3,4,5], [6,7,8], // rows
+      [0,3,6], [1,4,7], [2,5,8], // columns
+      [0,4,8], [2,4,6]           // diagonals
+    ];
+
+    function initBoard() {
+      board = Array(9).fill(null);
+      placedOrder = Array(9).fill(null);
+      currentPlayer = 'X';
+      globalOrderCount = 0;
+
+      blinkingCell = -1;
+      turnsToRemoveBlink = 0;
+      gameOver = false;
+
+      renderBoard();
+      updateStatus();
+    }
+
+    function renderBoard() {
+      boardElement.innerHTML = '';
+      for (let i = 0; i < 9; i++) {
+        const cellDiv = document.createElement('div');
+        cellDiv.classList.add('cell');
+        cellDiv.dataset.index = i;
+        if (board[i] === 'X') {
+          cellDiv.textContent = 'X';
+          cellDiv.classList.add('x-symbol');
+        } else if (board[i] === 'O') {
+          cellDiv.textContent = 'O';
+          cellDiv.classList.add('o-symbol');
+        }
+
+        // If this cell is blinking, add the CSS
+        if (i === blinkingCell) {
+          cellDiv.classList.add('blinking');
+        }
+
+        cellDiv.addEventListener('click', onCellClick);
+        boardElement.appendChild(cellDiv);
+      }
+    }
+
+    function updateStatus() {
+      if (!gameOver) {
+        statusElement.textContent = `Player ${currentPlayer}'s turn`;
+      }
+    }
+
+    // Check if there's a winner. Returns 'X' or 'O' if a winner is found, otherwise null.
+    function checkWinner() {
+      for (let combo of winningCombos) {
+        const [a, b, c] = combo;
+        if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+          return board[a]; // 'X' or 'O'
+        }
+      }
+      return null;
+    }
+
+    // Count how many times 'sym' is on the board.
+    function countSymbol(sym) {
+      return board.reduce((count, val) => val === sym ? count + 1 : count, 0);
+    }
+
+    // Find index of earliest placed cell of a given symbol
+    function findEarliestPlacement(sym) {
+      let earliestIndex = -1;
+      let earliestOrder = Infinity;
+      for (let i = 0; i < 9; i++) {
+        if (placedOrder[i] && placedOrder[i].symbol === sym) {
+          if (placedOrder[i].order < earliestOrder) {
+            earliestOrder = placedOrder[i].order;
+            earliestIndex = i;
+          }
+        }
+      }
+      return earliestIndex;
+    }
+
+    // Remove the currently blinking cell (if any)
+    function removeBlinkingCell() {
+      if (blinkingCell === -1) return;
+      board[blinkingCell] = null;
+      placedOrder[blinkingCell] = null;
+      blinkingCell = -1;
+      turnsToRemoveBlink = 0;
+    }
+
+    function onCellClick(e) {
+      // If game is already won, do nothing
+      if (gameOver) return;
+
+      const index = parseInt(e.target.dataset.index);
+
+      // At the start of any new click/turn, if something is blinking, check if it's time to remove it
+      if (blinkingCell !== -1) {
+        turnsToRemoveBlink--;
+        if (turnsToRemoveBlink <= 0) {
+          removeBlinkingCell();
+        }
+      }
+
+      // If this cell is already filled, do nothing
+      if (board[index] !== null) return;
+
+      // Place the current player's symbol
+      board[index] = currentPlayer;
+      placedOrder[index] = { symbol: currentPlayer, order: globalOrderCount++ };
+
+      // Check if this move caused a winner
+      const winner = checkWinner();
+      if (winner) {
+        gameOver = true;
+        statusElement.textContent = `Player ${winner} wins!`;
+        renderBoard();
+        return;
+      }
+
+      // If no winner, then check if the *opponent* has at least 3 cells on the board
+      // Start blinking the earliest placed piece of that opponent symbol (if not already blinking)
+      const opponent = (currentPlayer === 'X') ? 'O' : 'X';
+      if (blinkingCell === -1) {
+        if (countSymbol(opponent) >= 3) {
+          const earliestIndex = findEarliestPlacement(opponent);
+          if (earliestIndex !== -1) {
+            blinkingCell = earliestIndex;
+            turnsToRemoveBlink = 1; // removed on next turn
+          }
+        }
+      }
+
+      // Switch player
+      currentPlayer = (currentPlayer === 'X') ? 'O' : 'X';
+
+      // Render and update status for the new player's turn
+      renderBoard();
+      updateStatus();
+    }
+
+    resetBtn.addEventListener('click', initBoard);
+
+    // Initialize on page load
+    initBoard();
+  </script>
+</body>
+</html>

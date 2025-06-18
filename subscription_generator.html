@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Subscription Plan Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-start: #e0eafc;
+            --bg-end: #cfdef3;
+            --btn-bg: #336699;
+            --btn-bg-hover: #274f73;
+            --btn-color: #fff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Merriweather', serif;
+            background: linear-gradient(135deg, var(--bg-start), var(--bg-end));
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: #333;
+        }
+
+        h1 {
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 1000px;
+            padding: 20px;
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            background: rgba(255, 255, 255, 0.4);
+            border: none;
+            padding: 10px 20px;
+            margin: 0 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            color: #000;
+            transition: background 0.3s;
+        }
+
+        .tab-btn.active,
+        .tab-btn:hover {
+            background: rgba(255, 255, 255, 0.7);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #aaa;
+            border-radius: 4px;
+            background: #fff;
+        }
+
+        .error-msg {
+            color: red;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .package-block {
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .feature-input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        button {
+            background: var(--btn-bg);
+            color: var(--btn-color);
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: var(--btn-bg-hover);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            color: var(--btn-bg);
+            margin-right: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            vertical-align: middle;
+            transition: color 0.3s;
+            padding: 0;
+        }
+
+        .icon-btn:hover {
+            color: var(--btn-bg-hover);
+            background: none;
+        }
+
+        ul {
+            list-style: disc;
+            padding-left: 20px;
+        }
+
+        li.feature-item {
+            padding: 5px 0;
+        }
+
+        /* Saved Plans */
+        .saved-plan {
+            background: rgba(255, 255, 255, 0.4);
+            padding: 15px;
+            position: relative;
+        }
+
+        .saved-plan:not(:last-child) {
+            border-bottom: 1px solid #999;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+        }
+
+        .saved-plan h4 {
+            margin-bottom: 5px;
+        }
+
+        .code-snippet {
+            width: 100%;
+            height: 100px;
+            font-family: monospace;
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #aaa;
+            resize: none;
+        }
+
+        .delete-plan-btn,
+        .preview-btn {
+            position: absolute;
+            top: 15px;
+            background: var(--btn-bg);
+            color: var(--btn-color);
+            padding: 6px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .delete-plan-btn:hover,
+        .preview-btn:hover {
+            background: var(--btn-bg-hover);
+        }
+
+        .delete-plan-btn {
+            right: 15px;
+        }
+
+        .preview-btn {
+            right: 60px;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            max-width: 90%;
+            max-height: 90%;
+            overflow: auto;
+            position: relative;
+            text-align: center;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #333;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 20px;
+        }
+
+        .preview-packages {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .preview-card {
+            border-radius: 12px;
+            padding: 15px;
+            min-width: 150px;
+            color: #333;
+        }
+
+        .preview-card i {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        .download-pdf-btn {
+            margin-top: 20px;
+            background: var(--btn-bg);
+            color: var(--btn-color);
+        }
+
+        .download-pdf-btn:hover {
+            background: var(--btn-bg-hover);
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Subscription Plan Generator</h1>
+    <div class="glass">
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="createTab">Create Plan</button>
+            <button class="tab-btn" data-tab="plansTab">Generated Plans</button>
+        </div>
+        <div id="createTab" class="tab-content active">
+            <form id="planForm">
+                <div class="form-group">
+                    <label for="planName">Plan Name</label>
+                    <input type="text" id="planName">
+                    <div class="error-msg" id="planNameError"></div>
+                </div>
+                <div id="packagesContainer"></div>
+                <div class="error-msg" id="packagesError"></div>
+                <div class="button-group">
+                    <button type="button" id="addPackageBtn">Add Package</button>
+                    <button type="submit" id="savePlanBtn">Save Plan</button>
+                </div>
+            </form>
+        </div>
+        <div id="plansTab" class="tab-content">
+            <div id="savedPlans"></div>
+        </div>
+    </div>
+
+    <!-- Modal Preview -->
+    <div id="previewModal" class="modal-overlay">
+        <div class="modal-content" id="modalContent">
+            <button class="close-modal">&times;</button>
+            <h2 id="modalPlanName"></h2>
+            <div class="preview-packages" id="previewPackages"></div>
+            <button class="download-pdf-btn" id="downloadPdfBtn">Download PDF</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        const STORAGE_KEY = 'subscriptionPlans';
+        let packagesList = [];
+        const packagesContainer = document.getElementById('packagesContainer');
+        const savedPlansEl = document.getElementById('savedPlans');
+        const planNameInput = document.getElementById('planName');
+        const planNameError = document.getElementById('planNameError');
+        const packagesError = document.getElementById('packagesError');
+        const previewModal = document.getElementById('previewModal');
+        const modalPlanName = document.getElementById('modalPlanName');
+        const previewPackages = document.getElementById('previewPackages');
+        const closeModalBtn = document.querySelector('.close-modal');
+        const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+        const cardColors = ['#ffadad', '#ffd6a5', '#fdffb6', '#caffbf', '#9bf6ff', '#a0c4ff', '#bdb2ff', '#ffc6ff'];
+
+        // Tabs
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(btn.dataset.tab).classList.add('active');
+                if (btn.dataset.tab === 'plansTab') renderSavedPlans();
+            });
+        });
+
+        // Add Package
+        document.getElementById('addPackageBtn').addEventListener('click', () => {
+            packagesList.push({ id: Date.now(), name: '', features: [] });
+            renderPackages();
+        });
+
+        // Save Plan
+        document.getElementById('planForm').addEventListener('submit', e => {
+            e.preventDefault(); clearErrors();
+            const name = planNameInput.value.trim();
+            if (!name) { planNameError.textContent = 'Please enter a plan name.'; return; }
+            if (packagesList.length < 2) { packagesError.textContent = 'Add at least two packages.'; return; }
+            for (let pkg of packagesList) {
+                if (!pkg.name.trim()) { packagesError.textContent = 'Name all packages.'; return; }
+                if (!pkg.features.length) { packagesError.textContent = 'Each package needs ≥1 feature.'; return; }
+            }
+            const plan = { id: Date.now(), name, packages: JSON.parse(JSON.stringify(packagesList)) };
+            let plans = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            if (!Array.isArray(plans)) plans = [];
+            plans.push(plan);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(plans));
+            planNameInput.value = ''; packagesList = []; renderPackages();
+        });
+        function clearErrors() {
+            planNameError.textContent = '';
+            packagesError.textContent = '';
+        }
+
+        // Render create-tab packages
+        function renderPackages() {
+            packagesContainer.innerHTML = '';
+            packagesList.forEach(pkg => {
+                const block = document.createElement('div');
+                block.className = 'package-block';
+                // Name
+                const ng = document.createElement('div'); ng.className = 'form-group';
+                ng.innerHTML = `<label>Package Name</label><input type="text" value="${pkg.name}">`;
+                ng.querySelector('input').addEventListener('input', e => pkg.name = e.target.value);
+                block.appendChild(ng);
+                // Feature input
+                const fg = document.createElement('div'); fg.className = 'form-group';
+                fg.innerHTML = `<label>Add Feature</label>`;
+                const cont = document.createElement('div'); cont.className = 'feature-input-group';
+                const inp = document.createElement('input'); inp.type = 'text';
+                const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = 'Add';
+                btn.addEventListener('click', () => {
+                    const txt = inp.value.trim(); if (!txt) return;
+                    pkg.features.push({ id: Date.now(), text: txt });
+                    inp.value = ''; renderPackages();
+                });
+                cont.append(inp, btn); fg.appendChild(cont); block.appendChild(fg);
+                // Feature list
+                const ul = document.createElement('ul');
+                pkg.features.forEach(f => {
+                    const li = document.createElement('li'); li.className = 'feature-item';
+                    const span = document.createElement('span'); span.textContent = f.text; span.style.marginRight = '10px';
+                    const edit = document.createElement('button'); edit.className = 'icon-btn';
+                    edit.innerHTML = '<i class="fas fa-edit"></i>';
+                    edit.addEventListener('click', () => {
+                        li.innerHTML = '';
+                        const editInp = document.createElement('input'); editInp.type = 'text'; editInp.value = f.text; editInp.style.marginRight = '5px';
+                        const saveBtn = document.createElement('button'); saveBtn.textContent = 'Save'; saveBtn.style.marginRight = '5px';
+                        saveBtn.addEventListener('click', () => {
+                            const nt = editInp.value.trim(); if (nt) { f.text = nt; renderPackages(); }
+                        });
+                        const cancelBtn = document.createElement('button'); cancelBtn.textContent = 'Cancel';
+                        cancelBtn.addEventListener('click', () => renderPackages());
+                        li.append(editInp, saveBtn, cancelBtn);
+                    });
+                    const del = document.createElement('button'); del.className = 'icon-btn';
+                    del.innerHTML = '<i class="fas fa-trash-alt"></i>';
+                    del.addEventListener('click', () => {
+                        pkg.features = pkg.features.filter(x => x.id !== f.id);
+                        renderPackages();
+                    });
+                    li.append(span, edit, del);
+                    ul.appendChild(li);
+                });
+                block.appendChild(ul);
+                // Remove pkg
+                const rem = document.createElement('button'); rem.type = 'button'; rem.textContent = 'Remove Package';
+                rem.addEventListener('click', () => { packagesList = packagesList.filter(p => p.id !== pkg.id); renderPackages(); });
+                block.appendChild(rem);
+                packagesContainer.appendChild(block);
+            });
+        }
+
+        // Render saved plans
+        function renderSavedPlans() {
+            let plans = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            if (!Array.isArray(plans)) plans = [];
+            savedPlansEl.innerHTML = '';
+            plans.forEach(plan => {
+                plan.packages = plan.packages || [];
+                const div = document.createElement('div'); div.className = 'saved-plan'; div.id = 'plan-' + plan.id;
+                const title = document.createElement('h4'); title.textContent = plan.name;
+                const del = document.createElement('button'); del.className = 'delete-plan-btn';
+                del.innerHTML = '<i class="fas fa-trash-alt"></i>';
+                del.addEventListener('click', () => {
+                    plans = plans.filter(p => p.id !== plan.id);
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(plans));
+                    renderSavedPlans();
+                });
+                const preview = document.createElement('button'); preview.className = 'preview-btn'; preview.textContent = 'Preview';
+                preview.addEventListener('click', () => showPreview(plan));
+                const snippet = document.createElement('textarea'); snippet.className = 'code-snippet'; snippet.readOnly = true;
+                snippet.value = generateHTMLSnippet(plan);
+                div.append(del, preview, title, snippet);
+                savedPlansEl.appendChild(div);
+            });
+        }
+
+        // Show preview modal
+        function showPreview(plan) {
+            modalPlanName.textContent = plan.name;
+            previewPackages.innerHTML = '';
+            (plan.packages || []).forEach((pkg, i) => {
+                const card = document.createElement('div'); card.className = 'preview-card';
+                card.style.background = cardColors[i % cardColors.length];
+                const icon = document.createElement('i'); icon.className = 'fas fa-box'; card.appendChild(icon);
+                const pn = document.createElement('h4'); pn.textContent = pkg.name; card.appendChild(pn);
+                const ul = document.createElement('ul');
+                (pkg.features || []).forEach(f => {
+                    const li = document.createElement('li'); li.textContent = f.text; ul.appendChild(li);
+                });
+                card.appendChild(ul);
+                previewPackages.appendChild(card);
+            });
+            previewModal.style.display = 'flex';
+        }
+        closeModalBtn.addEventListener('click', () => previewModal.style.display = 'none');
+
+        downloadPdfBtn.addEventListener('click', () => {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF();
+            const exportContainer = document.createElement('div');
+            exportContainer.style.padding = '10px';
+
+            const styleEl = document.createElement('style');
+            styleEl.innerHTML = `
+    .export-packages {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-top: 10px;
+      margin-left: 10px
+    }
+    .export-packages .preview-card {
+      flex: 0 0 45%;
+      box-sizing: border-box;
+    }
+    .export-packages .preview-card ul {
+      margin-top: 10px;
+    }
+  `;
+            exportContainer.appendChild(styleEl);
+
+            const title = document.createElement('h3');
+            title.textContent = modalPlanName.textContent;
+            exportContainer.appendChild(title);
+
+            const packagesClone = previewPackages.cloneNode(true);
+            packagesClone.classList.add('export-packages');
+            exportContainer.appendChild(packagesClone);
+
+            pdf.html(exportContainer, {
+                callback: pdf => pdf.save(`${modalPlanName.textContent}.pdf`),
+                x: 90, y: 10,
+                html2canvas: { scale: 0.5 }
+            });
+        });
+
+        // Generate code snippet with modal CSS
+        function generateHTMLSnippet(plan) {
+            const style = `<style>
+.preview-packages{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;}
+.preview-card{border-radius:12px;padding:15px;min-width:150px;color:#333;}
+.preview-card i{font-size:1.5em;margin-bottom:10px;}
+</style>\n`;
+            let html = `<div class="subscription-plan">\n  <h3>${plan.name}</h3>\n  <div class="preview-packages">\n`;
+            (plan.packages || []).forEach((pkg, i) => {
+                html += `    <div class="preview-card">\n      <i class="fas fa-box"></i>\n      <h4>${pkg.name}</h4>\n      <ul>\n`;
+                (pkg.features || []).forEach(f => {
+                    html += `        <li>${f.text}</li>\n`;
+                });
+                html += '      </ul>\n    </div>\n';
+            });
+            html += '  </div>\n</div>';
+            return style + html;
+        }
+    </script>
+</body>
+
+</html>

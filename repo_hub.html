@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Repositories Hub</title>
+    <style>
+        /* Global Styles */
+        body {
+            background-color: #333;
+            color: #eee;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 10px;
+            /* Less margin above the title */
+            margin-bottom: 20px;
+        }
+
+        /* Centered Search and Sort Options */
+        #controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        #controls label {
+            font-weight: bold;
+        }
+
+        #controls input[type="text"],
+        #controls select {
+            padding: 5px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            background: #555;
+            color: #eee;
+        }
+
+        #controls button {
+            padding: 6px 12px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            background: black;
+            /* Search button's background is black */
+            color: #fff;
+            cursor: pointer;
+        }
+
+        #controls button:hover {
+            background: #444;
+        }
+
+        /* Layout: Cards and Graph Side by Side */
+        .content-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .cards-container {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        /* Card Wrapper with Gradient Border */
+        .card-wrapper {
+            border-radius: 8px;
+            padding: 3px;
+            /* Space for the gradient border */
+        }
+
+        /* Repo Card Content */
+        .repo-card {
+            background: #222;
+            border-radius: 5px;
+            padding: 15px;
+        }
+
+        .repo-card h3 {
+            margin-top: 0;
+            color: white;
+            /* Title in white */
+            font-size: 20px;
+        }
+
+        .repo-card p {
+            margin: 10px 0;
+        }
+
+        .repo-card h3 a {
+            color: white;
+            text-decoration: none;
+        }
+
+        .repo-card a:hover {
+            text-decoration: underline;
+        }
+
+        /* Graph Container */
+        .graph-container {
+            flex: 1;
+            max-width: 500px;
+        }
+
+        .graph-container h2 {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Repositories hub</h1>
+
+
+    <!-- Container for Cards and Graph -->
+    <div class="content-wrapper">
+        <div class="cards-section">
+            <div id="controls">
+                <label for="searchInput">Search Repositories:</label>
+                <input type="text" id="searchInput" placeholder="Enter keywords">
+                <button id="searchButton">Search</button>
+                <label for="sortSelect">Sort by:</label>
+                <select id="sortSelect">
+                    <option value="stars">Stars</option>
+                    <option value="forks">Forks</option>
+                </select>
+            </div>
+
+            <!-- Cards Container -->
+            <div class="cards-container" id="repoCards">
+                <!-- Repository cards will be injected here -->
+            </div>
+        </div>
+        <!-- Graph Container -->
+        <div class="graph-container">
+            <h2>Top 10 repositories</h2>
+            <canvas id="barChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Chart.js from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let repositories = [];
+        let chart = null;
+
+        // 16 distinct and prominent colors for the unique color of each card's gradient border.
+        const uniqueColors = [
+            "#e74c3c", "#3498db", "#2ecc71", "#9b59b6",
+            "#f1c40f", "#e67e22", "#1abc9c", "#ff1493",
+            "#00ced1", "#ff4500", "#7fff00", "#00bfff",
+            "#ff6347", "#dda0dd", "#40e0d0", "#ff69b4"
+        ];
+
+        // Get DOM elements
+        const searchButton = document.getElementById("searchButton");
+        const searchInput = document.getElementById("searchInput");
+        const sortSelect = document.getElementById("sortSelect");
+        const repoCardsContainer = document.getElementById("repoCards");
+
+        // Event Listeners
+        searchButton.addEventListener("click", fetchRepos);
+        sortSelect.addEventListener("change", () => {
+            displayRepos();
+            updateChart();
+        });
+
+        // Fetch repositories using the GitHub API.
+        // If no keyword is provided, fetch JavaScript repositories sorted by stars.
+        async function fetchRepos() {
+            let query = searchInput.value.trim();
+            if (!query) {
+                query = "language:JavaScript";
+            }
+            const url = `https://api.github.com/search/repositories?q=${encodeURIComponent(query)}&sort=stars`;
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error("Unable to fetch repositories. Try again later.");
+                }
+                const data = await response.json();
+                repositories = data.items;
+                displayRepos();
+                updateChart();
+            } catch (error) {
+                alert("Error: " + error.message);
+                repoCardsContainer.innerHTML = "";
+                if (chart) {
+                    chart.destroy();
+                    chart = null;
+                }
+            }
+        }
+
+        // Display repositories as cards with a gradient border.
+        // Repositories are sorted based on the selected criteria and limited to 16 cards.
+        function displayRepos() {
+            let sortedRepos = [...repositories];
+            const sortCriteria = sortSelect.value;
+            if (sortCriteria === "stars") {
+                sortedRepos.sort((a, b) => b.stargazers_count - a.stargazers_count);
+            } else if (sortCriteria === "forks") {
+                sortedRepos.sort((a, b) => b.forks_count - a.forks_count);
+            }
+            // Limit to 16 repositories
+            sortedRepos = sortedRepos.slice(0, 16);
+            let cardsHtml = "";
+            sortedRepos.forEach((repo, index) => {
+                const uniqueColor = uniqueColors[index % uniqueColors.length];
+                // Create a gradient with wider darkgrey portions at the edges.
+                const gradientStyle = `linear-gradient(to bottom right, darkgrey 0%, darkgrey 30%, ${uniqueColor} 50%, darkgrey 70%, darkgrey 100%)`;
+                cardsHtml += `
+            <div class="repo-card" style="
+            background: ${gradientStyle};
+            border: 4px solid;
+            border-image: linear-gradient(to bottom right, darkgrey 0%, darkgrey 5%, ${uniqueColor} 50%, darkgrey 95%, darkgrey 100%) 1;
+            padding: 15px;
+            ">
+    <h3><a href="${repo.html_url}" target="_blank">${repo.name}</a></h3>
+    <p>${repo.description || "No description provided."}</p>
+    <p>⭐ ${repo.stargazers_count} | 🍴 ${repo.forks_count} | ${repo.language || "N/A"}</p>
+  </div>
+`;
+
+            });
+            repoCardsContainer.innerHTML = cardsHtml;
+        }
+
+        // Update the bar chart to display the top 10 repositories by star count.
+        function updateChart() {
+            const topRepos = [...repositories]
+                .sort((a, b) => b.stargazers_count - a.stargazers_count)
+                .slice(0, 10);
+            const labels = topRepos.map(repo => repo.name);
+            const data = topRepos.map(repo => repo.stargazers_count);
+            const ctx = document.getElementById("barChart").getContext("2d");
+
+            if (chart) {
+                chart.destroy();
+            }
+            chart = new Chart(ctx, {
+                type: "bar",
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Stars',
+                        data: data,
+                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1,
+                                color: "#eee"
+                            },
+                            title: {
+                                display: true,
+                                text: 'Star Count',
+                                color: "#eee"
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: "#eee"
+                            },
+                            title: {
+                                display: true,
+                                text: 'Repository',
+                                color: "#eee"
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: "#eee"
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Fetch the default repositories on page load.
+        window.addEventListener("load", fetchRepos);
+    </script>
+</body>
+
+</html>

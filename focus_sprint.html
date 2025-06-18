@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Productivity Tool</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      /* Darker mixture of brown and green using a gradient */
+      background: linear-gradient(to bottom right, #b5651d, #99cc66);
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      background-color: white;
+      width: 40%;
+      margin: 20px auto;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      border-radius: 8px;
+    }
+
+    /* Gradient text for main heading (dark green to yellow) */
+    h1 {
+      background: linear-gradient(to right, #006400, #ffff00);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    h2 {
+      margin-bottom: 10px;
+    }
+
+    .task-list-section {
+      margin-bottom: 20px;
+    }
+
+    .task-input {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .task-input input {
+      flex: 1;
+      padding: 8px;
+      font-size: 16px;
+      border-radius: 20px; /* Round edges for input bar */
+      border: 1px solid #ccc;
+      outline: none;
+      /* Box shadow for input bar */
+      box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    }
+
+    .task-input button {
+      padding: 8px 16px;
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+      border-radius: 20px; /* Round edges for button */
+      color: #fff;
+      /* Dark and light green gradient */
+      background: linear-gradient(to right, #006400, #32CD32);
+    }
+
+    /* Hover state: only dark green with a gradient effect */
+    .task-input button:hover {
+      background: linear-gradient(to right, #006400, #006400);
+    }
+
+    /* Task Card */
+    #taskList {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .task-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 6px;
+      padding: 10px;
+      /* Lightest blue with a box shadow */
+      background-color: #e0f7fa;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .task-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .task-checkbox {
+      width: 20px;
+      height: 20px;
+      appearance: none;
+      border: 2px solid darkgreen;
+      border-radius: 50%;
+      cursor: pointer;
+      outline: none;
+      /* Same green color as checked state */
+      background-color: lightgreen;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: 60% 60%;
+    }
+
+    /* When checked, show white check */
+    .task-checkbox:checked {
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg fill='none' stroke='%23FFFFFF' stroke-width='3' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 6L9 17l-5-5'/%3E%3C/svg%3E");
+    }
+
+    /* Strike out text when checkbox is checked */
+    .task-checkbox:checked + .task-text {
+      text-decoration: line-through;
+    }
+
+    .task-text {
+      font-size: 16px;
+    }
+
+    .task-right {
+      display: flex;
+      gap: 10px;
+    }
+
+    /* Remove default fill from .icon and let specific classes handle color */
+    .icon {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+
+    /* Separate classes for edit and delete icons */
+    .edit-icon .icon {
+      fill: orange;
+    }
+    .delete-icon .icon {
+      fill: red;
+    }
+
+    /* Hidden edit input */
+    .edit-input {
+      display: none;
+      font-size: 16px;
+      padding: 2px 4px;
+      width: 150px;
+    }
+
+    /* Timer Section */
+    .timer-section {
+      text-align: center;
+    }
+
+    .timer-section h3 {
+      margin: 10px 0;
+    }
+
+    #timerDisplay {
+      font-size: 48px;
+      font-weight: bold;
+      margin: 20px 0;
+    }
+
+    .timer-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .timer-buttons button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+      border-radius: 20px; /* Round edges for timer buttons */
+      color: #fff;
+      /* Dark and light green gradient */
+      background: linear-gradient(to right, #006400, #32CD32);
+    }
+
+    /* Hover state for timer buttons: only dark green with a gradient effect */
+    .timer-buttons button:hover {
+      background: linear-gradient(to right, #006400, #006400);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Productivity Tool</h1>
+
+    <!-- Task List Section -->
+    <div class="task-list-section">
+      <h2>Task List</h2>
+      <div class="task-input">
+        <input type="text" id="taskInput" placeholder="Enter a task" />
+        <button id="addTaskBtn" onclick="addTask()">Add task</button>
+      </div>
+      <div id="taskList"></div>
+    </div>
+
+    <!-- Timer Section -->
+    <div class="timer-section">
+      <h3>Pomodoro Timer</h3>
+      <h3>Focus</h3>
+      <div id="timerDisplay">25:00</div>
+      <div class="timer-buttons">
+        <button id="startBtn">Start</button>
+        <button id="resetBtn">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // References
+    const taskInput = document.getElementById("taskInput");
+    const taskList = document.getElementById("taskList");
+    const startBtn = document.getElementById("startBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const timerDisplay = document.getElementById("timerDisplay");
+
+    // Pomodoro Timer variables
+    let timeLeft = 25 * 60; // 25 minutes in seconds
+    let timerInterval = null;
+    let isRunning = false;
+
+    // Update the display initially
+    updateTimerDisplay(timeLeft);
+
+    // Start/Pause button logic
+    startBtn.addEventListener("click", () => {
+      if (!isRunning) {
+        // Start the timer
+        isRunning = true;
+        startBtn.textContent = "Pause";
+        timerInterval = setInterval(() => {
+          timeLeft--;
+          updateTimerDisplay(timeLeft);
+
+          if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            isRunning = false;
+            startBtn.textContent = "Start";
+            alert("Time's up!");
+          }
+        }, 1000);
+      } else {
+        // Pause the timer
+        isRunning = false;
+        startBtn.textContent = "Start";
+        clearInterval(timerInterval);
+      }
+    });
+
+    // Reset button
+    resetBtn.addEventListener("click", () => {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      isRunning = false;
+      timeLeft = 25 * 60;
+      updateTimerDisplay(timeLeft);
+      startBtn.textContent = "Start";
+    });
+
+    // Function to update timer display
+    function updateTimerDisplay(time) {
+      const minutes = Math.floor(time / 60);
+      const seconds = time % 60;
+      timerDisplay.textContent = `${padZero(minutes)}:${padZero(seconds)}`;
+    }
+
+    function padZero(num) {
+      return num < 10 ? "0" + num : num;
+    }
+
+    // Function to add a task
+    function addTask() {
+      const taskValue = taskInput.value.trim();
+      if (!taskValue) return;
+
+      // Create task card
+      const taskCard = document.createElement("div");
+      taskCard.className = "task-card";
+
+      // Left side (checkbox + text + edit input)
+      const taskLeft = document.createElement("div");
+      taskLeft.className = "task-left";
+
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.className = "task-checkbox";
+
+      const taskText = document.createElement("span");
+      taskText.className = "task-text";
+      taskText.textContent = taskValue;
+
+      // Hidden edit input
+      const editInput = document.createElement("input");
+      editInput.type = "text";
+      editInput.className = "edit-input";
+
+      taskLeft.appendChild(checkbox);
+      taskLeft.appendChild(taskText);
+      taskLeft.appendChild(editInput);
+
+      // Right side (edit + delete icons)
+      const taskRight = document.createElement("div");
+      taskRight.className = "task-right";
+
+      // Pencil (edit) icon
+      const editIcon = document.createElement("span");
+      editIcon.classList.add("edit-icon"); // add class for orange fill
+      const pencilIconSVG = `
+        <svg class="icon" viewBox="0 0 16 16">
+          <path d="M12.146.146a.5.5 0 0 1 .708 0l3 
+            3a.5.5 0 0 1 0 .708l-8.5 8.5-3.793.939a.25.25 
+            0 0 1-.303-.303l.939-3.793 8.5-8.5zM11.207 
+            2L3 10.207V11h.793L12 3.793 11.207 2zM2 
+            12.5V14h1.5a.5.5 0 0 0 
+            .491-.408L4.5 13.5H3v-1.5a.5.5 0 0 0-.5-.5h-.592a.5.5 
+            0 0 0-.408.491z"/>
+        </svg>
+      `;
+      // Tick icon
+      const tickIconSVG = `
+        <svg class="icon" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M13.485.515a1.75 1.75 0 0 1 
+            2.475 2.475l-8.75 8.75a1.75 1.75 0 0 1-2.475 
+            0l-3.75-3.75a1.75 1.75 0 0 1 2.475-2.475L5.5 
+            7.025l7.985-7.985z"/>
+        </svg>
+      `;
+
+      editIcon.innerHTML = pencilIconSVG;
+
+      // Delete icon
+      const deleteIcon = document.createElement("span");
+      deleteIcon.classList.add("delete-icon"); // add class for red fill
+      deleteIcon.innerHTML = `
+        <svg class="icon" viewBox="0 0 16 16">
+          <path d="M5.5 5.5a.5.5 0 0 1 
+            .5.5v6a.5.5 0 0 1-1 0v-6a.5.5 0 0 
+            1 .5-.5zm3 0a.5.5 0 0 1 
+            .5.5v6a.5.5 0 0 1-1 0v-6a.5.5 0 0 
+            1 .5-.5z"/>
+          <path fill-rule="evenodd" d="M14.5 
+            3a1 1 0 0 1-1 1H13l-.001 
+            9.5a2.5 2.5 0 0 1-2.5 
+            2.5h-5a2.5 2.5 0 0 
+            1-2.5-2.5L3 4H2.5a1 
+            1 0 0 1 0-2h3a1 
+            1 0 0 1 1-1h3a1 
+            1 0 0 1 1 1h3a1 
+            1 0 0 1 1 1zM4 
+            4l.001 9.5a1.5 
+            1.5 0 0 0 1.5 
+            1.5h5a1.5 1.5 0 0 0 
+            1.5-1.5L12 4H4z"/>
+        </svg>
+      `;
+
+      // Edit icon logic
+      let isEditing = false;
+      editIcon.onclick = () => {
+        if (!isEditing) {
+          // Switch to editing mode
+          isEditing = true;
+          editInput.value = taskText.textContent;
+          taskText.style.display = "none";
+          editInput.style.display = "inline-block";
+          editIcon.innerHTML = tickIconSVG;
+        } else {
+          // Finalize editing
+          isEditing = false;
+          taskText.textContent = editInput.value;
+          taskText.style.display = "inline";
+          editInput.style.display = "none";
+          editIcon.innerHTML = pencilIconSVG;
+        }
+      };
+
+      // Delete icon logic
+      deleteIcon.onclick = () => {
+        taskCard.remove();
+      };
+
+      taskRight.appendChild(editIcon);
+      taskRight.appendChild(deleteIcon);
+
+      taskCard.appendChild(taskLeft);
+      taskCard.appendChild(taskRight);
+
+      // Append to the task list
+      taskList.appendChild(taskCard);
+
+      // Clear input
+      taskInput.value = "";
+    }
+  </script>
+</body>
+</html>

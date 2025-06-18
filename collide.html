@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Collide</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to bottom, #ffffff, #add8e6);
+    }
+    
+    /* Main menu styling */
+    #menu {
+      width: 600px;
+      margin: auto;
+      background-color: transparent;
+      padding: 20px;
+      text-align: center;
+      position: relative;
+      z-index: 10;
+    }
+    
+    #menu h2 {
+      margin-top: 120px;
+      font-size: 40px;
+      color: #007BFF;
+      transition: all 0.3s ease;
+    }
+    
+    #menu h2:hover {
+      transform: scale(1.05);
+      color: #0056b3;
+    }
+    
+    .player-inputs {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+    }
+    
+    .player-card {
+      background-color: transparent;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 119, 255, 0.2);
+      padding: 15px;
+      width: 100%;
+      box-sizing: border-box;
+      transition: all 0.3s ease;
+    }
+    
+    .player-card:hover {
+      box-shadow: 0 6px 20px rgba(0, 119, 255, 0.3);
+      transform: translateY(-5px);
+    }
+    
+    .player-card h3 {
+      margin-top: 0;
+      color: #333;
+    }
+    
+    .player-card input[type="text"] {
+      width: 90%;
+      padding: 8px;
+      font-size: 16px;
+      margin-bottom: 10px;
+      border-radius: 24px;
+      border: 1px solid #ccc;
+    }
+    
+    .color-options {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+    
+    .color-circle {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      box-sizing: border-box;
+      transition: transform 0.2s ease;
+    }
+    
+    .color-circle:hover {
+      transform: scale(1.1);
+    }
+    
+    .color-circle.selected {
+      border: 2px solid black;
+    }
+    
+    .color-circle.disabled {
+      opacity: 0.3;
+      pointer-events: none;
+    }
+    
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 24px;
+      border: none;
+      background-color: #007BFF;
+      color: white;
+      transition: all 0.3s ease;
+    }
+    
+    button:hover {
+      transform: scale(1.05);
+      background-color: #0056b3;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* Canvas styling */
+    #gameCanvas {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      background-color: white;
+    }
+    
+    /* Result screen styling */
+    #resultScreen {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: transparent;
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      z-index: 100;
+      width: 90%;
+      max-width: 800px;
+    }
+    
+    #resultScreen h2 {
+      margin-top: 0;
+      color: #007BFF;
+      font-size: 32px;
+      transition: all 0.3s ease;
+    }
+    
+    #resultScreen h2:hover {
+      transform: scale(1.05);
+      color: #0056b3;
+    }
+    
+    /* Stats container - now properly horizontal */
+    #stats {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      margin: 10px 0;
+    }
+    .stat-card {
+      background-color: transparent;
+      border-radius: 12px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      padding: 10px;
+      width: 40%;
+      height: 50px;
+      box-sizing: border-box;
+    }
+    
+    .stat-card:hover {
+      box-shadow: 0 6px 20px rgba(0, 119, 255, 0.3);
+      transform: translateY(-5px);
+    }
+    
+    /* Global styles */
+    input[type="text"], button {
+      border-radius: 24px;
+      transition: transform 0.2s ease;
+    }
+</style>
+</head>
+<body>
+  <!-- Main menu for entering player details -->
+  <div id="menu">
+    <h2>Collide</h2>
+    <div class="player-inputs">
+      <!-- Player 1 Card -->
+      <div class="player-card" id="player1Section">
+        <h3>Player 1</h3>
+        <input type="text" id="player1Name" placeholder="Player 1 Name">
+        <div class="color-options" id="player1Colors">
+          <div class="color-circle" data-color="#ff0000" style="background-color: #ff0000;"></div>
+          <div class="color-circle" data-color="#0000ff" style="background-color: #0000ff;"></div>
+          <div class="color-circle" data-color="#00ff00" style="background-color: #00ff00;"></div>
+          <div class="color-circle" data-color="#ffff00" style="background-color: #ffff00;"></div>
+          <div class="color-circle" data-color="#800080" style="background-color: #800080;"></div>
+        </div>
+      </div>
+      <!-- Player 2 Card -->
+      <div class="player-card" id="player2Section">
+        <h3>Player 2</h3>
+        <input type="text" id="player2Name" placeholder="Player 2 Name">
+        <div class="color-options" id="player2Colors">
+          <div class="color-circle" data-color="#ff0000" style="background-color: #ff0000;"></div>
+          <div class="color-circle" data-color="#0000ff" style="background-color: #0000ff;"></div>
+          <div class="color-circle" data-color="#00ff00" style="background-color: #00ff00;"></div>
+          <div class="color-circle" data-color="#ffff00" style="background-color: #ffff00;"></div>
+          <div class="color-circle" data-color="#800080" style="background-color: #800080;"></div>
+        </div>
+      </div>
+    </div>
+    <br>
+    <button id="startButton">Start Game</button>
+  </div>
+  
+  <!-- Game canvas -->
+  <canvas id="gameCanvas"></canvas>
+  
+  <!-- Result screen -->
+  <div id="resultScreen">
+    <h2>Winner: <span id="winnerName"></span></h2>
+    <div id="stats">
+      <div class="stat-card" id="player1Stats"></div>
+      <div class="stat-card" id="player2Stats"></div>
+    </div>
+    <br>
+    <button id="restartButton">Restart Game</button>
+  </div>
+  
+  <script>
+    // Global variables for color selections
+    let selectedColor1 = null;
+    let selectedColor2 = null;
+    
+    // Setup color selection for Player 1
+    const player1Circles = document.querySelectorAll("#player1Colors .color-circle");
+    const player2Circles = document.querySelectorAll("#player2Colors .color-circle");
+    
+    player1Circles.forEach(circle => {
+      circle.addEventListener("click", function() {
+        // Remove selection from all Player 1 circles
+        player1Circles.forEach(c => c.classList.remove("selected"));
+        this.classList.add("selected");
+        selectedColor1 = this.getAttribute("data-color");
+        // Disable the same color in Player 2's options
+        player2Circles.forEach(c => {
+          if (c.getAttribute("data-color") === selectedColor1) {
+            c.classList.add("disabled");
+            if (c.classList.contains("selected")) {
+              c.classList.remove("selected");
+              selectedColor2 = null;
+            }
+          } else {
+            c.classList.remove("disabled");
+          }
+        });
+      });
+    });
+    
+    // Setup color selection for Player 2
+    player2Circles.forEach(circle => {
+      circle.addEventListener("click", function() {
+        if (this.classList.contains("disabled")) return;
+        player2Circles.forEach(c => c.classList.remove("selected"));
+        this.classList.add("selected");
+        selectedColor2 = this.getAttribute("data-color");
+      });
+    });
+    
+    // Get DOM elements for game screens
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const menu = document.getElementById("menu");
+    const startButton = document.getElementById("startButton");
+    const resultScreen = document.getElementById("resultScreen");
+    const winnerNameEl = document.getElementById("winnerName");
+    const player1StatsEl = document.getElementById("player1Stats");
+    const player2StatsEl = document.getElementById("player2Stats");
+    const restartButton = document.getElementById("restartButton");
+    
+    let gameRunning = false;
+    let gameOver = false;
+    let lastTime = null; // for tracking delta time
+    
+    // Resize canvas to full screen
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    
+    // Helper function: choose contrasting text color based on background hex
+    function getContrastColor(hexcolor) {
+      hexcolor = hexcolor.replace("#", "");
+      var r = parseInt(hexcolor.substr(0,2), 16);
+      var g = parseInt(hexcolor.substr(2,2), 16);
+      var b = parseInt(hexcolor.substr(4,2), 16);
+      var luminance = (0.299 * r + 0.587 * g + 0.114 * b);
+      return luminance > 186 ? "black" : "white";
+    }
+    
+    // Player class with boost and stats tracking
+    class Player {
+      constructor(name, color, x, y) {
+        this.name = name;
+        this.color = color;
+        this.x = x;
+        this.y = y;
+        this.radius = 15; // starting radius
+        this.normalSpeed = 2;
+        this.speed = this.normalSpeed;
+        this.vx = 0;
+        this.vy = 0;
+        this.ballsEaten = 0;
+        this.movementTime = 0;
+        this.restTime = 0;
+        // Boost properties
+        this.boostActive = false;
+        this.boostTimer = 0;
+        this.timeSinceLastBoost = 0;
+      }
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        ctx.closePath();
+        // Draw player's name centered on the ball
+        ctx.font = "bold " + Math.max(10, this.radius / 2) + "px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = getContrastColor(this.color);
+        ctx.fillText(this.name, this.x, this.y);
+      }
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        if (this.x - this.radius < 0) this.x = this.radius;
+        if (this.x + this.radius > canvas.width) this.x = canvas.width - this.radius;
+        if (this.y - this.radius < 0) this.y = this.radius;
+        if (this.y + this.radius > canvas.height) this.y = canvas.height - this.radius;
+      }
+    }
+    
+    // SmallBall class (the balls to be eaten)
+    class SmallBall {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.radius = 5;
+        this.color = randomColor();
+      }
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        ctx.closePath();
+      }
+    }
+    
+    // Generate a random RGB color for small balls
+    function randomColor() {
+      const r = Math.floor(Math.random() * 256);
+      const g = Math.floor(Math.random() * 256);
+      const b = Math.floor(Math.random() * 256);
+      return "rgb(" + r + "," + g + "," + b + ")";
+    }
+    
+    let player1, player2;
+    let smallBalls = [];
+    const numSmallBalls = 30;
+    
+    // Key tracking
+    const keys = {};
+    window.addEventListener("keydown", (e) => { keys[e.key] = true; });
+    window.addEventListener("keyup", (e) => { keys[e.key] = false; });
+    
+    // Draw a grid of thin blue-bordered squares
+    function drawGrid() {
+      const cellSize = 50;
+      ctx.strokeStyle = "blue";
+      ctx.lineWidth = 0.5;
+      for (let x = 0; x < canvas.width; x += cellSize) {
+        for (let y = 0; y < canvas.height; y += cellSize) {
+          ctx.strokeRect(x, y, cellSize, cellSize);
+        }
+      }
+    }
+    
+    // Initialize the game when Start is pressed
+    function initGame() {
+      if (!selectedColor1) {
+        const firstCircle = document.querySelector("#player1Colors .color-circle");
+        firstCircle.classList.add("selected");
+        selectedColor1 = firstCircle.getAttribute("data-color");
+        player2Circles.forEach(c => {
+          if (c.getAttribute("data-color") === selectedColor1) {
+            c.classList.add("disabled");
+          }
+        });
+      }
+      if (!selectedColor2) {
+        for (let c of player2Circles) {
+          if (!c.classList.contains("disabled")) {
+            c.classList.add("selected");
+            selectedColor2 = c.getAttribute("data-color");
+            break;
+          }
+        }
+        if (!selectedColor2) {
+          selectedColor2 = "#0000ff";
+        }
+      }
+      resizeCanvas();
+      menu.style.display = "none";
+      resultScreen.style.display = "none";
+      canvas.style.display = "block";
+      
+      const p1Name = document.getElementById("player1Name").value || "Player 1";
+      const p2Name = document.getElementById("player2Name").value || "Player 2";
+      
+      player1 = new Player(p1Name, selectedColor1, canvas.width / 4, canvas.height / 2);
+      player2 = new Player(p2Name, selectedColor2, canvas.width * 3 / 4, canvas.height / 2);
+      
+      smallBalls = [];
+      for (let i = 0; i < numSmallBalls; i++) {
+        let x = Math.random() * (canvas.width - 10) + 5;
+        let y = Math.random() * (canvas.height - 10) + 5;
+        smallBalls.push(new SmallBall(x, y));
+      }
+      
+      gameRunning = true;
+      gameOver = false;
+      lastTime = null;
+      
+      requestAnimationFrame(gameLoop);
+    }
+    
+    // Check if two circular objects are colliding
+    function isColliding(obj1, obj2) {
+      const dx = obj1.x - obj2.x;
+      const dy = obj1.y - obj2.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      return distance < (obj1.radius + obj2.radius);
+    }
+    
+    // Update game state with delta time; also handles boost activation
+    function updateGame(delta) {
+      // Check boost keys (Player 1: X key; Player 2: M key)
+      if ((keys["x"] || keys["X"]) && !player1.boostActive && player1.timeSinceLastBoost >= 5) {
+        player1.boostActive = true;
+        player1.boostTimer = 1; // boost lasts 1 second
+        player1.speed = 4;      // boosted speed value
+        player1.timeSinceLastBoost = 0;
+        keys["x"] = false;
+      }
+      if ((keys["m"] || keys["M"]) && !player2.boostActive && player2.timeSinceLastBoost >= 5) {
+        player2.boostActive = true;
+        player2.boostTimer = 1;
+        player2.speed = 4;
+        player2.timeSinceLastBoost = 0;
+        keys["m"] = false;
+      }
+      
+      // Update boost timers and cooldowns for each player
+      if (player1.boostActive) {
+        player1.boostTimer -= delta;
+        if (player1.boostTimer <= 0) {
+          player1.boostActive = false;
+          player1.speed = player1.normalSpeed;
+        }
+      } else {
+        player1.timeSinceLastBoost += delta;
+      }
+      if (player2.boostActive) {
+        player2.boostTimer -= delta;
+        if (player2.boostTimer <= 0) {
+          player2.boostActive = false;
+          player2.speed = player2.normalSpeed;
+        }
+      } else {
+        player2.timeSinceLastBoost += delta;
+      }
+      
+      // Set movement velocities (using the possibly boosted speed values)
+      player1.vx = 0;
+      player1.vy = 0;
+      if (keys["w"] || keys["W"]) { player1.vy = -player1.speed; }
+      if (keys["s"] || keys["S"]) { player1.vy = player1.speed; }
+      if (keys["a"] || keys["A"]) { player1.vx = -player1.speed; }
+      if (keys["d"] || keys["D"]) { player1.vx = player1.speed; }
+      
+      player2.vx = 0;
+      player2.vy = 0;
+      if (keys["ArrowUp"]) { player2.vy = -player2.speed; }
+      if (keys["ArrowDown"]) { player2.vy = player2.speed; }
+      if (keys["ArrowLeft"]) { player2.vx = -player2.speed; }
+      if (keys["ArrowRight"]) { player2.vx = player2.speed; }
+      
+      player1.update();
+      player2.update();
+      
+      // Check collisions between players and small balls
+      for (let i = 0; i < smallBalls.length; i++) {
+        let ball = smallBalls[i];
+        if (isColliding(player1, ball)) {
+          player1.radius += 1;
+          player1.ballsEaten++;
+          smallBalls.splice(i, 1);
+          i--;
+          spawnSmallBall();
+          continue;
+        }
+        if (isColliding(player2, ball)) {
+          player2.radius += 1;
+          player2.ballsEaten++;
+          smallBalls.splice(i, 1);
+          i--;
+          spawnSmallBall();
+          continue;
+        }
+      }
+      
+      // Check collision between players.
+      // If sizes differ, declare the larger ball's owner as the winner.
+      if (isColliding(player1, player2)) {
+        if (player1.radius > player2.radius) {
+          endGame(player1);
+        } else if (player2.radius > player1.radius) {
+          endGame(player2);
+        }
+      }
+    }
+    
+    // Spawn a new small ball at a random location
+    function spawnSmallBall() {
+      let x = Math.random() * (canvas.width - 10) + 5;
+      let y = Math.random() * (canvas.height - 10) + 5;
+      smallBalls.push(new SmallBall(x, y));
+    }
+    
+    // Draw all game elements
+    function drawGame() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      drawGrid();
+      smallBalls.forEach(ball => ball.draw());
+      player1.draw();
+      player2.draw();
+    }
+    
+    // Main game loop with delta time tracking and stats updates
+    function gameLoop(timestamp) {
+      if (!lastTime) lastTime = timestamp;
+      const delta = (timestamp - lastTime) / 1000; // seconds
+      lastTime = timestamp;
+      
+      if (!gameRunning) return;
+      updateGame(delta);
+      
+      // Update movement/rest time stats for each player
+      if (player1.vx !== 0 || player1.vy !== 0) {
+        player1.movementTime += delta;
+      } else {
+        player1.restTime += delta;
+      }
+      if (player2.vx !== 0 || player2.vy !== 0) {
+        player2.movementTime += delta;
+      } else {
+        player2.restTime += delta;
+      }
+      
+      drawGame();
+      if (!gameOver) {
+        requestAnimationFrame(gameLoop);
+      }
+    }
+    
+    // End game: hide the canvas and show the result screen with stats
+    function endGame(winner) {
+      gameOver = true;
+      gameRunning = false;
+      canvas.style.display = "none";
+      winnerNameEl.textContent = winner.name;
+      player1StatsEl.textContent =
+        player1.name + " - Balls Eaten: " + player1.ballsEaten +
+        ", Movement Time: " + player1.movementTime.toFixed(2) + "s" +
+        ", Rest Time: " + player1.restTime.toFixed(2) + "s";
+      player2StatsEl.textContent =
+        player2.name + " - Balls Eaten: " + player2.ballsEaten +
+        ", Movement Time: " + player2.movementTime.toFixed(2) + "s" +
+        ", Rest Time: " + player2.restTime.toFixed(2) + "s";
+      resultScreen.style.display = "block";
+    }
+    
+    // Restart the game: return to the main menu
+    restartButton.addEventListener("click", function() {
+      resultScreen.style.display = "none";
+      menu.style.display = "block";
+      canvas.style.display = "none";
+      gameRunning = false;
+      gameOver = false;
+      lastTime = null;
+    });
+    
+    startButton.addEventListener("click", initGame);
+    
+    // Adjust canvas size on window resize if the game is running
+    window.addEventListener("resize", () => {
+      if (gameRunning) {
+        resizeCanvas();
+      }
+    });
+  </script>
+</body>
+</html>

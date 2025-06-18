@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Enhanced Habit Tracker</title>
+  <!-- Include Chart.js from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* Global Styles */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+    }
+    header {
+      background: linear-gradient(to right, #006400, #90EE90);
+      color: #fff;
+      text-align: center;
+      padding: 20px;
+      font-size: 2em;
+      font-weight: bold;
+    }
+    /* White container in the middle */
+    .main-container {
+      max-width: 800px;
+      margin: 30px auto;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      padding: 20px;
+    }
+    /* Section headings in white container */
+    .main-container h2 {
+      margin-top: 0;
+      color: #006400;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 5px;
+      margin-bottom: 10px;
+    }
+    .section {
+      margin-bottom: 30px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #ddd;
+    }
+    .section:last-child {
+      border-bottom: none;
+    }
+    input[type="text"],
+    input[type="date"] {
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1em;
+    }
+    /* Habit input container: full-width input with button on same line */
+    .add-habit-container {
+      display: flex;
+      align-items: center;
+      margin-top: 10px;
+    }
+    .add-habit-container input[type="text"] {
+      flex: 1;
+      margin-right: 10px;
+    }
+    button {
+      padding: 8px 12px;
+      background-color: #4CAF50;
+      border: none;
+      border-radius: 4px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 1em;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    /* Daily Tracker habit cards */
+    .habit-cards {
+      margin-top: 15px;
+    }
+    .habit-card {
+      background-color: #f9f9f9;
+      border: 1px solid #d3d3d3;
+      border-radius: 5px;
+      padding: 10px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .habit-card input[type="checkbox"] {
+      margin-right: 10px;
+    }
+    .habit-card label {
+      flex-grow: 1;
+    }
+    .delete-icon {
+      color: #d3d3d3;
+      font-weight: bold;
+      cursor: pointer;
+      margin-left: 10px;
+      user-select: none;
+    }
+    /* Summary section styles */
+    .summary-controls {
+      margin-bottom: 10px;
+    }
+    .summary-controls label {
+      margin-right: 10px;
+    }
+    /* Chart container */
+    #dotChart {
+      max-width: 100%;
+      height: 400px;
+      border: 1px solid #ccc; /* Light grey outline */
+    }
+  </style>
+</head>
+<body>
+  <!-- Header with gradient background -->
+  <header>
+    Enhanced Habit Tracker
+  </header>
+
+  <!-- White container that holds all three sections -->
+  <div class="main-container">
+    <!-- Section 1: Add Habit -->
+    <div class="section" id="addHabitSection">
+      <h2>Add a New Habit</h2>
+      <div class="add-habit-container">
+        <input type="text" id="newHabitInput" placeholder="Enter habit name" />
+        <button id="addHabitButton">Add Habit</button>
+      </div>
+    </div>
+
+    <!-- Section 2: Daily Tracker -->
+    <div class="section" id="dailyTrackerSection">
+      <h2>Daily Tracker</h2>
+      <!-- Date and Save button on the same line -->
+      <div style="display: flex; align-items: center;">
+        <label for="dateInput">Select Date:</label>
+        <input type="date" id="dateInput" style="margin: 0 10px;" />
+        <button id="saveButton">Save</button>
+      </div>
+      <!-- Habit cards will be rendered here -->
+      <div id="habitCards" class="habit-cards"></div>
+    </div>
+
+    <!-- Section 3: Summary -->
+    <div class="section" id="summarySection">
+      <h2>Summary</h2>
+      <!-- Controls for summary view -->
+      <div class="summary-controls">
+        <label for="timeScaleSelect">Select time scale:</label>
+        <select id="timeScaleSelect">
+          <option value="monthly" selected>Monthly</option>
+          <option value="weekly">Weekly</option>
+        </select>
+      </div>
+      <canvas id="dotChart"></canvas>
+    </div>
+  </div>
+
+  <script>
+    // Global data structures
+    let defaultHabits = ["reading books", "music lessons", "yoga", "cooking"];
+    let habits = [...defaultHabits]; // All habits (default + added)
+    let records = {}; // records[date] = { habitName: boolean, ... }
+    let dotChart = null; // Global Chart.js instance
+
+    // --- Local Storage Functions ---
+    function saveToLocalStorage() {
+      localStorage.setItem("habitTrackerHabits", JSON.stringify(habits));
+      localStorage.setItem("habitTrackerRecords", JSON.stringify(records));
+    }
+    function loadFromLocalStorage() {
+      const storedHabits = localStorage.getItem("habitTrackerHabits");
+      const storedRecords = localStorage.getItem("habitTrackerRecords");
+      if (storedHabits) {
+        habits = JSON.parse(storedHabits);
+      }
+      if (storedRecords) {
+        records = JSON.parse(storedRecords);
+      }
+    }
+    loadFromLocalStorage();
+
+    // Helper: Get today's date in YYYY-MM-DD format
+    function getToday() {
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, "0");
+      const dd = String(today.getDate()).padStart(2, "0");
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
+    // Set the date input to today's date if not already set
+    const dateInput = document.getElementById("dateInput");
+    if (!dateInput.value) {
+      dateInput.value = getToday();
+    }
+
+    // Render the habit cards in the Daily Tracker section
+    function renderHabitCards() {
+      const container = document.getElementById("habitCards");
+      container.innerHTML = ""; // Clear previous content
+      const currentDate = dateInput.value;
+      // Get (or initialize) the record for the current date
+      let record = records[currentDate] || {};
+      habits.forEach((habit) => {
+        // Ensure each habit has a value in the record
+        if (!(habit in record)) {
+          record[habit] = false;
+        }
+        // Create the card element
+        const card = document.createElement("div");
+        card.className = "habit-card";
+
+        // Left side: Checkbox and label
+        const leftDiv = document.createElement("div");
+        leftDiv.style.display = "flex";
+        leftDiv.style.alignItems = "center";
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.id = "checkbox_" + habit;
+        checkbox.checked = record[habit];
+        leftDiv.appendChild(checkbox);
+        const label = document.createElement("label");
+        label.htmlFor = "checkbox_" + habit;
+        label.textContent = habit;
+        leftDiv.appendChild(label);
+        card.appendChild(leftDiv);
+
+        // Right side: Delete icon (×)
+        const deleteIcon = document.createElement("span");
+        deleteIcon.className = "delete-icon";
+        deleteIcon.textContent = "\u00D7"; // Unicode multiplication sign
+        deleteIcon.title = "Delete habit";
+        deleteIcon.addEventListener("click", function (e) {
+          e.stopPropagation();
+          deleteHabit(habit);
+        });
+        card.appendChild(deleteIcon);
+
+        container.appendChild(card);
+      });
+      records[currentDate] = record;
+      saveToLocalStorage();
+    }
+
+    // Delete a habit from the global list and update all records
+    function deleteHabit(habitName) {
+      if (confirm("Are you sure you want to delete the habit: " + habitName + "?")) {
+        // Remove the habit from the global array
+        habits = habits.filter((h) => h !== habitName);
+        // Remove habit from each recorded date
+        for (const date in records) {
+          if (records[date][habitName] !== undefined) {
+            delete records[date][habitName];
+          }
+        }
+        renderHabitCards();
+        updateDotPlot();
+        saveToLocalStorage();
+      }
+    }
+
+    // Add a new habit from Section 1
+    document.getElementById("addHabitButton").addEventListener("click", function () {
+      const input = document.getElementById("newHabitInput");
+      const newHabit = input.value.trim();
+      if (newHabit && !habits.includes(newHabit)) {
+        habits.push(newHabit);
+        // Add the new habit to existing records (unchecked by default)
+        for (const date in records) {
+          if (!(newHabit in records[date])) {
+            records[date][newHabit] = false;
+          }
+        }
+        renderHabitCards();
+        updateDotPlot();
+        saveToLocalStorage();
+        input.value = "";
+      } else {
+        alert("Please enter a unique habit name.");
+      }
+    });
+
+    // When the date is changed, re-render the habit cards.
+    dateInput.addEventListener("change", renderHabitCards);
+
+    // Save the current day's record when "Save" is clicked.
+    document.getElementById("saveButton").addEventListener("click", function () {
+      const currentDate = dateInput.value;
+      let record = {};
+      habits.forEach((habit) => {
+        const checkbox = document.getElementById("checkbox_" + habit);
+        record[habit] = checkbox ? checkbox.checked : false;
+      });
+      records[currentDate] = record;
+      updateDotPlot();
+      saveToLocalStorage();
+      alert("Record saved for " + currentDate);
+    });
+
+    // Get the selected time scale from the drop-down.
+    function getTimeScale() {
+      const scaleSelect = document.getElementById("timeScaleSelect");
+      return scaleSelect.value; // "monthly" or "weekly"
+    }
+
+    // Update the dot plot using Chart.js based on the selected time scale.
+    function updateDotPlot() {
+      const timeScale = getTimeScale();
+      let xScaleConfig;
+      // Abbreviated weekday names starting with Sunday
+      const weekdayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+      if (timeScale === "monthly") {
+        xScaleConfig = {
+          type: "linear",
+          min: 1,
+          max: 31,
+          ticks: {
+            stepSize: 1,
+            autoSkip: false,
+          },
+          title: {
+            display: true,
+            text: "day",
+          },
+        };
+      } else {
+        // Weekly: use a category scale with abbreviated weekday names.
+        xScaleConfig = {
+          type: "category",
+          labels: weekdayNames,
+          title: {
+            display: true,
+            text: "day",
+          },
+        };
+      }
+
+      // Define a palette for habit colors.
+      const palette = [
+        "#4CAF50",
+        "#8BC34A",
+        "#CDDC39",
+        "#FFC107",
+        "#FF9800",
+        "#FF5722",
+        "#F44336",
+        "#E91E63",
+        "#9C27B0",
+        "#673AB7",
+      ];
+
+      // Build datasets: one dataset per habit.
+      const datasets = habits.map((habit, index) => {
+        let dataPoints = [];
+        for (const dateStr in records) {
+          // Convert dateStr (YYYY-MM-DD) to a Date object.
+          const dateObj = new Date(dateStr);
+          let xValue;
+          if (timeScale === "monthly") {
+            xValue = dateObj.getDate(); // 1-31
+          } else {
+            // For weekly, get the abbreviated weekday name
+            xValue = weekdayNames[dateObj.getDay()];
+          }
+          // If this habit was marked true on this date, add a data point.
+          if (records[dateStr] && records[dateStr][habit]) {
+            dataPoints.push({ x: xValue, y: habit });
+          }
+        }
+        return {
+          label: habit,
+          data: dataPoints,
+          backgroundColor: palette[index % palette.length],
+          pointRadius: 6,
+        };
+      });
+
+      // Configure the Chart.js scatter chart.
+      const chartOptions = {
+        type: "scatter",
+        data: {
+          datasets: datasets,
+        },
+        options: {
+          plugins: {
+            legend: { display: true, position: "bottom" },
+          },
+          scales: {
+            x: xScaleConfig,
+            y: {
+              type: "category",
+              labels: habits,
+              title: {
+                display: true,
+                text: "Habit",
+              },
+            },
+          },
+        },
+      };
+
+      if (dotChart) {
+        dotChart.data.datasets = datasets;
+        dotChart.options.scales.x = xScaleConfig;
+        dotChart.options.scales.y.labels = habits;
+        dotChart.update();
+      } else {
+        const ctx = document.getElementById("dotChart").getContext("2d");
+        dotChart = new Chart(ctx, chartOptions);
+      }
+    }
+
+    // Update dot plot when the time scale selection changes.
+    document.getElementById("timeScaleSelect").addEventListener("change", updateDotPlot);
+
+    // Initial render
+    renderHabitCards();
+    updateDotPlot();
+  </script>
+</body>
+</html>

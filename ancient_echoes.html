@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ancient Echoes</title>
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    /* Reset & base */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #ffffff;
+      color: #000000;
+      padding-top: 60px;
+    }
+    a { text-decoration: none; color: inherit; }
+
+    /* Navbar */
+    .navbar {
+      position: fixed; top:0; left:0; right:0;
+      height:60px; background:#e8e8e8;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:0 20px; z-index:1000;
+    }
+    .logo { color:#000000; font-size:1.5rem; font-weight:bold; }
+    .nav-buttons button {
+      background:none; border:none; color:#000000;
+      margin-left:20px; padding:8px 12px; cursor:pointer;
+      transition: .3s;
+    }
+    .nav-buttons button:hover,
+    .nav-buttons button.active {
+      background:#000000; color:#ffffff; border-radius:24px;
+    }
+
+    /* Sections */
+    .section { display:none; padding:20px; }
+    .section.active { display:block; }
+
+    /* Search & filters */
+    .search-filters {
+      display:flex; justify-content:space-between; align-items:center;
+      margin-bottom:20px;
+    }
+    .search-bar input {
+      width:250px; padding:8px; border:2px solid #000000; border-radius:24px;
+    }
+    .filters select {
+      margin-left:10px; padding:8px; border:2px solid #000000; border-radius:24px;
+    }
+     /* Add these styles for map popups */
+  .leaflet-popup {
+    pointer-events: none;
+  }
+  .leaflet-popup-content-wrapper {
+    pointer-events: auto;
+  }
+  .custom-popup {
+    margin-bottom: 20px !important;
+  }
+
+    /* Artifacts */
+    .artifacts-wrapper { position:relative; }
+    .loading {
+      position:absolute; top:50%; left:50%;
+      transform:translate(-50%,190%); z-index:10;
+    }
+    
+    .spinner {
+      border:8px solid #f3f3f3;
+      border-top:8px solid #2c3e50;
+      border-radius:50%; width:90px; height:90px;
+      animation:spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform:rotate(360deg) } }
+    .artifacts-container {
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:20px;
+      opacity:0; transition:opacity .3s;
+    }
+    .artifacts-container.loaded { opacity:1; }
+    .artifact-card {
+      background:#fff; border-radius:6px;
+      box-shadow:0 2px 6px rgba(0,0,0,0.15);
+      overflow:hidden; cursor:pointer;
+      display:flex; flex-direction:column;
+      transition:transform .2s;
+    }
+    .artifact-card:hover { transform:translateY(-4px) }
+    .artifact-card img {
+      width:100%; height:180px; object-fit:cover;
+    }
+    .card-content { padding:15px; }
+    .card-content h3 {
+      font-size:1.1rem; color:#2c3e50; margin-bottom:8px;
+    }
+    .card-content p { font-size:.9rem; color:#555 }
+
+    /* Map */
+    #map { width:100%; height:600px; }
+
+    /* Modal */
+    .modal {
+      display:none; position:fixed;
+      top:0; left:0; right:0; bottom:0;
+      background:rgba(0,0,0,0.6);
+      justify-content:center; align-items:center;
+      z-index:2000;
+    }
+    .modal.show { display:flex; }
+    .modal-content {
+      background:#fff; border-radius:6px;
+      width:90%; max-width:900px; max-height:90%;
+      padding:20px; position:relative;
+      display:flex; flex-direction:column;
+    }
+    .modal-close {
+      position:absolute; top:10px; right:20px;
+      cursor:pointer; font-size:1.5rem; color:#333;
+    }
+    .modal-body { display:flex; flex:1; overflow:hidden }
+    .modal-image {
+      flex:0 0 40%; padding-right:20px;
+    }
+    .modal-image img {
+      width:100%; height:auto; object-fit:contain;
+      border-radius:4px;
+    }
+    .modal-details {
+      flex:1; display:flex; flex-direction:column;
+      overflow:hidden;
+    }
+    .modal-title {
+      text-align:center; font-size:1.4rem;
+      font-weight:bold; color:#2c3e50; margin-bottom:10px;
+    }
+    .details-list {
+      flex:1; overflow-y:auto; padding-right:5px;
+    }
+    .detail-item { margin-bottom:10px }
+    .detail-item .label { font-weight:bold; color:#2c3e50 }
+    .detail-item .value { margin-left:5px; color:#555 }
+    .modal-buttons {
+      margin-top:15px; text-align:right;
+    }
+    .modal-buttons button {
+      background:#2c3e50; color:#ecf0f1; border:none;
+      padding:8px 14px; margin-left:10px; border-radius:24px;
+      cursor:pointer; transition:.3s;
+    }
+    .modal-buttons button:hover { background:#1a242f }
+
+    /* Quiz */
+   /* Quiz */
+#quizContainer {
+  position: relative;
+  display:flex; 
+  flex-direction:column;
+  align-items:center; 
+  justify-content:center;
+  height:calc(100vh - 100px);
+}
+#quizCounter {
+  position:absolute; 
+  top:10px; 
+  left:10px;
+  font-size:1.2rem; 
+  font-weight:bold; 
+  color:#2c3e50;
+}
+#startQuizBtn {
+  padding:12px 24px; 
+  font-size:1.2rem;
+  background:#2c3e50; 
+  color:#ecf0f1; 
+  border:none;
+  border-radius:24px; 
+  cursor:pointer;
+}
+#quizContent { 
+  display:none; 
+  width:100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.quiz-question {
+  text-align:center; 
+  font-size:2rem;  /* Increased from 1.6rem */
+  font-weight:bold;
+  margin-bottom:30px; 
+  color:#2c3e50;
+}
+.quiz-options {
+  display:flex; 
+  justify-content:center; 
+  gap:30px;  /* Increased from 20px */
+  flex-wrap: wrap;
+}
+.quiz-card {
+  background:#fff; 
+  border:2px solid transparent;
+  border-radius:8px;  /* Increased from 6px */
+  box-shadow:0 4px 12px rgba(0,0,0,0.15);  /* More prominent shadow */
+  overflow:hidden; 
+  cursor:pointer;
+  text-align:center; 
+  width:280px;  /* Increased from 220px */
+  transition:all .3s;
+}
+.quiz-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+}
+.quiz-card.correct {
+  border-color:green; 
+  box-shadow:0 0 15px rgba(0,128,0,0.6);  /* More prominent glow */
+}
+.quiz-card.wrong {
+  border-color:red; 
+  box-shadow:0 0 15px rgba(255,0,0,0.6);  /* More prominent glow */
+}
+.quiz-card img {
+  width:100%; 
+  height:220px;  /* Increased from 160px */
+  object-fit:cover;
+}
+.quiz-end {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+.quiz-card p {
+  padding:15px;  /* Increased from 10px */
+  font-size:1.2rem;  /* Increased from 1rem */
+  color:#333;
+  margin: 0;
+}
+.quiz-end h2 {
+  font-size:2rem;  
+  color:#2c3e50; 
+  margin-bottom:30px;  
+}
+.quiz-end button {
+  padding:12px 24px; 
+  font-size:1.2rem;
+  background:#2c3e50; 
+  color:#ecf0f1; 
+  border:none;
+  border-radius:24px; 
+  cursor:pointer;
+}
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="logo">Ancient Echoes</div>
+    <div class="nav-buttons">
+      <button id="artifactsBtn" class="active">Artifacts</button>
+      <button id="mapBtn">Map</button>
+      <button id="quizBtn">Quiz</button>
+    </div>
+  </nav>
+
+  <!-- Artifacts Section -->
+  <section id="artifactsSection" class="section active">
+    <div class="search-filters">
+      <div class="search-bar">
+        <input type="text" id="artifactSearch" placeholder="Search artifacts...">
+      </div>
+      <div class="filters">
+        <select id="filterYear"><option value="">All Years</option></select>
+        <select id="filterCountry"><option value="">All Countries</option></select>
+        <select id="filterMedium"><option value="">All Mediums</option></select>
+      </div>
+    </div>
+    <div class="artifacts-wrapper">
+      <div id="loading" class="loading"><div class="spinner"></div></div>
+      <div class="artifacts-container" id="artifactsContainer"></div>
+    </div>
+  </section>
+
+  <!-- Map Section -->
+  <section id="mapSection" class="section">
+    <div class="search-filters">
+      <div class="search-bar">
+        <input type="text" id="mapSearch" placeholder="Search map...">
+      </div>
+      <div class="filters">
+        <select id="mapYear"><option value="">All Years</option></select>
+        <select id="mapCountry"><option value="">All Countries</option></select>
+        <select id="mapMedium"><option value="">All Mediums</option></select>
+      </div>
+    </div>
+    <div id="map"></div>
+  </section>
+
+  <!-- Quiz Section -->
+  <section id="quizSection" class="section">
+    <div id="quizContainer">
+      <div id="quizCounter"></div>
+      <button id="startQuizBtn">Start Quiz</button>
+      <div id="quizContent">
+        <div id="quizQuestion" class="quiz-question"></div>
+        <div id="quizOptions" class="quiz-options"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Modal -->
+  <div id="artifactModal" class="modal">
+    <div class="modal-content">
+      <span class="modal-close">&times;</span>
+      <div class="modal-body">
+        <div class="modal-image"></div>
+        <div class="modal-details"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    // Section toggles
+    const artifactsBtn = document.getElementById('artifactsBtn'),
+          mapBtn       = document.getElementById('mapBtn'),
+          quizBtn      = document.getElementById('quizBtn'),
+          artifactsSection = document.getElementById('artifactsSection'),
+          mapSection       = document.getElementById('mapSection'),
+          quizSection      = document.getElementById('quizSection');
+function setActive(sec,btn){
+  [artifactsSection,mapSection,quizSection].forEach(s=>s.classList.remove('active'));
+  [artifactsBtn,mapBtn,quizBtn].forEach(b=>b.classList.remove('active'));
+  sec.classList.add('active'); 
+  btn.classList.add('active');
+  
+  // When map section is activated, update the map view
+  if (sec === mapSection) {
+    setTimeout(() => {
+      map.invalidateSize();
+      updateMapMarkers();
+    }, 100);
+  }
+}
+    artifactsBtn.onclick = ()=>setActive(artifactsSection,artifactsBtn);
+    mapBtn.onclick       = ()=>setActive(mapSection,mapBtn);
+    quizBtn.onclick      = ()=>setActive(quizSection,quizBtn);
+
+    // Data stores
+    const artifactsData = [],
+          yearsSet = new Set(),
+          countriesSet = new Set(),
+          mediumsSet = new Set(),
+          locationSet = new Set(),
+          locationCoordMap = {};
+
+    // Modal
+    const modal = document.getElementById('artifactModal'),
+          modalClose = modal.querySelector('.modal-close'),
+          modalImageDiv = modal.querySelector('.modal-image'),
+          modalDetailsDiv = modal.querySelector('.modal-details');
+    modalClose.onclick = ()=>modal.classList.remove('show');
+
+    // Leaflet
+    const map = L.map('map').setView([20,0],2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap'}).addTo(map);
+    const markersGroup = L.layerGroup().addTo(map);
+
+    // Fetch artifacts (limit increased to 200, only with country, city, tags, Wikidata_URL)
+    async function fetchArtifacts(limit=200) {
+      for(let id=1; id<=limit; id++){
+        try {
+          const res = await fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${id}`);
+          const data = await res.json();
+          if(data.primaryImage && data.country && data.city && Array.isArray(data.tags)) {
+            const wikiTag = data.tags.find(t=>t.Wikidata_URL);
+            if(!wikiTag) continue;
+            const year = data.objectDate||'';
+            const country = data.country;
+            const medium = data.medium||'';
+            const location = `${data.city}, ${country}`;
+            yearsSet.add(year);
+            countriesSet.add(country);
+            mediumsSet.add(medium);
+            locationSet.add(location);
+            artifactsData.push({data,year,country,medium,location});
+          }
+        } catch{}
+      }
+      populateFilters();
+      applyFilters();
+      await geocodeLocations();
+      updateMapMarkers();
+      document.getElementById('loading').style.display='none';
+      document.getElementById('artifactsContainer').classList.add('loaded');
+    }
+
+    // Populate filter dropdowns
+    function populateFilters(){
+      const yS=document.getElementById('filterYear'),
+            cS=document.getElementById('filterCountry'),
+            mS=document.getElementById('filterMedium'),
+            myS=document.getElementById('mapYear'),
+            mcS=document.getElementById('mapCountry'),
+            mmS=document.getElementById('mapMedium');
+      Array.from(yearsSet).sort().forEach(v=>{ yS.append(new Option(v,v)); myS.append(new Option(v,v)); });
+      Array.from(countriesSet).sort().forEach(v=>{ cS.append(new Option(v,v)); mcS.append(new Option(v,v)); });
+      Array.from(mediumsSet).sort().forEach(v=>{ mS.append(new Option(v,v)); mmS.append(new Option(v,v)); });
+    }
+
+    // Create card
+    function createCard(item){
+      const {data} = item;
+      const card=document.createElement('div'); card.className='artifact-card';
+      const img=document.createElement('img');
+      img.src=data.primaryImageSmall||data.primaryImage; img.alt=data.title||'';
+      const content=document.createElement('div'); content.className='card-content';
+      const h3=document.createElement('h3'); h3.textContent=data.title||'';
+      const p=document.createElement('p'); p.textContent=data.objectName||'';
+      content.append(h3,p); card.append(img,content);
+      card.onclick=()=>openModal(data);
+      return card;
+    }
+
+    // Apply filters & search
+    function applyFilters(){
+      const term=document.getElementById('artifactSearch').value.trim().toLowerCase(),
+            fy=document.getElementById('filterYear').value,
+            fc=document.getElementById('filterCountry').value,
+            fm=document.getElementById('filterMedium').value;
+      const cont=document.getElementById('artifactsContainer');
+      cont.innerHTML='';
+      const filtered = artifactsData.filter(item=>{
+        const text = ((item.data.title||'')+' '+(item.data.objectName||'')).toLowerCase();
+        if(term && !text.includes(term)) return false;
+        if(fy && item.year!==fy) return false;
+        if(fc && item.country!==fc) return false;
+        if(fm && item.medium!==fm) return false;
+        return true;
+      });
+      filtered.forEach(item=>cont.append(createCard(item)));
+      updateMapMarkers(filtered);
+    }
+
+    // Geocode locations (city + country)
+    async function geocodeLocations(){
+      for(const loc of locationSet){
+        if(!locationCoordMap[loc]){
+          try{
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(loc)}&format=json&limit=1`);
+            const arr = await res.json();
+            if(arr[0]) locationCoordMap[loc] = [parseFloat(arr[0].lat), parseFloat(arr[0].lon)];
+          }catch{}
+        }
+      }
+    }
+
+   // Update map markers
+function updateMapMarkers(list = null) {
+  markersGroup.clearLayers();
+  const items = list || artifactsData;
+  const bounds = L.latLngBounds();
+  let hasMarkers = false;
+
+  items.forEach(item => {
+    const coord = locationCoordMap[item.location];
+    if (coord) {
+      hasMarkers = true;
+      bounds.extend(coord);
+      const marker = L.marker(coord).addTo(markersGroup);
+      const imgUrl = item.data.primaryImageSmall || item.data.primaryImage;
+      const title = item.data.title || '';
+      const popup = `<div style="text-align:center">
+        <img src="${imgUrl}" style="width:100px;height:auto;border-radius:4px"/><br>
+        <strong>${title}</strong>
+      </div>`;
+      marker.bindPopup(popup, {
+        closeButton: false,
+        autoClose: false,
+        className: 'custom-popup'
+      })
+      .on('mouseover', function() {
+        this.openPopup();
+        // Bring marker to front when hovered
+        this.setZIndexOffset(1000);
+      })
+      .on('mouseout', function() {
+        this.closePopup();
+        this.setZIndexOffset(0);
+      });
+    }
+  });
+
+  // Fit bounds only if we have markers and the map is currently visible
+  if (hasMarkers && mapSection.classList.contains('active')) {
+    // Add padding and max zoom to ensure markers remain visible
+    map.fitBounds(bounds, {
+      padding: [50, 50],
+      maxZoom: 8
+    });
+  }
+}
+    // Modal open
+    function openModal(data){
+      modalImageDiv.innerHTML=''; modalDetailsDiv.innerHTML='';
+      const img=document.createElement('img');
+      img.src=data.primaryImage; img.alt=data.title||'';
+      modalImageDiv.append(img);
+      const titleEl=document.createElement('div');
+      titleEl.className='modal-title';
+      titleEl.textContent=data.title||'';
+      modalDetailsDiv.append(titleEl);
+      const detailsList=document.createElement('div'); detailsList.className='details-list';
+      Object.entries(data).forEach(([key,value])=>{
+        if(value==null||value==='')return;
+        if(key==='tags')return;
+        if(typeof value==='string'&&value.startsWith('http'))return;
+        if(Array.isArray(value)&&value.some(v=>typeof v==='string'&&v.startsWith('http')))return;
+        if(key.toLowerCase().includes('image'))return;
+        const item=document.createElement('div'); item.className='detail-item';
+        const label=document.createElement('span'); label.className='label';
+        label.textContent=key.replace(/([A-Z])/g,' $1').replace(/^./,s=>s.toUpperCase())+':';
+        const val=document.createElement('span'); val.className='value';
+        val.textContent=Array.isArray(value)?value.join(', '):value;
+        item.append(label,val); detailsList.append(item);
+      });
+      modalDetailsDiv.append(detailsList);
+      const btns=document.createElement('div'); btns.className='modal-buttons';
+      if(Array.isArray(data.tags)){
+        const tag=data.tags.find(t=>t.Wikidata_URL);
+        if(tag){
+          const wikiBtn=document.createElement('button');
+          wikiBtn.textContent='Wiki';
+          wikiBtn.onclick=()=>window.open(tag.Wikidata_URL,'_blank');
+          btns.append(wikiBtn);
+        }
+      }
+      if(data.objectURL){
+        const metBtn=document.createElement('button');
+        metBtn.textContent='Met Museum';
+        metBtn.onclick=()=>window.open(data.objectURL,'_blank');
+        btns.append(metBtn);
+      }
+      modalDetailsDiv.append(btns);
+      modal.classList.add('show');
+    }
+
+    // Filters & search events
+    ['artifactSearch','filterYear','filterCountry','filterMedium']
+      .forEach(id=>document.getElementById(id)
+      .addEventListener(id==='artifactSearch'?'input':'change',applyFilters));
+    ['mapSearch','mapYear','mapCountry','mapMedium'].forEach(id=>{
+      const el=document.getElementById(id);
+      el.addEventListener(id==='mapSearch'?'input':'change',()=>{
+        document.getElementById('artifactSearch').value = document.getElementById('mapSearch').value;
+        document.getElementById('filterYear').value     = document.getElementById('mapYear').value;
+        document.getElementById('filterCountry').value  = document.getElementById('mapCountry').value;
+        document.getElementById('filterMedium').value   = document.getElementById('mapMedium').value;
+        applyFilters();
+      });
+    });
+
+    // Quiz logic (unchanged)
+    const startQuizBtn = document.getElementById('startQuizBtn'),
+          quizContent = document.getElementById('quizContent'),
+          quizQuestion = document.getElementById('quizQuestion'),
+          quizOptions = document.getElementById('quizOptions'),
+          quizCounter = document.getElementById('quizCounter');
+    const TOTAL_QUESTIONS = 10;
+    let currentQ = 0, score = 0, quizCandidates = [];
+
+    startQuizBtn.onclick = () => {
+      startQuizBtn.style.display = 'none';
+      quizCandidates = artifactsData.filter(i => i.data.accessionYear && i.data.accessionYear!=='');
+      currentQ = 0; score = 0;
+      quizContent.style.display = 'block';
+      nextQuestion();
+    };
+
+    function nextQuestion() {
+      currentQ++;
+      if (currentQ > TOTAL_QUESTIONS || quizCandidates.length < 2) {
+        endQuiz();
+        return;
+      }
+      quizCounter.textContent = `${currentQ}/${TOTAL_QUESTIONS}`;
+      generateQuestion();
+    }
+
+    function generateQuestion() {
+  const correct = quizCandidates[Math.floor(Math.random() * quizCandidates.length)];
+  const wrongPool = quizCandidates.filter(i => i.data.accessionYear !== correct.data.accessionYear);
+  const wrong = wrongPool[Math.floor(Math.random() * wrongPool.length)];
+  const options = [correct, wrong].sort(() => Math.random() - 0.5);
+
+  quizQuestion.textContent = `Accession Year of which artifact is ${correct.data.accessionYear}?`;
+  quizOptions.innerHTML = '';
+  options.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'quiz-card';
+    const img = document.createElement('img');
+    img.src = item.data.primaryImageSmall || item.data.primaryImage;
+    const title = document.createElement('p');
+    title.textContent = item.data.title || '';
+    card.append(img, title);
+    card.onclick = () => handleAnswer(card, item === correct);
+    quizOptions.append(card);
+  });
+}
+
+    function handleAnswer(card, isCorrect) {
+      Array.from(quizOptions.children).forEach(c => c.style.pointerEvents = 'none');
+      if (isCorrect) {
+        score++;
+        card.classList.add('correct');
+      } else {
+        card.classList.add('wrong');
+      }
+      setTimeout(nextQuestion, 800);
+    }
+
+    function endQuiz() {
+      quizContent.style.display = 'none';
+      quizCounter.textContent = '';
+      const endDiv = document.createElement('div');
+      endDiv.className = 'quiz-end';
+      endDiv.innerHTML = `
+        <h2>Quiz Complete! Your score: ${score}/${TOTAL_QUESTIONS}</h2>
+        <button id="restartQuizBtn">Restart Quiz</button>
+      `;
+      quizOptions.innerHTML = '';
+      quizQuestion.innerHTML = '';
+      document.getElementById('quizContainer').append(endDiv);
+      document.getElementById('restartQuizBtn').onclick = () => {
+        endDiv.remove();
+        startQuizBtn.style.display = 'block';
+      };
+    }
+
+    // Initialize
+    fetchArtifacts(200);
+  </script>
+</body>
+</html>

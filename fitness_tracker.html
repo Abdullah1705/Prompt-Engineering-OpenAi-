@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Fitness Tracker</title>
+  <!-- Chart.js for bar chart -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* ====== GLOBAL ====== */
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: Arial, sans-serif;
+      background: url('https://images.pexels.com/photos/1552242/pexels-photo-1552242.jpeg') no-repeat center/cover;
+      min-height: 100vh; position: relative;
+    }
+    button, #content button {
+      border-radius: 25px;
+      border: none;
+      cursor: pointer;
+    }
+    /* ====== AUTH ====== */
+    #auth-container {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 320px; padding: 20px 15px;
+      background: transparent;
+      border: 2px solid #fff; border-radius: 30px;
+      color: #fff;
+    }
+    #auth-container h2 { text-align: center; margin-bottom: 15px; }
+    #auth-container form { display: flex; flex-direction: column; }
+    #auth-container label {
+      margin-top: 8px; font-size: 14px;
+    }
+    #auth-container input[type="text"],
+    #auth-container input[type="password"],
+    #auth-container input[type="number"],
+    #auth-container input[type="date"] {
+      margin-top: 4px; padding: 10px 14px;
+      font-size: 14px; border: none;
+      border-radius: 25px; outline: none;
+      background: rgba(255,255,255,0.9); color: #333;
+    }
+    #auth-container button {
+      margin-top: 16px; padding: 12px;
+      font-size: 16px; background: #28a745;
+      color: #fff; transition: background .2s;
+    }
+    #auth-container button:hover { background: #218838; }
+    #auth-container p {
+      text-align: center; margin-top: 12px; font-size: 14px;
+    }
+    #auth-container a {
+      color: #fff; text-decoration: none; font-weight: bold;
+    }
+    /* SIGNUP PIC CIRCLE */
+    #signupPicContainer {
+      width: 100px; height: 100px;
+      margin: 0 auto 10px;
+      border: 2px dashed #fff; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.2);
+      cursor: pointer; position: relative; overflow: hidden;
+    }
+    #signupPicContainer span {
+      font-size: 36px; color: #fff;
+    }
+    #signupPicPreview {
+      position: absolute; width: 100%; height: 100%;
+      object-fit: cover; display: none;
+    }
+    #signupPic { display: none; }
+
+    /* ====== DASHBOARD ====== */
+    #dashboard { display: none; height: 100vh; }
+    #sidebar {
+      width: 240px; background: #343a40; color: #fff;
+      padding: 20px; float: left; height: 100%;
+    }
+    #sidebar #profile { text-align: center; margin-bottom: 20px; }
+    #sidebar #profile img {
+      width: 80px; height: 80px; border-radius: 50%; object-fit: cover;
+    }
+    #sidebar #profile h3 { margin: 10px 0 0; font-size: 18px; }
+    #sidebar ul { list-style: none; padding: 0; margin: 0; }
+    #sidebar ul li {
+      padding: 12px; cursor: pointer; font-size: 16px; border-radius: 4px;
+    }
+    #sidebar ul li.active,
+    #sidebar ul li:hover { background: #495057; }
+    #sidebar ul li#logout { margin-top: 30px; color: #dc3545; }
+    #content {
+      margin-left: 240px; padding: 20px; overflow-y: auto;
+      background: #f8f9fa; height: 100%;
+    }
+    #content h2 { margin-top: 0; text-align: center; }
+    #content button {
+      padding: 8px 12px; background: #007bff; color: #fff;
+      margin-bottom: 10px;
+    }
+    table {
+      width: 100%; border-collapse: collapse; margin-top: 10px;
+    }
+    th, td {
+      padding: 8px; border: 1px solid #ccc; text-align: left;
+    }
+    th { background: #e9ecef; }
+    .action-icon { cursor: pointer; margin-right: 8px; font-size: 16px; }
+
+    /* CENTERED VIEWS (Today & Goal) */
+    .viewCentered {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+    }
+    .viewCentered #todayTable,
+    .viewCentered #goalTable {
+      width: 100%; max-width: 500px;
+    }
+    /* GOAL CARD */
+    .goal-card {
+      background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      border: none; border-radius: 8px;
+      padding: 16px; margin-bottom: 16px;
+      width: 100%; max-width: 400px; text-align: center;
+    }
+
+    /* MODALS */
+    .modalOverlay {
+      display: none; position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      align-items: center; justify-content: center;
+      z-index: 1000;
+    }
+    .modal {
+      background: #fff; padding: 20px; border-radius: 8px;
+      width: 90%; max-width: 300px;
+    }
+    .modal h2 { margin-top: 0; font-size: 20px; text-align: center; }
+    .modal form { display: flex; flex-direction: column; }
+    .modal input {
+      margin: 8px 0; padding: 8px; font-size: 14px;
+      border: 1px solid #ccc; border-radius: 4px;
+    }
+    .modal button {
+      padding: 10px; margin-top: 10px; font-size: 15px;
+      border-radius: 25px;
+    }
+    #saveWorkout, #saveGoal { background: #28a745; color: #fff; }
+    #cancelWorkout, #cancelGoal { background: #dc3545; color: #fff; }
+
+    /* WEEK CHART SIZE */
+    #weekChart {
+  max-width: 90%;
+  margin: 0 auto 20px;
+  display: block;
+  height: 40% !important;  /* Increased height */
+  width: 100% !important;    /* Forces full width */
+}
+
+  /* RESPONSIVE */
+@media (max-width: 768px) {
+  #auth-container {
+    width: 90%;
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none;
+    margin: 20px auto;
+  }
+  
+  #dashboard { 
+    display: none; 
+    flex-direction: column; 
+  }
+  
+  #sidebar { 
+    width: 100%; 
+    float: none; 
+    height: auto;
+  }
+  
+  #content { 
+    margin-left: 0; 
+    height: auto; 
+    min-height: calc(100vh - 200px);
+  }
+  
+  .viewCentered #todayTable,
+  .viewCentered #goalTable,
+  .goal-card { 
+    max-width: 100%; 
+  }
+  
+  body {
+    background-attachment: fixed;
+  }
+}
+  </style>
+</head>
+<body>
+
+  <!-- AUTH CONTAINER -->
+  <div id="auth-container">
+    <!-- LOGIN -->
+    <div id="login-form">
+      <h2>Login</h2>
+      <form id="loginForm">
+        <label for="loginID">User ID</label>
+        <input type="text" id="loginID" placeholder="Enter your user ID" required>
+
+        <label for="loginPassword">Password</label>
+        <input type="password" id="loginPassword" placeholder="Enter password" required>
+
+        <button type="submit">Login</button>
+      </form>
+      <p>No account? <a id="showSignup">Sign up</a></p>
+    </div>
+    <!-- SIGNUP -->
+    <div id="signup-form" style="display:none;">
+      <h2>Sign Up</h2>
+      <form id="signupForm">
+        <label>Profile Picture</label>
+        <div id="signupPicContainer"><span>＋</span><img id="signupPicPreview" alt="Preview"></div>
+        <input type="file" id="signupPic" accept="image/*" required>
+
+        <label for="signupName">Name</label>
+        <input type="text" id="signupName" placeholder="Your name" required>
+
+        <label for="signupAge">Age</label>
+        <input type="number" id="signupAge" placeholder="Your age" min="1" required>
+
+        <label for="signupID">User ID</label>
+        <input type="text" id="signupID" placeholder="Choose a user ID" required>
+
+        <label for="signupPassword">Password</label>
+        <input type="password" id="signupPassword" placeholder="Choose a password" required>
+
+        <button type="submit">Sign Up</button>
+      </form>
+      <p>Have an account? <a id="showLogin">Login</a></p>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard">
+    <div id="sidebar">
+      <div id="profile">
+        <img id="profilePic" src="" alt="Profile Pic">
+        <h3 id="profileName"></h3>
+      </div>
+      <ul>
+        <li data-section="today" class="active">Today</li>
+        <li data-section="week">Previous Week</li>
+        <li data-section="goal">Set Goals</li>
+        <li id="logout">Logout</li>
+      </ul>
+    </div>
+    <div id="content"></div>
+  </div>
+
+  <!-- WORKOUT MODAL -->
+  <div id="modalOverlay" class="modalOverlay">
+    <div class="modal" id="workoutModal">
+      <h2 id="modalTitle">Add Workout</h2>
+      <form id="modalForm">
+        <input type="hidden" id="modalWorkoutId">
+        <input type="text" id="modalName" placeholder="Exercise Name" required>
+        <input type="number" id="modalReps" placeholder="Total Reps" min="1" required>
+        <input type="date" id="modalDate" required>
+        <button type="submit" id="saveWorkout">Save</button>
+        <button type="button" id="cancelWorkout">Cancel</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- GOAL MODAL -->
+  <div id="goalModalOverlay" class="modalOverlay">
+    <div class="modal" id="goalModal">
+      <h2 id="goalModalTitle">Add Goal</h2>
+      <form id="goalFormModal">
+        <input type="hidden" id="modalGoalId">
+        <input type="date" id="modalGoalDate" required>
+        <input type="number" id="modalGoalReps" placeholder="Reps Goal" min="1" required>
+        <button type="submit" id="saveGoal">Save</button>
+        <button type="button" id="cancelGoal">Cancel</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // AUTH FORM TOGGLE
+    const loginDiv = document.getElementById('login-form'),
+          signupDiv = document.getElementById('signup-form');
+
+    document.getElementById('showSignup').onclick = e => {
+      e.preventDefault();
+      loginDiv.style.display = 'none';
+      signupDiv.style.display = 'block';
+    };
+    document.getElementById('showLogin').onclick = e => {
+      e.preventDefault();
+      signupDiv.style.display = 'none';
+      loginDiv.style.display = 'block';
+    };
+
+    // IMAGE UPLOAD & PREVIEW (single-click)
+    const picContainer = document.getElementById('signupPicContainer'),
+          picInput     = document.getElementById('signupPic'),
+          picPreview   = document.getElementById('signupPicPreview');
+
+    picContainer.addEventListener('click', () => picInput.click());
+    picInput.addEventListener('change', () => {
+      const file = picInput.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        picPreview.src = e.target.result;
+        picPreview.style.display = 'block';
+        picContainer.querySelector('span').style.display = 'none';
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // SIGN UP
+    document.getElementById('signupForm').onsubmit = e => {
+      e.preventDefault();
+      const name = signupName.value.trim(),
+            age  = signupAge.value,
+            id   = signupID.value.trim(),
+            pass = signupPassword.value,
+            file = picInput.files[0];
+      if (!name||!age||!id||!pass||!file) return alert('All fields are required.');
+      if (localStorage.getItem('user_'+id)) return alert('User ID taken.');
+      const rd = new FileReader();
+      rd.onload = () => {
+        localStorage.setItem('user_'+id, JSON.stringify({
+          name, age, id, pass, picData: rd.result
+        }));
+        alert('Signed up! Please login.');
+        signupForm.reset();
+        picPreview.style.display = 'none';
+        picContainer.querySelector('span').style.display = 'block';
+        signupDiv.style.display = 'none';
+        loginDiv.style.display = 'block';
+      };
+      rd.readAsDataURL(file);
+    };
+
+    // LOGIN
+    document.getElementById('loginForm').onsubmit = e => {
+      e.preventDefault();
+      const id = loginID.value.trim(),
+            pass = loginPassword.value,
+            u = localStorage.getItem('user_'+id);
+      if (!u) return alert('User not found.');
+      const user = JSON.parse(u);
+      if (user.pass !== pass) return alert('Incorrect password.');
+      sessionStorage.setItem('currentUser', id);
+      showDashboard();
+    };
+
+    // SHOW DASHBOARD
+    function showDashboard(){
+      document.getElementById('auth-container').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      const id = sessionStorage.getItem('currentUser'),
+            user = JSON.parse(localStorage.getItem('user_'+id));
+      profilePic.src = user.picData;
+      profileName.textContent = user.name;
+      document.querySelectorAll('#sidebar ul li[data-section]').forEach(li => {
+        li.onclick = () => {
+          document.querySelectorAll('#sidebar ul li').forEach(x=>x.classList.remove('active'));
+          li.classList.add('active');
+          showSection(li.dataset.section);
+        };
+      });
+      document.getElementById('logout').onclick = () => {
+        sessionStorage.removeItem('currentUser');
+        location.reload();
+      };
+      showSection('today');
+    }
+
+    // ROUTER
+    let currentSection = 'today';
+    function showSection(sec){
+      currentSection = sec; content.innerHTML = '';
+      if (sec==='today') loadToday();
+      if (sec==='week')  loadWeek();
+      if (sec==='goal')  loadGoal();
+    }
+
+    // HELPERS
+    function todayStr(){ return new Date().toISOString().split('T')[0]; }
+    function getWorkouts(){
+      return JSON.parse(localStorage.getItem('workouts_'+sessionStorage.getItem('currentUser'))||'[]');
+    }
+    function saveWorkouts(a){
+      localStorage.setItem('workouts_'+sessionStorage.getItem('currentUser'), JSON.stringify(a));
+    }
+    function getGoals(){
+      return JSON.parse(localStorage.getItem('goals_'+sessionStorage.getItem('currentUser'))||'[]');
+    }
+    function saveGoals(a){
+      localStorage.setItem('goals_'+sessionStorage.getItem('currentUser'), JSON.stringify(a));
+    }
+
+    // WORKOUT MODAL
+    const workoutOverlay = document.getElementById('modalOverlay'),
+          workoutForm    = document.getElementById('modalForm'),
+          wId            = document.getElementById('modalWorkoutId'),
+          wName          = document.getElementById('modalName'),
+          wReps          = document.getElementById('modalReps'),
+          wDate          = document.getElementById('modalDate');
+    cancelWorkout.onclick = ()=>workoutOverlay.style.display='none';
+    function showModal(mode,w){
+      workoutOverlay.style.display='flex';
+      workoutForm.reset();
+      wDate.max = todayStr();
+      if (mode==='add'){
+        modalTitle.textContent='Add Workout'; wId.value='';
+      } else {
+        modalTitle.textContent='Edit Workout';
+        wId.value=w.id; wName.value=w.name; wReps.value=w.reps; wDate.value=w.date;
+      }
+    }
+    workoutForm.onsubmit = e => {
+      e.preventDefault();
+      const name=wName.value.trim(), reps=parseInt(wReps.value), date=wDate.value;
+      if (!name||!reps||!date) return alert('All fields required.');
+      let arr = getWorkouts();
+      if (wId.value){
+        let i=arr.findIndex(x=>x.id==wId.value);
+        arr[i]={id:arr[i].id,name,reps,date};
+      } else {
+        arr.push({id:Date.now(),name,reps,date});
+      }
+      saveWorkouts(arr);
+      workoutOverlay.style.display='none';
+      currentSection==='today'?loadToday():loadWeek();
+    };
+
+    // GOAL MODAL
+    const goalOverlay = document.getElementById('goalModalOverlay'),
+          goalForm    = document.getElementById('goalFormModal'),
+          gId          = document.getElementById('modalGoalId'),
+          gDate        = document.getElementById('modalGoalDate'),
+          gReps        = document.getElementById('modalGoalReps');
+    cancelGoal.onclick = ()=>goalOverlay.style.display='none';
+    function showGoalModal(mode,g){
+      goalOverlay.style.display='flex';
+      goalForm.reset();
+      if (mode==='add'){
+        goalModalTitle.textContent='Add Goal'; gId.value='';
+      } else {
+        goalModalTitle.textContent='Edit Goal';
+        gId.value=g.id; gDate.value=g.date; gReps.value=g.reps;
+      }
+    }
+    goalForm.onsubmit = e => {
+      e.preventDefault();
+      const date=gDate.value, reps=parseInt(gReps.value);
+      if (!date||!reps) return alert('All fields required.');
+      let arr = getGoals();
+      if (gId.value){
+        let i=arr.findIndex(x=>x.id==gId.value);
+        arr[i]={id:arr[i].id,date,reps};
+      } else {
+        arr.push({id:Date.now(),date,reps});
+      }
+      saveGoals(arr);
+      goalOverlay.style.display='none';
+      loadGoal();
+    };
+
+    // TODAY VIEW
+    function loadToday(){
+      content.innerHTML=`
+        <div class="viewCentered">
+          <h2>Today's Workouts</h2>
+          <button id="addWorkoutBtn">Add Workout</button>
+          <div id="todayGoal"></div>
+          <div id="todayTable"></div>
+        </div>
+      `;
+      document.getElementById('addWorkoutBtn').onclick = ()=>showModal('add');
+      renderGoalCard();
+      renderTodayTable();
+    }
+    function renderGoalCard(){
+      const g = getGoals().find(x=>x.date===todayStr());
+      todayGoal.innerHTML = g
+        ? `<div class="goal-card">Today's Goal:<br><strong>${g.reps} reps</strong></div>`
+        : `<div class="goal-card">No goal set for today.</div>`;
+    }
+    function renderTodayTable(){
+      const data = getWorkouts().filter(x=>x.date===todayStr());
+      if (!data.length){
+        todayTable.innerHTML='<p>No workouts yet today.</p>'; return;
+      }
+      let html=`<table><tr><th>Exercise</th><th>Reps</th><th>Actions</th></tr>`;
+      data.forEach(w=>{
+        html+=`<tr>
+          <td>${w.name}</td>
+          <td>${w.reps}</td>
+          <td>
+            <span class="action-icon" onclick="editWorkout(${w.id})">✏️</span>
+            <span class="action-icon" onclick="deleteWorkout(${w.id})">🗑️</span>
+          </td>
+        </tr>`;
+      });
+      html+=`</table>`; todayTable.innerHTML=html;
+    }
+
+    // PREVIOUS WEEK VIEW
+    let weekChart = null;
+    function loadWeek(){
+      content.innerHTML=`
+        <h2>Previous Week</h2>
+        <canvas id="weekChart" height="100"></canvas>
+        <h3>Older Workouts</h3>
+        <div id="olderTable"></div>
+      `;
+      renderWeekChart();
+      renderOlderTable();
+    }
+    function renderWeekChart(){
+      const all=getWorkouts(), labels=[], data=[];
+      const today=new Date();
+      for(let i=7;i>=1;i--){
+        const d=new Date(today.getTime()-i*86400000),
+              ds=d.toISOString().split('T')[0],
+              total=all.filter(x=>x.date===ds).reduce((s,w)=>s+w.reps,0);
+        labels.push(ds); data.push(total);
+      }
+      if (weekChart) weekChart.destroy();
+      weekChart = new Chart(
+        document.getElementById('weekChart').getContext('2d'),
+        {
+          type:'bar',
+          data:{ labels, datasets:[{ label:'Total Reps', data, backgroundColor:'#007bff' }]},
+          options:{ scales:{ y:{ beginAtZero:true } } }
+        }
+      );
+    }
+    function renderOlderTable(){
+      const all=getWorkouts(),
+            weekAgo=new Date(new Date().getTime()-7*86400000),
+            older=all.filter(x=>new Date(x.date)<weekAgo);
+      if(!older.length){
+        olderTable.innerHTML='<p>No workouts older than a week.</p>'; return;
+      }
+      let html=`<table><tr><th>Date</th><th>Exercise</th><th>Reps</th><th>Actions</th></tr>`;
+      older.sort((a,b)=>new Date(b.date)-new Date(a.date)).forEach(w=>{
+        html+=`<tr>
+          <td>${w.date}</td><td>${w.name}</td><td>${w.reps}</td>
+          <td>
+            <span class="action-icon" onclick="editWorkout(${w.id})">✏️</span>
+            <span class="action-icon" onclick="deleteWorkout(${w.id})">🗑️</span>
+          </td>
+        </tr>`;
+      });
+      html+=`</table>`; olderTable.innerHTML=html;
+    }
+
+    window.editWorkout = id => {
+      const w = getWorkouts().find(x=>x.id==id);
+      if (w) showModal('edit', w);
+    };
+    window.deleteWorkout = id => {
+      if (!confirm('Delete this workout?')) return;
+      saveWorkouts(getWorkouts().filter(x=>x.id!=id));
+      currentSection==='today'?renderTodayTable():loadWeek();
+    };
+
+    // SET GOALS VIEW
+    function loadGoal(){
+      content.innerHTML=`
+        <div class="viewCentered">
+          <h2>Set Goals</h2>
+          <button id="addGoalBtn">Add Goal</button>
+          <div id="goalTable"></div>
+        </div>
+      `;
+      document.getElementById('addGoalBtn').onclick = ()=>showGoalModal('add');
+      renderGoalTable();
+    }
+    function renderGoalTable(){
+      const arr = getGoals();
+      if (!arr.length){
+        goalTable.innerHTML='<p>No goals set.</p>'; return;
+      }
+      let html=`<table><tr><th>Date</th><th>Reps</th><th>Actions</th></tr>`;
+      arr.sort((a,b)=>new Date(b.date)-new Date(a.date)).forEach(g=>{
+        html+=`<tr>
+          <td>${g.date}</td><td>${g.reps}</td>
+          <td>
+            <span class="action-icon" onclick="editGoal(${g.id})">✏️</span>
+            <span class="action-icon" onclick="deleteGoal(${g.id})">🗑️</span>
+          </td>
+        </tr>`;
+      });
+      html+=`</table>`; goalTable.innerHTML=html;
+    }
+    window.editGoal = id => {
+      const g = getGoals().find(x=>x.id==id);
+      if (g) showGoalModal('edit', g);
+    };
+    window.deleteGoal = id => {
+      if (!confirm('Delete this goal?')) return;
+      saveGoals(getGoals().filter(x=>x.id!=id));
+      loadGoal();
+    };
+
+  </script>
+</body>
+</html>

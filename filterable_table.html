@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sortable & Filterable Table</title>
+  <style>
+    * { box-sizing: border-box; font-family: Arial, sans-serif; }
+    body {
+      margin: 0; padding: 20px;
+      font-size: 18px;
+      background: linear-gradient(270deg, #ff9a9e, #fad0c4);
+      background-size: 400% 400%;
+      animation: gradientSwitch 6s ease infinite;
+    }
+    @keyframes gradientSwitch {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .container {
+      width: 1000px;
+      max-width: 100%;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      opacity: 0.8;
+    }
+    h2 { margin-top: 0; text-align: center; font-size: 24px; }
+    .form-row, .control-row {
+      display: flex; gap: 10px; margin-bottom: 15px;
+      flex-wrap: wrap; align-items: center;
+    }
+    .form-group {
+      flex: 1; display: flex; flex-direction: column;
+    }
+    .form-group label.input-label {
+      margin-bottom: 4px; opacity: 0.6; font-size: 16px;
+    }
+    .form-group input {
+      padding: 8px; font-size: 16px;
+      border: 1px solid #ccc; border-radius: 4px;
+    }
+    .control-row label {
+      flex: 0 0 auto; width: 80px; padding: 6px 0;
+      font-size: 16px;
+    }
+    .control-row input, .control-row select {
+      flex: 1; padding: 8px; font-size: 16px;
+      border: 1px solid #ccc; border-radius: 4px;
+    }
+    .control-row select { cursor: pointer; }
+    .control-row button {
+      padding: 10px 14px; font-size: 16px; min-width: 120px;
+      border: none; color: #fff; border-radius: 4px;
+      cursor: pointer; transition: background 0.2s;
+    }
+    #addButton { background: #007BFF; }
+    #resetButton { background: #dc3545; }
+    #exportButton { background: #28a745; }
+    .control-row button:hover { opacity: 0.9; }
+    table {
+      width: 100%; border-collapse: collapse; margin-top: 20px;
+      display: none; background: #fff;
+    }
+    th, td {
+      border: none; border-bottom: 1px solid #ddd;
+      padding: 10px; font-size: 16px; text-align: left;
+      background: #fff;
+    }
+    thead th {
+      background: #f9f9f9;
+    }
+    th .arrow { font-size: 0.8em; margin-left: 4px; }
+    tr:hover td { background: #f1f1f1; }
+    .action-btn {
+      padding: 10px 14px; font-size: 16px; min-width: 120px;
+      border: none; border-radius: 4px; cursor: pointer;
+      transition: opacity 0.2s; margin-right: 5px;
+    }
+    .edit-btn { background: #ffc107; color: #000; }
+    .delete-btn { background: #dc3545; color: #fff; }
+    .action-btn:hover { opacity: 0.9; }
+
+    /* Modal styles */
+    .modal {
+      display: none; position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+    .modal-content {
+      position: relative;
+      background: #fff; padding: 20px; border-radius: 8px;
+      max-width: 400px; width: 90%;
+    }
+    .modal-content h3 {
+      margin-top: 0; font-size: 20px;
+    }
+    .error-title { color: red; }
+    .modal-content p { color: #000; font-size: 16px; }
+    .close-btn {
+      position: absolute; top: 10px; right: 10px;
+      background: none; border: none; font-size: 20px;
+      cursor: pointer; color: #000;
+    }
+    .modal-form .form-group { margin-bottom: 10px; }
+    .modal-form label { display: block; margin-bottom: 4px; }
+    .modal-form input {
+      width: 100%; padding: 6px 8px;
+      border: 1px solid #ccc; border-radius: 4px;
+    }
+    .modal-buttons {
+      text-align: right; margin-top: 10px;
+    }
+    #editCancelButton, #editSaveButton {
+      padding: 10px 14px; font-size: 16px; min-width: 120px;
+      border: none; color: #fff; border-radius: 4px;
+      cursor: pointer; transition: background 0.2s;
+      margin-left: 10px;
+    }
+    #editCancelButton { background: #6c757d; }
+    #editSaveButton   { background: #007BFF; }
+    #editCancelButton:hover, #editSaveButton:hover { opacity: 0.9; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>Sortable & Filterable Table</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="nameInput" class="input-label">Name:</label>
+        <input type="text" id="nameInput" placeholder="Enter name">
+      </div>
+      <div class="form-group">
+        <label for="ageInput" class="input-label">Age:</label>
+        <input type="number" id="ageInput" placeholder="Enter age" min="0">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="countryInput" class="input-label">Country:</label>
+        <input type="text" id="countryInput" placeholder="Enter country">
+      </div>
+      <div class="form-group">
+        <label for="emailInput" class="input-label">Email:</label>
+        <input type="email" id="emailInput" placeholder="Enter email">
+      </div>
+    </div>
+    <div class="control-row">
+      <label for="searchInput">Search:</label>
+      <input type="text" id="searchInput" placeholder="Search...">
+      <label for="filterCountry">Country:</label>
+      <select id="filterCountry">
+        <option value="">All</option>
+      </select>
+      <button id="addButton">Add Info</button>
+      <button id="resetButton">Reset Filters</button>
+      <button id="exportButton">Export to CSV</button>
+    </div>
+    <table id="dataTable">
+      <thead>
+        <tr>
+          <th data-col="name">Name <span class="arrow"></span></th>
+          <th data-col="age">Age <span class="arrow"></span></th>
+          <th>Country</th>
+          <th data-col="email">Email <span class="arrow"></span></th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- Error Modal -->
+  <div id="errorModal" class="modal">
+    <div class="modal-content">
+      <button class="close-btn" id="errorCloseBtn">&times;</button>
+      <h3 class="error-title">Error</h3>
+      <p>The name already exists.</p>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <h3>Edit Entry</h3>
+      <div class="modal-form">
+        <div class="form-group">
+          <label for="editNameInput">Name:</label>
+          <input type="text" id="editNameInput">
+        </div>
+        <div class="form-group">
+          <label for="editAgeInput">Age:</label>
+          <input type="number" id="editAgeInput" min="0">
+        </div>
+        <div class="form-group">
+          <label for="editCountryInput">Country:</label>
+          <input type="text" id="editCountryInput">
+        </div>
+        <div class="form-group">
+          <label for="editEmailInput">Email:</label>
+          <input type="email" id="editEmailInput">
+        </div>
+      </div>
+      <div class="modal-buttons">
+        <button id="editCancelButton">Cancel</button>
+        <button id="editSaveButton">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let data = [];
+    let currentSort = { col: null, dir: 'asc' };
+    let idCounter = 0;
+    let editingIndex = null;
+
+    // Elements
+    const nameInput    = document.getElementById('nameInput');
+    const ageInput     = document.getElementById('ageInput');
+    const countryInput = document.getElementById('countryInput');
+    const emailInput   = document.getElementById('emailInput');
+    const searchInput  = document.getElementById('searchInput');
+    const filterCountry= document.getElementById('filterCountry');
+    const addButton    = document.getElementById('addButton');
+    const resetButton  = document.getElementById('resetButton');
+    const exportButton = document.getElementById('exportButton');
+    const dataTable    = document.getElementById('dataTable');
+    const tbody        = dataTable.querySelector('tbody');
+    const sortableHeaders = dataTable.querySelectorAll('th[data-col]');
+
+    // Modals
+    const errorModal      = document.getElementById('errorModal');
+    const errorCloseBtn   = document.getElementById('errorCloseBtn');
+    const editModal       = document.getElementById('editModal');
+    const editNameInput   = document.getElementById('editNameInput');
+    const editAgeInput    = document.getElementById('editAgeInput');
+    const editCountryInput= document.getElementById('editCountryInput');
+    const editEmailInput  = document.getElementById('editEmailInput');
+    const editCancelButton= document.getElementById('editCancelButton');
+    const editSaveButton  = document.getElementById('editSaveButton');
+
+    function showModal(modal){ modal.style.display = 'flex'; }
+    function hideModal(modal){ modal.style.display = 'none'; }
+
+    // Error popup close
+    errorCloseBtn.addEventListener('click', ()=> hideModal(errorModal));
+
+    // Add entry
+    addButton.addEventListener('click', () => {
+      const name = nameInput.value.trim(),
+            age  = ageInput.value.trim(),
+            country = countryInput.value.trim(),
+            email = emailInput.value.trim();
+      if (!name||!age||!country||!email) {
+        alert('Please fill in all fields.'); return;
+      }
+      if (!emailInput.checkValidity()) {
+        alert('Please enter a valid email address.'); return;
+      }
+      if (data.some(d=>d.name.toLowerCase()===name.toLowerCase())) {
+        showModal(errorModal); return;
+      }
+      data.push({ id: idCounter++, name, age: Number(age), country, email });
+      [nameInput,ageInput,countryInput,emailInput].forEach(i=>i.value='');
+      renderTable(); dataTable.style.display='table';
+    });
+
+    // Filters & reset
+    searchInput.addEventListener('input', renderTable);
+    filterCountry.addEventListener('change', renderTable);
+    resetButton.addEventListener('click', ()=>{
+      searchInput.value=''; filterCountry.value=''; renderTable();
+    });
+
+    // Sorting
+    sortableHeaders.forEach(th=>{
+      th.addEventListener('click', ()=>{
+        const col = th.dataset.col;
+        if (currentSort.col===col) currentSort.dir = currentSort.dir==='asc'?'desc':'asc';
+        else { currentSort.col=col; currentSort.dir='asc'; }
+        sortableHeaders.forEach(h=>h.querySelector('.arrow').textContent='');
+        th.querySelector('.arrow').textContent = currentSort.dir==='asc'?'▲':'▼';
+        renderTable();
+      });
+    });
+
+    // Export CSV
+    exportButton.addEventListener('click', () => {
+      let csv = `"Name","Age","Country","Email"\n`;
+      Array.from(tbody.rows).forEach(row=>{
+        const cols = Array.from(row.cells).slice(0,4)
+          .map(td=>`"${td.textContent.replace(/"/g,'""')}"`);
+        csv += cols.join(',')+'\n';
+      });
+      const blob=new Blob([csv],{type:'text/csv'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url; a.download='table.csv'; a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // Render table
+    function renderTable(){
+      // preserve filter
+      const sel = filterCountry.value;
+      const countries = Array.from(new Set(data.map(d=>d.country))).sort();
+      filterCountry.innerHTML = `<option value="">All</option>` +
+        countries.map(c=>`<option value="${c}">${c}</option>`).join('');
+      filterCountry.value = sel;
+
+      let display = data.filter(d=>{
+        const s = searchInput.value.trim().toLowerCase();
+        const matchSearch = !s || Object.values(d)
+          .some(v=>v.toString().toLowerCase().includes(s));
+        const matchCountry = !filterCountry.value || d.country===filterCountry.value;
+        return matchSearch && matchCountry;
+      });
+
+      if (currentSort.col){
+        display.sort((a,b)=>{
+          const va=a[currentSort.col], vb=b[currentSort.col];
+          if (va<vb) return currentSort.dir==='asc'?-1:1;
+          if (va>vb) return currentSort.dir==='asc'?1:-1;
+          return 0;
+        });
+      }
+
+      tbody.innerHTML = display.map(d=>`
+        <tr>
+          <td>${d.name}</td>
+          <td>${d.age}</td>
+          <td>${d.country}</td>
+          <td>${d.email}</td>
+          <td>
+            <button class="action-btn edit-btn" data-id="${d.id}">Edit</button>
+            <button class="action-btn delete-btn" data-id="${d.id}">Delete</button>
+          </td>
+        </tr>
+      `).join('');
+
+      // delete
+      tbody.querySelectorAll('.delete-btn').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const id=+btn.dataset.id;
+          data=data.filter(d=>d.id!==id); renderTable();
+        });
+      });
+      // edit
+      tbody.querySelectorAll('.edit-btn').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const id=+btn.dataset.id;
+          editingIndex = data.findIndex(d=>d.id===id);
+          const rec = data[editingIndex];
+          editNameInput.value = rec.name;
+          editAgeInput.value = rec.age;
+          editCountryInput.value = rec.country;
+          editEmailInput.value = rec.email;
+          showModal(editModal);
+        });
+      });
+    }
+
+    // Edit modal
+    editCancelButton.addEventListener('click', ()=>{
+      hideModal(editModal); editingIndex=null;
+    });
+    editSaveButton.addEventListener('click', ()=>{
+      const name = editNameInput.value.trim(),
+            age  = editAgeInput.value.trim(),
+            country = editCountryInput.value.trim(),
+            email = editEmailInput.value.trim();
+      if (!name||!age||!country||!email) {
+        alert('Please fill in all fields.'); return;
+      }
+      if (!editEmailInput.checkValidity()) {
+        alert('Please enter a valid email address.'); return;
+      }
+      if (data.some((d,i)=> i!==editingIndex && d.name.toLowerCase()===name.toLowerCase())) {
+        hideModal(editModal); showModal(errorModal); return;
+      }
+      data[editingIndex] = { ...data[editingIndex], name, age:Number(age), country, email };
+      hideModal(editModal); editingIndex=null; renderTable();
+    });
+
+  </script>
+</body>
+</html>

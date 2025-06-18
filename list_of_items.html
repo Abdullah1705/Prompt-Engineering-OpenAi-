@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Item List</title>
+  <!-- Cloudflare CDN link for Font Awesome flat icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      background: #f0f0f0;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    /* Increased top margin and size for the main heading */
+    h1 {
+      text-align: center;
+      font-size: 4.5rem; /* increased size */
+      margin-top: 120px; /* more top margin */
+      margin-bottom: 20px;
+      color: rgba(128, 0, 128, 0.8); /* purple with decreased opacity */
+    }
+    /* Increased container width */
+    .container {
+      background: #fff;
+      width: 90%;
+      max-width: 800px; /* increased width */
+      margin: 0 auto 50px auto;
+      padding: 20px 30px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .input-container {
+      display: flex;
+      align-items: center;
+    }
+    /* Increased height, font size and bold text for the input field */
+    #item-input {
+      flex: 1;
+      padding: 10px;
+      font-size: 20px; /* increased font size */
+      height: 60px; /* increased height */
+      font-weight: bold; /* text appears bold */
+      border: 2px solid purple; /* thicker purple border */
+      border-top-left-radius: 4px;
+      border-bottom-left-radius: 4px;
+      /* Remove border radius on the right side */
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+      outline: none;
+    }
+    /* Increased size for the button */
+    #add-btn {
+      padding: 10px 20px;
+      font-size: 20px; /* increased font size */
+      height: 60px; /* match input height */
+      min-width: 120px; /* increased minimum width */
+      background-color: purple;
+      color: #fff;
+      border: none;
+      /* Remove border radius on the left side */
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+      border-top-right-radius: 4px;
+      border-bottom-right-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    #add-btn:hover {
+      background-color: darkmagenta;
+    }
+    #items-container {
+      margin-top: 10px;
+    }
+    .item-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fafafa;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 10px 15px;
+      margin-bottom: 10px;
+    }
+    .item-text {
+      flex: 1;
+      font-size: 16px;
+      color: #333;
+      word-break: break-word;
+    }
+    .completed {
+      text-decoration: line-through;
+      color: #888;
+    }
+    .item-actions {
+      display: flex;
+      gap: 10px;
+      margin-left: 15px;
+    }
+    .icon {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 30px;
+      height: 30px;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      border-radius: 4px; /* small border radius around icon containers */
+    }
+    .icon.tick {
+      background-color: green;
+    }
+    .icon.edit {
+      background-color: orange;
+    }
+    .icon.delete {
+      background-color: red;
+    }
+    /* Instructions text below the container */
+    .instructions {
+      text-align: center;
+      font-size: 16px;
+      margin: 20px 0 40px 0;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <h1>ENTER ITEMS</h1>
+  <div class="container">
+    <div class="input-container">
+      <input type="text" id="item-input" placeholder="Add a new item ..." />
+      <button id="add-btn">Enter</button>
+    </div>
+    <div id="items-container">
+      <!-- Item cards will appear here -->
+    </div>
+  </div>
+  <!-- Added instructions text below the container -->
+  <p class="instructions">Click check to complete, edit to modify, delete to remove.</p>
+
+  <script>
+    const addBtn = document.getElementById("add-btn");
+    const itemInput = document.getElementById("item-input");
+    const itemsContainer = document.getElementById("items-container");
+
+    // Function to create a new item card
+    function addItem() {
+      const text = itemInput.value.trim();
+      if (text === "") return;
+
+      // Create card elements
+      const card = document.createElement("div");
+      card.className = "item-card";
+
+      const itemText = document.createElement("span");
+      itemText.className = "item-text";
+      itemText.innerText = text;
+
+      const actions = document.createElement("div");
+      actions.className = "item-actions";
+
+      // Create Tick icon container using Font Awesome icon
+      const tickIcon = document.createElement("span");
+      tickIcon.classList.add("icon", "tick");
+      tickIcon.title = "Mark as completed";
+      const tickI = document.createElement("i");
+      tickI.classList.add("fa-solid", "fa-check");
+      tickIcon.appendChild(tickI);
+      tickIcon.addEventListener("click", () => {
+        itemText.classList.toggle("completed");
+      });
+
+      // Create Edit icon container using Font Awesome icon
+      const editIcon = document.createElement("span");
+      editIcon.classList.add("icon", "edit");
+      editIcon.title = "Edit item";
+      const editI = document.createElement("i");
+      editI.classList.add("fa-solid", "fa-pen-to-square");
+      editIcon.appendChild(editI);
+      editIcon.addEventListener("click", () => {
+        const newText = prompt("Edit item:", itemText.innerText);
+        if (newText !== null && newText.trim() !== "") {
+          itemText.innerText = newText.trim();
+        }
+      });
+
+      // Create Delete icon container using Font Awesome icon
+      const deleteIcon = document.createElement("span");
+      deleteIcon.classList.add("icon", "delete");
+      deleteIcon.title = "Delete item";
+      const deleteI = document.createElement("i");
+      deleteI.classList.add("fa-solid", "fa-trash");
+      deleteIcon.appendChild(deleteI);
+      deleteIcon.addEventListener("click", () => {
+        itemsContainer.removeChild(card);
+      });
+
+      // Append icons to actions container
+      actions.appendChild(tickIcon);
+      actions.appendChild(editIcon);
+      actions.appendChild(deleteIcon);
+
+      // Append text and actions to card
+      card.appendChild(itemText);
+      card.appendChild(actions);
+
+      // Add card to items container
+      itemsContainer.appendChild(card);
+
+      // Clear input field and refocus
+      itemInput.value = "";
+      itemInput.focus();
+    }
+
+    // Add button click event
+    addBtn.addEventListener("click", addItem);
+
+    // Allow adding items by pressing the Enter key
+    itemInput.addEventListener("keypress", function(event) {
+      if (event.key === "Enter") {
+        addItem();
+      }
+    });
+  </script>
+</body>
+</html>

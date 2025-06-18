@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>News Network</title>
+  <style>
+    /* Page background */
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      background: url('https://images.pexels.com/photos/3944425/pexels-photo-3944425.jpeg') no-repeat center center fixed;
+      background-size: cover;
+    }
+    /* Header & Footer */
+    header, footer {
+     background-color: #6c2323;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      height: 70px;
+      flex-shrink: 0;
+      margin: 15px;
+      position: relative;
+      border-radius: 4px;
+    }
+  
+    header .left, footer .left {
+      flex: 0 0 auto;
+    }
+    header .center, footer .center {
+      flex: 1 1 auto;
+      text-align: center;
+      font-size: 1.3em;
+      padding: 0 10px;
+      opacity: 1;
+    }
+    header .logo {
+      font-weight: bold;
+      font-size: 1.5em;
+    }
+    footer .left button {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 1em;
+      cursor: pointer;
+      padding: 5px 10px;
+    }
+    /* Admin dropdown */
+    .dropdown {
+      position: relative;
+      margin-left: auto;
+    }
+    .admin-logo {
+      cursor: pointer;
+      font-size: 1em;
+      color: #fff;
+      user-select: none;
+    }
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      bottom: 100%;
+      right: 0;
+      background: #fff;
+      color: #000;
+      border: 1px solid #000;
+      border-radius: 4px;
+      min-width: 120px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      z-index: 10;
+    }
+    .dropdown-menu.visible {
+      display: block;
+    }
+    .dropdown-menu li {
+      list-style: none;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+    .dropdown-menu li:hover {
+      background: #f0f0f0;
+    }
+    /* Main containers */
+    main {
+      flex: 1 1 auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+      padding: 20px;
+      background-color: rgba(255,255,255,0.1);
+    }
+    .news-card {
+      position: relative;
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(5px);
+      border: 1px solid #000;
+      border-radius: 8px;
+      overflow: hidden;
+      width: 700px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      text-align: left;
+      opacity: 1;
+      transition: opacity 0.5s;
+      display: flex;
+      flex-direction: column;
+      height: 360px;
+    }
+    .news-card img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      display: block;
+    }
+    .caption {
+      padding: 10px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+    }
+    .caption .title {
+      font-weight: bold;
+      font-size: 1.1em;
+      margin-bottom: 5px;
+    }
+    .caption .description {
+      font-size: 0.9em;
+      color: #555;
+      margin-bottom: 8px;
+      flex: 1;
+    }
+
+    .left button {
+  background: none;
+  border: 1px solid #fff; 
+  color: #fff;
+  font-size: 1em;
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 4px; 
+  transition: border-color 0.3s ease; 
+}
+
+.left button:hover {
+  border-color: #ccc; 
+  background-color: rgba(255, 255, 255, 0.1); 
+}
+    .caption .meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+    /* Modal backdrop */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    /* Modal content */
+    .modal-content {
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(5px);
+      border: 1px solid #000;
+      padding: 20px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 500px;
+      position: relative;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-content h2 {
+      margin-top: 0;
+    }
+    .modal-content label {
+      display: block;
+      margin: 10px 0 5px;
+      font-weight: bold;
+    }
+    .modal-content input[type="text"],
+    .modal-content input[type="email"],
+    .modal-content input[type="password"],
+    .modal-content textarea,
+    .modal-content input[type="file"] {
+      width: 100%;
+      padding: 8px;
+      box-sizing: border-box;
+      margin-bottom: 10px;
+      border-radius: 24px;
+      border: 1px solid #ccc;
+    }
+    .modal-content button {
+      padding: 10px 20px;
+      background: #333;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      border-radius: 24px;
+      font-size: 1em;
+      margin-right: 10px;
+    }
+    .close-btn {
+      position: absolute;
+      top: 10px; right: 10px;
+      cursor: pointer;
+      font-size: 1.2em;
+    }
+    /* Review list */
+    #review-list {
+      max-height: 300px;
+      overflow-y: auto;
+      margin-top: 10px;
+    }
+    .submission-card {
+      display: flex;
+      align-items: center;
+      border: 1px solid #000;
+      margin: 5px 0;
+      padding: 5px;
+      border-radius: 4px;
+      cursor: pointer;
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(5px);
+    }
+    .submission-card img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 4px;
+      margin-right: 10px;
+    }
+    .submission-card-title {
+      font-size: 1em;
+      color: #333;
+    }
+    /* Detail modal */
+    .detail-body {
+      display: flex;
+      margin-top: 10px;
+    }
+    .detail-body img {
+      width: 150px;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 4px;
+      margin-right: 20px;
+    }
+    .detail-info p {
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="left logo">News Network</div>
+    <div class="center" id="top-title">Loading headline...</div>
+  </header>
+
+  <main id="news-containers">
+    <!-- News cards will be injected here -->
+  </main>
+
+  <footer>
+    <div class="left"><button id="action-btn">Share</button></div>
+    <div class="center" id="bottom-title">Loading headline...</div>
+    <div class="dropdown">
+      <span id="admin-btn" class="admin-logo">⚙️</span>
+      <ul id="admin-dropdown" class="dropdown-menu">
+        <li id="logout-btn">Logout</li>
+      </ul>
+    </div>
+  </footer>
+
+  <!-- Share Modal -->
+  <div id="share-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" id="share-close">&times;</span>
+      <h2>Share your News With Us!</h2>
+      <form id="share-form">
+        <label for="share-title">Title</label>
+        <input type="text" id="share-title" name="title" required>
+        <label for="share-description">Description</label>
+        <textarea id="share-description" name="description" rows="4" required></textarea>
+        <label for="share-name">Name</label>
+        <input type="text" id="share-name" name="name" required>
+        <label for="share-email">Email</label>
+        <input type="email" id="share-email" name="email" required>
+        <label for="share-image">Image</label>
+        <input type="file" id="share-image" name="image" accept="image/*">
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Admin Modal -->
+  <div id="admin-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" id="admin-close">&times;</span>
+      <h2>Admin Login</h2>
+      <form id="admin-form">
+        <label for="admin-username">Username</label>
+        <input type="text" id="admin-username" name="username" required>
+        <label for="admin-password">Password</label>
+        <input type="password" id="admin-password" name="password" required>
+        <button type="submit">Login</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Review Modal -->
+  <div id="review-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" id="review-close">&times;</span>
+      <h2>Submitted News</h2>
+      <div id="review-list"></div>
+    </div>
+  </div>
+
+  <!-- Detail Modal -->
+  <div id="detail-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" id="detail-close">&times;</span>
+      <h2>Submission Details</h2>
+      <div class="detail-body">
+        <img id="detail-image" alt="News Image">
+        <div class="detail-info">
+          <p><strong>Title:</strong> <span id="detail-title"></span></p>
+          <p><strong>Description:</strong> <span id="detail-description"></span></p>
+          <p><strong>Name:</strong> <span id="detail-name"></span></p>
+          <p><strong>Email:</strong> <span id="detail-email"></span></p>
+          <p><strong>Submitted At:</strong> <span id="detail-time"></span></p>
+        </div>
+      </div>
+      <div style="margin-top: 15px; text-align: right;">
+        <button id="detail-accept">Accept</button>
+        <button id="detail-reject">Reject</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'https://saurav.tech/NewsAPI/everything/cnn.json';
+    const fadeDuration = 500;
+    let cnnArticles = [], acceptedNews = [], combinedArticles = [];
+    let isAdmin = false;
+    const containerRefs = [];
+    let currentDetailIndex = null;
+
+    function randTime() {
+      return Math.random() * 5000 + 3000;
+    }
+    function fadeElement(el, updateFn) {
+      el.style.transition = `opacity ${fadeDuration}ms`;
+      el.style.opacity = 0;
+      setTimeout(() => {
+        updateFn();
+        el.style.opacity = 1;
+      }, fadeDuration);
+    }
+    function showModal(id) {
+      document.getElementById(id).style.display = 'flex';
+    }
+    function hideModal(id) {
+      document.getElementById(id).style.display = 'none';
+    }
+    function updateCombined() {
+      combinedArticles = acceptedNews.concat(cnnArticles);
+    }
+
+    function updateTopBar() {
+      if (!combinedArticles.length) return;
+      const art = combinedArticles[Math.floor(Math.random() * combinedArticles.length)];
+      const el = document.getElementById('top-title');
+      fadeElement(el, () => { el.textContent = art.title || 'No title'; });
+      setTimeout(updateTopBar, randTime());
+    }
+    function updateBottomBar() {
+      if (!combinedArticles.length) return;
+      const art = combinedArticles[Math.floor(Math.random() * combinedArticles.length)];
+      const el = document.getElementById('bottom-title');
+      fadeElement(el, () => { el.textContent = art.title || 'No title'; });
+      setTimeout(updateBottomBar, randTime());
+    }
+   function updateContainer(i) {
+  if (!combinedArticles.length) return;
+  const { card, img, titleDiv, descDiv, metaDiv } = containerRefs[i];
+  const art = combinedArticles[Math.floor(Math.random() * combinedArticles.length)];
+  fadeElement(card, () => {
+    img.src = art.urlToImage || art.image || '';
+    titleDiv.textContent = art.title || '';
+    descDiv.textContent = art.description || '';
+    
+    // Format author info
+    const author = art.name ? 'By: ' + art.name : art.author ? 'By: ' + art.author : '';
+    
+    // Format date and time separately
+    let dateTime = '';
+    if (art.publishedAt) {
+      const date = new Date(art.publishedAt);
+      dateTime = `${date.toLocaleDateString()}\n${date.toLocaleTimeString()}`;
+    } else if (art.submittedAt) {
+      const date = new Date(art.submittedAt);
+      dateTime = `${date.toLocaleDateString()}\n${date.toLocaleTimeString()}`;
+    }
+    
+    // Combine author and date/time with line break
+    metaDiv.innerHTML = author 
+      ? `${author}<br>${dateTime}` 
+      : dateTime;
+  });
+  setTimeout(() => updateContainer(i), randTime());
+}
+
+    async function fetchNews() {
+      try {
+        const res = await fetch(API_URL);
+        const data = await res.json();
+        cnnArticles = data.articles || [];
+        acceptedNews = JSON.parse(localStorage.getItem('acceptedNews')||'[]');
+        updateCombined();
+        buildContainers();
+        updateTopBar();
+        updateBottomBar();
+        updateContainer(0);
+        updateContainer(1);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function buildContainers() {
+      const newsEl = document.getElementById('news-containers');
+      newsEl.innerHTML = '';
+      containerRefs.length = 0;
+      for (let i = 0; i < 2; i++) {
+        const card = document.createElement('div'); card.className = 'news-card';
+        const img = document.createElement('img'); img.alt='News image';
+        const cap = document.createElement('div'); cap.className='caption';
+        const titleDiv = document.createElement('div'); titleDiv.className='title';
+        const descDiv = document.createElement('div'); descDiv.className='description';
+        const metaDiv = document.createElement('div'); metaDiv.className='meta';
+        cap.append(titleDiv, descDiv, metaDiv);
+        card.append(img, cap);
+        newsEl.append(card);
+        containerRefs.push({ card, img, titleDiv, descDiv, metaDiv });
+      }
+    }
+
+    // Review & Detail
+    function buildReviewList() {
+      const listEl = document.getElementById('review-list');
+      const arr = JSON.parse(localStorage.getItem('sharedNews')||'[]');
+      listEl.innerHTML = '';
+      arr.forEach((e,i)=> {
+        const card = document.createElement('div'); card.className='submission-card'; card.dataset.idx=i;
+        const img = document.createElement('img'); img.src=e.image||'';
+        const t = document.createElement('div'); t.className='submission-card-title'; t.textContent=e.title;
+        card.append(img,t);
+        card.onclick = ()=> openDetail(i);
+        listEl.append(card);
+      });
+    }
+    function openDetail(i) {
+      const arr = JSON.parse(localStorage.getItem('sharedNews')||'[]');
+      const e = arr[i]; if(!e) return;
+      currentDetailIndex = i;
+      document.getElementById('detail-image').src=e.image||'';
+      document.getElementById('detail-title').textContent=e.title;
+      document.getElementById('detail-description').textContent=e.description;
+      document.getElementById('detail-name').textContent=e.name;
+      document.getElementById('detail-email').textContent=e.email;
+      document.getElementById('detail-time').textContent=new Date(e.submittedAt).toLocaleString();
+      showModal('detail-modal');
+    }
+    function handleDecision(accept) {
+      const shared = JSON.parse(localStorage.getItem('sharedNews')||'[]');
+      const e = shared[currentDetailIndex];
+      if(accept && e) {
+        acceptedNews.push(e);
+        localStorage.setItem('acceptedNews', JSON.stringify(acceptedNews));
+        updateCombined();
+      }
+      shared.splice(currentDetailIndex,1);
+      localStorage.setItem('sharedNews',JSON.stringify(shared));
+      hideModal('detail-modal');
+      buildReviewList();
+    }
+
+    // Events
+    document.getElementById('action-btn').onclick = ()=> {
+      if(isAdmin) { buildReviewList(); showModal('review-modal'); }
+      else showModal('share-modal');
+    };
+    document.getElementById('share-close').onclick = ()=> hideModal('share-modal');
+    document.getElementById('share-form').onsubmit = function(e) {
+      e.preventDefault();
+      const D=new FormData(this);
+      const entry={ title:D.get('title'), description:D.get('description'),
+        name:D.get('name'), email:D.get('email'), submittedAt:new Date().toISOString()
+      };
+      const file=this.image.files[0];
+      const finish = img=>{
+        entry.image=img||'';
+        const arr=JSON.parse(localStorage.getItem('sharedNews')||'[]');
+        arr.push(entry);
+        localStorage.setItem('sharedNews',JSON.stringify(arr));
+        alert('Thank you!');
+        this.reset();
+        hideModal('share-modal');
+      };
+      if(file){
+        const r=new FileReader();
+        r.onload=()=>finish(r.result);
+        r.readAsDataURL(file);
+      } else finish('');
+    };
+    const dropdown=document.getElementById('admin-dropdown');
+    document.getElementById('admin-btn').onclick = ()=>{
+      if(isAdmin) dropdown.classList.toggle('visible');
+      else showModal('admin-modal');
+    };
+    document.getElementById('logout-btn').onclick = ()=>{
+      isAdmin=false;
+      document.getElementById('action-btn').textContent='Share';
+      dropdown.classList.remove('visible');
+    };
+    document.getElementById('admin-close').onclick = ()=> hideModal('admin-modal');
+    document.getElementById('admin-form').onsubmit = function(e){
+      e.preventDefault();
+      if(this.username.value==='Admin'&&this.password.value==='123'){
+        isAdmin=true;
+        document.getElementById('action-btn').textContent='Accept';
+        hideModal('admin-modal');
+      } else alert('Invalid credentials');
+      this.reset();
+    };
+    document.getElementById('review-close').onclick = ()=> hideModal('review-modal');
+    document.getElementById('detail-close').onclick = ()=> hideModal('detail-modal');
+    document.getElementById('detail-accept').onclick = ()=> handleDecision(true);
+    document.getElementById('detail-reject').onclick = ()=> handleDecision(false);
+
+    document.addEventListener('DOMContentLoaded', fetchNews);
+  </script>
+</body>
+</html>

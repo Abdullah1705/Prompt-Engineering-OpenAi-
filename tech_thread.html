@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Tech Threads</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * {
+      box-sizing: border-box
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 200px;
+      height: 100vh;
+      background: #fff;
+      border-right: 1px solid #ddd;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    #layout {
+      margin-left: 200px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    header {
+      height: 60px;
+      position: relative;
+      text-align: center;
+      line-height: 60px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-family: Georgia, serif;
+      font-size: 1.8rem;
+      color: #333;
+    }
+
+    #user-icon {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+    }
+
+    #main-content {
+      flex: 1;
+      padding: 1rem;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    #sidebar button {
+      margin-bottom: 0.5rem;
+      padding: 0.5rem;
+      border: none;
+      background: #0077cc;
+      color: #fff;
+      cursor: pointer;
+      border-radius: 3px;
+      text-align: left;
+    }
+
+    #sidebar button.active {
+      background: #005fa3;
+    }
+
+    #main-content {
+      flex: 1 1 auto;
+      padding: 1rem;
+      position: relative;
+      overflow-y: auto;
+    }
+
+    #spinner {
+      display: none;
+      margin: 2rem auto;
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid #0077cc;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    #cards-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 6px;
+      padding: 1rem;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      min-height: 180px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    .card h3 {
+      margin: 0 0 0.5rem;
+      font-size: 1.1rem;
+      color: #0077cc;
+    }
+
+    .card p {
+      margin: 0.25rem 0;
+      font-size: 0.9rem;
+      color: #555;
+    }
+
+    #pagination {
+      text-align: center;
+      margin-top: 1rem;
+    }
+
+    #pagination button {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: #0077cc;
+      cursor: pointer;
+      margin: 0 1rem;
+    }
+
+    #pagination button:disabled {
+      color: #ccc;
+      cursor: default;
+    }
+
+    #pagination span {
+      font-size: 1rem;
+      vertical-align: middle;
+    }
+
+    /* Story modal */
+    #story-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      z-index: 1000;
+    }
+
+    #story-modal.hidden {
+      display: none
+    }
+
+    #story-content {
+      background: #fff;
+      border-radius: 6px;
+      width: 100%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      padding: 1.5rem;
+    }
+
+    #story-close {
+      position: absolute;
+      top: 0.5rem;
+      right: 1rem;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #999;
+    }
+
+    #story-close:hover {
+      color: #333
+    }
+
+    /* Login/Signup modal */
+    #login-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      z-index: 2000;
+    }
+
+    #login-modal.hidden {
+      display: none
+    }
+
+    #login-content {
+      background: #fff;
+      border-radius: 6px;
+      width: 100%;
+      max-width: 400px;
+      padding: 1.5rem;
+      position: relative;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    #login-close {
+      position: absolute;
+      top: 0.5rem;
+      right: 1rem;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #999;
+    }
+
+    #login-close:hover {
+      color: #333
+    }
+
+    #login-content h2 {
+      margin-top: 0;
+      font-size: 1.4rem
+    }
+
+    #login-content label {
+      display: block;
+      margin: 0.5rem 0 0.2rem;
+      font-size: 0.9rem;
+    }
+
+    #login-content input {
+      width: 100%;
+      padding: 0.5rem;
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    #login-content button {
+      background: #0077cc;
+      color: #fff;
+      border: none;
+      padding: 0.5rem 1rem;
+      margin-top: 0.5rem;
+      cursor: pointer;
+      border-radius: 3px;
+      font-size: 0.9rem;
+    }
+
+    #login-content button:hover {
+      background: #005fa3
+    }
+
+    #login-content .toggle-link {
+      background: none;
+      border: none;
+      color: #0077cc;
+      text-decoration: underline;
+      cursor: pointer;
+      padding: 0;
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+    }
+
+    #login-error {
+      color: red;
+      font-size: 0.9rem;
+      min-height: 1.2em;
+    }
+
+    /* Story modal extras */
+    .upvote-btn,
+    .add-comment-btn {
+      background: #ff6600;
+      color: #fff;
+      border: none;
+      padding: 0.5rem 1rem;
+      margin: 0.5rem 0;
+      cursor: pointer;
+      border-radius: 3px;
+      font-size: 0.9rem;
+    }
+
+    .upvote-btn:disabled {
+      background: #ccc;
+      cursor: default
+    }
+
+    .upvote-btn:hover:not(:disabled),
+    .add-comment-btn:hover {
+      background: #e65c00
+    }
+
+    #story-content textarea {
+      width: 100%;
+      height: 60px;
+      padding: 0.5rem;
+      font-family: inherit;
+      font-size: 0.9rem;
+      resize: vertical;
+      margin-bottom: 0.5rem;
+    }
+  </style>
+</head>
+
+<body>
+  <nav id="sidebar">
+    <button id="btn-all" class="active">All Stories</button>
+    <button id="btn-upvoted">Upvoted</button>
+    <button id="btn-commented">Commented</button>
+    <button id="btn-keywords">Keywords</button>
+  </nav>
+
+  <div id="layout">
+    <header>
+      <h1>Tech Threads</h1>
+      <svg id="user-icon" viewBox="0 0 24 24">
+        <path fill="#333"
+          d="M12,19.2C7.5,19.2,3.8,21.4,3.8,23V24h16.4v-1C20.2,21.4,16.5,19.2,12,19.2M12,17A5,5 0 1,0 12,7A5,5 0 0,0 12,17Z" />
+      </svg>
+    </header>
+    <section id="main-content">
+      <div id="spinner"></div>
+      <div id="cards-container"></div>
+      <canvas id="keywordChart" width="400" height="200" style="display:none;"></canvas>
+      <div id="pagination">
+        <button id="prev-btn">&#9664;</button>
+        <span id="page-info">Page 1</span>
+        <button id="next-btn">&#9654;</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- STORY MODAL -->
+  <div id="story-modal" class="hidden">
+    <div id="story-content">
+      <span id="story-close">&times;</span>
+      <div id="story-body"></div>
+    </div>
+  </div>
+
+  <!-- LOGIN/SIGNUP MODAL -->
+  <div id="login-modal" class="hidden">
+    <div id="login-content">
+      <span id="login-close">&times;</span>
+      <div id="login-body"></div>
+    </div>
+  </div>
+
+  <script>
+    // —— API & Pagination —————————————————————————————————————
+    const TOP_URL = 'https://hacker-news.firebaseio.com/v0/topstories.json';
+    const ITEM = id => `https://hacker-news.firebaseio.com/v0/item/${id}.json`;
+    const PER = 15;
+
+    let allIds = [], stories = [], currentPage = 1, pageCount = 1;
+    let pending = [];
+
+    // —— LocalStorage State ——————————————————————————————————
+    let upvotes = JSON.parse(localStorage.getItem('upvotes') || '{}');
+    let comments = JSON.parse(localStorage.getItem('comments') || '{}');
+    let users = JSON.parse(localStorage.getItem('users') || '{}');
+    let currentUser = localStorage.getItem('currentUser') || null;
+
+    // —— DOM Nodes ———————————————————————————————————————
+    const spinner = document.getElementById('spinner');
+    const cards = document.getElementById('cards-container');
+    const pagination = document.getElementById('pagination');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const pageInfo = document.getElementById('page-info');
+    const userIcon = document.getElementById('user-icon');
+
+    const storyModal = document.getElementById('story-modal');
+    const storyBody = document.getElementById('story-body');
+    const storyClose = document.getElementById('story-close');
+
+    const loginModal = document.getElementById('login-modal');
+    const loginBody = document.getElementById('login-body');
+    const loginClose = document.getElementById('login-close');
+
+    const btnAll = document.getElementById('btn-all');
+    const btnUpvoted = document.getElementById('btn-upvoted');
+    const btnCommented = document.getElementById('btn-commented');
+    const btnKeywords = document.getElementById('btn-keywords');
+
+    document.getElementById('keywordChart').style.display = 'none';
+
+    // —— Utilities ——————————————————————————————————————
+    function showSpinner() { spinner.style.display = 'block'; }
+    function hideSpinner() { spinner.style.display = 'none'; }
+    function clearActive() { [btnAll, btnUpvoted, btnCommented, btnKeywords].forEach(b => b.classList.remove('active')); }
+    function mustLogin(cb) {
+      if (currentUser) return cb();
+      pending.push(cb);
+      openLogin('login');
+    }
+    function runPending() { pending.forEach(f => f()); pending = []; }
+
+    // —— Init —————————————————————————————————————————
+    window.onload = init;
+    async function init() {
+      clearActive(); btnAll.classList.add('active');
+      showSpinner();
+      allIds = await fetch(TOP_URL).then(r => r.json());
+      pageCount = Math.ceil(allIds.length / PER);
+      setupPagination();
+      await loadPage(1);
+    }
+    function setupPagination() {
+      prevBtn.onclick = () => currentPage > 1 && loadPage(currentPage - 1);
+      nextBtn.onclick = () => currentPage < pageCount && loadPage(currentPage + 1);
+    }
+
+    // —— Load & Render All Stories ———————————————————————
+    async function loadPage(page) {
+      currentPage = page;
+      clearActive(); btnAll.classList.add('active');
+      showSpinner();
+      const slice = allIds.slice((page - 1) * PER, (page - 1) * PER + PER);
+      stories = await Promise.all(slice.map(id => fetch(ITEM(id)).then(r => r.json())));
+      renderGrid(stories);
+      pageInfo.textContent = `Page ${currentPage} of ${pageCount}`;
+      prevBtn.disabled = currentPage === 1;
+      nextBtn.disabled = currentPage === pageCount;
+      pagination.style.display = 'block';
+      hideSpinner();
+    }
+
+    function renderGrid(list) {
+      cards.style.display = 'grid';
+      cards.innerHTML = '';
+      list.forEach(s => {
+        const c = document.createElement('div'); c.className = 'card';
+        c.innerHTML = `
+          <h3>${s.title || ' '}</h3>
+          <p><strong>By:</strong> ${s.by || '?'}<br>
+             <strong>Score:</strong> ${s.score || 0} | <strong>Upvotes:</strong> ${upvotes[s.id] || 0}
+          </p>
+        `;
+        c.onclick = () => openStory(s.id);
+        cards.appendChild(c);
+      });
+    }
+
+    // —— Story Modal ————————————————————————————————————
+    storyClose.onclick = () => storyModal.classList.add('hidden');
+    storyModal.onclick = e => { if (e.target === storyModal) storyModal.classList.add('hidden'); };
+    async function openStory(id) {
+      const s = stories.find(x => x.id === id) || { id };
+      storyBody.innerHTML = `
+        <h2><a href="${s.url || '#'}" target="_blank">${s.title || '...'}</a></h2>
+        <p>
+          <strong>By:</strong> ${s.by || '?'} |
+          <strong>Score:</strong> ${s.score || 0} |
+          <strong>Upvotes:</strong> ${upvotes[id] || 0}
+        </p>
+        <button class="upvote-btn" id="btn-up">Upvote</button>
+        <h3>Comments</h3>
+        <div id="comments">Loading…</div>
+        <textarea id="new-comment" placeholder="Add your comment…"></textarea>
+        <button class="add-comment-btn" id="btn-cm">Add Comment</button>
+      `;
+      const upb = document.getElementById('btn-up');
+      if (currentUser && users[currentUser].upvotedPosts.includes(id)) upb.disabled = true;
+      upb.onclick = () => mustLogin(() => {
+        if (!users[currentUser].upvotedPosts.includes(id)) {
+          upvotes[id] = (upvotes[id] || 0) + 1;
+          users[currentUser].upvotedPosts.push(id);
+          localStorage.setItem('upvotes', JSON.stringify(upvotes));
+          localStorage.setItem('users', JSON.stringify(users));
+          upb.disabled = true;
+          storyBody.querySelector('p').innerHTML = `
+            <strong>By:</strong> ${s.by || '?'} |
+            <strong>Score:</strong> ${s.score || 0} |
+            <strong>Upvotes:</strong> ${upvotes[id]}
+          `;
+          renderGrid(stories);
+        }
+      });
+      document.getElementById('btn-cm').onclick = () => mustLogin(() => {
+        const txt = document.getElementById('new-comment').value.trim();
+        if (!txt) return;
+        const c = { by: currentUser, text: txt, time: Date.now() };
+        comments[id] = comments[id] || [];
+        comments[id].push(c);
+        users[currentUser].commentedPosts.push(id);
+        localStorage.setItem('comments', JSON.stringify(comments));
+        localStorage.setItem('users', JSON.stringify(users));
+        document.getElementById('new-comment').value = '';
+        loadComments(id);
+      });
+      loadComments(id);
+      storyModal.classList.remove('hidden');
+    }
+    async function loadComments(id) {
+      const cont = document.getElementById('comments');
+      cont.innerHTML = 'Loading…';
+      let remote = [], s = stories.find(x => x.id === id);
+      if (s && s.kids) {
+        remote = await Promise.all(
+          s.kids.slice(0, 10).map(k => fetch(ITEM(k)).then(r => r.json()))
+        );
+      }
+      cont.innerHTML = '';
+      const all = [];
+      remote.forEach(c => c && c.text && !c.deleted && all.push({ by: c.by, text: c.text, time: c.time * 1000 }));
+      (comments[id] || []).forEach(c => all.push(c));
+      if (!all.length) cont.innerHTML = '<p>No comments yet.</p>';
+      else all.forEach(c => {
+        const d = document.createElement('div'); d.className = 'comment';
+        d.innerHTML = `<p class="meta">${c.by} at ${new Date(c.time).toLocaleString()}</p>
+                       <p>${c.text}</p>`;
+        cont.appendChild(d);
+      });
+    }
+
+    // —— Login / Signup ——————————————————————————————————
+    userIcon.onclick = () => openLogin(currentUser ? 'welcome' : 'login');
+    loginClose.onclick = () => loginModal.classList.add('hidden');
+    loginModal.onclick = e => { if (e.target === loginModal) loginModal.classList.add('hidden'); };
+
+    function openLogin(mode) {
+      loginBody.innerHTML = '';
+      if (mode === 'welcome' && currentUser) {
+        loginBody.innerHTML = `
+          <h2>Welcome, ${currentUser}</h2>
+          <button id="btn-out">Logout</button>`;
+        document.getElementById('btn-out').onclick = () => {
+          currentUser = null;
+          localStorage.removeItem('currentUser');
+          localStorage.setItem('users', JSON.stringify(users));
+          loginModal.classList.add('hidden');
+        };
+      } else {
+        const isLogin = mode === 'login';
+        loginBody.innerHTML = `
+          <h2>${isLogin ? 'Login' : 'Sign Up'}</h2>
+          <label>Username</label><input id="li-u"/>
+          <label>Password</label><input type="password" id="li-p"/>
+          <div id="login-error"></div>
+          <button id="li-go">${isLogin ? 'Login' : 'Create Account'}</button>
+          <button class="toggle-link" id="li-tgl">
+            ${isLogin ? "Don't have an account? Sign Up" : "Have an account? Login"}
+          </button>`;
+        document.getElementById('li-tgl').onclick = () => openLogin(isLogin ? 'signup' : 'login');
+        document.getElementById('li-go').onclick = () => {
+          const u = document.getElementById('li-u').value.trim();
+          const p = document.getElementById('li-p').value;
+          const err = document.getElementById('login-error');
+          err.textContent = '';
+          if (!u || !p) { err.textContent = 'Both fields required'; return; }
+          if (isLogin) {
+            if (users[u] && users[u].password === p) {
+              currentUser = u; localStorage.setItem('currentUser', u);
+              loginModal.classList.add('hidden'); runPending();
+            } else err.textContent = 'Invalid credentials';
+          } else {
+            if (users[u]) err.textContent = 'User exists';
+            else {
+              users[u] = { password: p, upvotedPosts: [], commentedPosts: [] };
+              localStorage.setItem('users', JSON.stringify(users));
+              currentUser = u; localStorage.setItem('currentUser', u);
+              loginModal.classList.add('hidden'); runPending();
+            }
+          }
+        };
+      }
+      loginModal.classList.remove('hidden');
+    }
+
+    // —— Sidebar Actions —————————————————————————————————
+    btnAll.onclick = () => loadPage(1);
+
+    btnUpvoted.onclick = () => mustLogin(async () => {
+      clearActive(); btnUpvoted.classList.add('active');
+      showSpinner();
+      const ups = users[currentUser].upvotedPosts || [];
+      const data = await Promise.all(ups.map(id => fetch(ITEM(id)).then(r => r.json())));
+      renderGrid(data);
+      pagination.style.display = 'none';
+      hideSpinner();
+    });
+
+    btnCommented.onclick = () => mustLogin(async () => {
+      clearActive(); btnCommented.classList.add('active');
+      showSpinner();
+      const cms = users[currentUser].commentedPosts || [];
+      const data = await Promise.all(cms.map(id => fetch(ITEM(id)).then(r => r.json())));
+      renderGrid(data);
+      pagination.style.display = 'none';
+      hideSpinner();
+    });
+
+    btnKeywords.onclick = async () => {
+      clearActive(); btnKeywords.classList.add('active');
+      showSpinner();
+
+      cards.style.display = 'none';
+      pagination.style.display = 'none';
+      const canvas = document.getElementById('keywordChart');
+      canvas.style.display = 'block';
+      // build freq from titles, text, all comments
+      const STOP = new Set([
+        'the', 'and', 'for', 'with', 'from', 'that', 'this', 'have', 'are', 'not', 'but', 'you', 'your', 'all',
+        'any', 'can', 'has', 'will', 'its', 'was', 'would', 'their', 'there', 'what', 'if', 'they', 'his', 'her',
+        'she', 'he', 'we', 'us', 'our', 'them', 'my', 'me', 'do', 'does', 'did', 'so', 'such', 'will', 'could',
+        'should', 'about', 'into', 'more', 'other', 'some', 'only', 'just', 'than', 'like', 'over', 'under',
+        'after', 'before', 'while', 'because', 'where', 'when', 'how', 'why', 'also', 'those', 'these', 'then',
+        'now', 'each', 'many', 'much'
+      ]);
+      const freq = {};
+      // include all loaded stories
+      stories.forEach(s => {
+        let txt = (s.title || '') + ' ' + (s.text || '');
+        // include comments
+        const localC = comments[s.id] || [];
+        localC.forEach(c => txt += ' ' + c.text);
+        txt.toLowerCase().split(/\W+/).forEach(w => {
+          if (w.length > 2 && !STOP.has(w)) freq[w] = (freq[w] || 0) + 1;
+        });
+      });
+
+      const top10 = Object.entries(freq)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10);
+      const labels = top10.map(([w]) => w);
+      const data = top10.map(([, c]) => c);
+
+      if (window.keywordChartInstance) {
+        window.keywordChartInstance.destroy();
+      }
+      const ctx = canvas.getContext('2d');
+      window.keywordChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Keyword Frequency',
+            data,
+            backgroundColor: '#0077cc'
+          }]
+        },
+        options: {
+          scales: { y: { beginAtZero: true } },
+          plugins: { legend: { display: false } }
+        }
+      });
+
+      hideSpinner();
+    };
+  </script>
+</body>
+
+</html>

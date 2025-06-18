@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Meow Meow</title>
+    <!-- Import Moon Dance font from Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Moon+Dance&display=swap" rel="stylesheet">
+    <style>
+        /* Reset and basic styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+            font-family: Arial, sans-serif;
+            /* Hide the default cursor */
+            cursor: none;
+        }
+
+        /* Single background gradient for the whole page */
+        body {
+            background: linear-gradient(to bottom, #fffde7, #fbc02d);
+            height: 100vh;
+            background-attachment: fixed;
+
+        }
+
+        /* Header with centered title using Moon Dance font */
+        header {
+            text-align: center;
+            padding: 20px;
+            font-family: 'Moon Dance', cursive;
+            font-size: 3em;
+        }
+
+        /* Main container holding left (image) and right (fact) sections */
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+        }
+
+        .left,
+        .right {
+            flex: 1;
+            min-width: 300px;
+            padding: 20px;
+        }
+
+        /* Left side: set relative positioning to allow absolute positioned arrows */
+        .left {
+            position: relative;
+        }
+
+        /* Image container holds the cat image and loading text */
+        .image-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 300px;
+        }
+
+        #catImage {
+            max-width: 100%;
+            max-height: 80vh;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s;
+            display: none;
+            padding: 20px;
+        }
+
+        #catImage:hover {
+            transform: scale(1.05);
+        }
+
+        #imageLoading {
+            font-size: 1.5em;
+            color: #333;
+        }
+
+        /* Navigation arrows styled as plain text (< and >), bigger and bold.
+       They are positioned outside the image container (relative to .left) */
+        .nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #000;
+            font-size: 3em;
+            font-weight: bold;
+            cursor: pointer;
+            display: none;
+            z-index: 10;
+        }
+
+        .prev-btn {
+            padding: 20px;
+            left: -30px;
+        }
+
+        .next-btn {
+            padding: 20px;
+            right: -30px;
+        }
+
+        /* Right side: fact-wrapper wraps the fact container and the triangle element */
+        .fact-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        /* Fact container: a rounded rectangle with a background only slightly darker than page */
+        .fact-container {
+            width: 33vw;
+            background: linear-gradient(to bottom, #fff9c4, #f9a825);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .fact-container p {
+            margin: 0;
+            color: #000;
+            font-size: 1.2em;
+        }
+
+        /* Triangle element: not inside the fact container but positioned so that its base (top edge)
+       collides with the bottom of the fact container. It is placed at the bottom right. */
+        .triangle {
+            position: absolute;
+            top: 100%;
+            /* starts exactly at the bottom edge of fact-wrapper */
+            right: 30px;
+            width: 50px;
+            height: 70px;
+            background: #f9a825;
+            /* Create a downward pointing triangle using clip-path.
+         The top edge (base of the triangle) is horizontal and collides with the container */
+            clip-path: polygon(0 0, 100% 0, 50% 100%);
+        }
+
+        /* Custom cursor: a paw image following the mouse */
+        #cursorPaw {
+            position: fixed;
+            width: 30px;
+            height: 30px;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            z-index: 10000;
+        }
+
+        /* Paw trail: a lighter version that fades and scales out */
+        .paw-trail {
+            position: fixed;
+            width: 30px;
+            height: 30px;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+            opacity: 0.7;
+            filter: brightness(1.5);
+            animation: fadeTrail 0.8s forwards;
+        }
+
+        @keyframes fadeTrail {
+            0% {
+                opacity: 0.7;
+                transform: translate(-50%, -50%) scale(1);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(1.5);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>Meow Meow</header>
+
+    <div class="container">
+        <!-- Left Column: Image area with navigation arrows outside the image container -->
+        <div class="left">
+            <button id="prevBtn" class="nav-btn prev-btn">
+                < </button>
+                    <div class="image-container">
+                        <div id="imageLoading">Loading image...</div>
+                        <img id="catImage" src="" alt="Cute Cat">
+                    </div>
+                    <button id="nextBtn" class="nav-btn next-btn">></button>
+        </div>
+
+        <!-- Right Column: Fact wrapper containing fact container and triangle element -->
+        <div class="right">
+            <div class="fact-wrapper">
+                <div class="fact-container">
+                    <p id="catFact">Loading cat fact...</p>
+                </div>
+                <div class="triangle"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom cursor paw image -->
+    <img id="cursorPaw"
+        src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iOCIgZmlsbD0iIzAwMDAwMCIvPjxjaXJjbGUgY3g9IjQ0IiBjeT0iMjAiIHI9IjgiIGZpbGw9IiMwMDAwMDAiLz48Y2lyY2xlIGN4PSIzMiIgY3k9IjQ0IiByPSIxMCIgZmlsbD0iIzAwMDAwMCIvPjxjaXJjbGUgY3g9IjE0IiBjeT0iMzgiIHI9IjYiIGZpbGw9IiMwMDAwMDAiLz48Y2lyY2xlIGN4PSI1MCIgY3k9IjM4IiByPSI2IiBmaWxsPSIjMDAwMDAwIi8+PC9zdmc+"
+        alt="Cursor Paw">
+
+    <script>
+        // --- Audio: Play "Meow Meow" sound on cat image hover ---
+        let audioCtx = null;
+        function playMeow() {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            const audioCtx = new AudioContext();
+            const now = audioCtx.currentTime;
+
+            const mOsc = audioCtx.createOscillator();
+            const mGain = audioCtx.createGain();
+            const mFilter = audioCtx.createBiquadFilter();
+            mFilter.type = 'bandpass';
+            mFilter.frequency.setValueAtTime(300, now);
+            mFilter.Q.value = 10;
+
+            mOsc.type = 'sine';
+            mOsc.frequency.setValueAtTime(120, now);
+
+            mOsc.connect(mFilter);
+            mFilter.connect(mGain);
+            mGain.connect(audioCtx.destination);
+
+            mGain.gain.setValueAtTime(1, now);
+            mGain.gain.linearRampToValueAtTime(0.001, now + 0.15);
+
+            mOsc.start(now);
+            mOsc.stop(now + 0.15);
+
+            function playOscillator(delay = 0) {
+                const startTime = audioCtx.currentTime + delay;
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(300, startTime);
+                oscillator.frequency.exponentialRampToValueAtTime(800, startTime + 0.15);
+                oscillator.frequency.exponentialRampToValueAtTime(250, startTime + 0.5);
+                gainNode.gain.setValueAtTime(0.001, startTime);
+                gainNode.gain.linearRampToValueAtTime(1, startTime + 0.05);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.5);
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                oscillator.start(startTime);
+                oscillator.stop(startTime + 0.5);
+            }
+            // Play two oscillators in sequence to mimic "Meow Meow"
+            playOscillator(0);
+            playOscillator(0.8);
+        }
+
+        // --- Cat Image Navigation ---
+        let catImages = [];
+        let currentIndex = 0;
+
+        function displayImage() {
+            const img = document.getElementById("catImage");
+            if (catImages.length > 0) {
+                // Hide image and show loading text while new image loads
+                img.style.display = "none";
+                document.getElementById("imageLoading").style.display = "block";
+
+                img.src = catImages[currentIndex].url;
+                img.onload = function () {
+                    document.getElementById("imageLoading").style.display = "none";
+                    img.style.display = "block";
+                    // Show navigation arrows now that the image is loaded
+                    document.getElementById("prevBtn").style.display = "block";
+                    document.getElementById("nextBtn").style.display = "block";
+                };
+                // Ensure meow sound plays on hover
+                img.removeEventListener("mouseenter", playMeow);
+                img.addEventListener("mouseenter", playMeow);
+            }
+        }
+
+        function fetchCatImages() {
+            // Show loading state and hide navigation arrows while fetching images
+            document.getElementById("imageLoading").style.display = "block";
+            document.getElementById("catImage").style.display = "none";
+            document.getElementById("prevBtn").style.display = "none";
+            document.getElementById("nextBtn").style.display = "none";
+
+            fetch("https://api.thecatapi.com/v1/images/search?size=med&mime_types=jpg&format=json&has_breeds=true&order=RANDOM&page=0&limit=10")
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length > 0) {
+                        catImages = data;
+                        currentIndex = 0;
+                        displayImage();
+                    } else {
+                        document.getElementById("imageLoading").textContent = "No cat image found.";
+                    }
+                })
+                .catch(err => {
+                    console.error("Error fetching cat images:", err);
+                    document.getElementById("imageLoading").textContent = "Failed to load cat image.";
+                });
+        }
+
+        function nextImage() {
+            if (catImages.length === 0) return;
+            currentIndex = (currentIndex + 1) % catImages.length;
+            // Optionally, refresh images when wrapping around
+            if (currentIndex === 0) {
+                fetchCatImages();
+            } else {
+                displayImage();
+            }
+        }
+
+        function prevImage() {
+            if (catImages.length === 0) return;
+            currentIndex = (currentIndex - 1 + catImages.length) % catImages.length;
+            displayImage();
+        }
+
+        // --- Fetch Cat Fact ---
+        function fetchCatFact() {
+            fetch("https://catfact.ninja/fact")
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("catFact").textContent = data.fact;
+                })
+                .catch(err => {
+                    console.error("Error fetching cat fact:", err);
+                    document.getElementById("catFact").textContent = "Failed to load cat fact.";
+                });
+        }
+
+        // --- Custom Cursor and Paw Trail ---
+        const cursorPaw = document.getElementById("cursorPaw");
+        document.addEventListener("mousemove", (e) => {
+            // Update custom cursor paw position
+            cursorPaw.style.left = e.clientX + "px";
+            cursorPaw.style.top = e.clientY + "px";
+
+            // Create a trailing paw print
+            const trail = document.createElement("img");
+            trail.src = cursorPaw.src;
+            trail.className = "paw-trail";
+            trail.style.left = e.clientX + "px";
+            trail.style.top = e.clientY + "px";
+            document.body.appendChild(trail);
+            trail.addEventListener("animationend", () => {
+                trail.remove();
+            });
+        });
+
+        // --- Initialize on DOMContentLoaded ---
+        document.addEventListener("DOMContentLoaded", () => {
+            fetchCatFact();
+            fetchCatImages();
+
+            document.getElementById("nextBtn").addEventListener("click", nextImage);
+            document.getElementById("prevBtn").addEventListener("click", prevImage);
+        });
+    </script>
+</body>
+
+</html>

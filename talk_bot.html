@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Persistent Talk Bot</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <script defer src="https://use.fontawesome.com/releases/v5.15.4/js/all.js"></script>
+    <style>
+        /* RESET & BASE */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            height: 100%;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        /* SIDEBAR */
+        #sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 250px;
+            height: 100%;
+            background: #444;
+            color: #fff;
+            padding: 60px 10px 10px;
+            overflow-y: auto;
+            z-index: 1001;
+            transition: width .3s, padding .3s;
+        }
+
+        #sidebar.closed {
+            width: 0;
+            padding: 0;
+        }
+
+        #sidebar h2 {
+            text-align: center;
+            margin-bottom: 1em;
+            font-size: 1.2em;
+        }
+
+        .history-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px;
+            margin: 4px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            font-size: 0.9em;
+            cursor: pointer;
+        }
+
+        .history-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .history-item .title {
+            flex: 1;
+        }
+
+        .history-item .del-chat {
+            color: #f55;
+            cursor: pointer;
+            font-size: 26px;
+        }
+
+        #toggleSidebarBtnSidebar {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            font-size: 20px;
+            background: none;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            display: none;
+        }
+
+        /* hide scrollbars */
+        #sidebar::-webkit-scrollbar,
+        .chat-area::-webkit-scrollbar {
+            width: 0;
+        }
+
+        #sidebar,
+        .chat-area {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* CONTAINER */
+        .container {
+            margin-left: 250px;
+            transition: margin-left .3s;
+            background: #333;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container.full {
+            margin-left: 0;
+        }
+
+        /* NAVBAR */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: #333;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 15px;
+            z-index: 1000;
+        }
+
+        .nav-left,
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        body.sidebar-open .navbar .nav-left {
+            transform: translateX(250px);
+        }
+
+        .nav-left {
+            transition: transform .3s;
+        }
+
+        .navbar button {
+            background: none;
+            border: none;
+            color: inherit;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 5px;
+        }
+
+        .navbar button:hover {
+            opacity: .8;
+        }
+
+        /* white borders */
+        #newChatBtn,
+        #tempBtn,
+        #talkBotBtn {
+            border: 1px solid #fff;
+            border-radius: 4px;
+            padding: 4px 8px;
+        }
+
+        #newChatBtn:disabled {
+            opacity: .4;
+            cursor: not-allowed;
+        }
+
+        /* DROPDOWNS */
+        .dropdown {
+            position: relative;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: #fff;
+            color: #333;
+            min-width: 140px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, .2);
+            z-index: 1002;
+        }
+
+        .dropdown-content a {
+            display: block;
+            padding: 10px;
+            color: inherit;
+        }
+
+        .dropdown-content a:hover {
+            background: #f0f0f0;
+        }
+
+        .dropdown.show .dropdown-content {
+            display: block;
+        }
+
+        /* MAIN */
+        .main-content {
+    margin-top: 60px;
+    height: calc(100vh - 60px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 150px 0 10px;
+}
+
+.main-content.chat-mode {
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.main-content.chat-active {
+    justify-content: flex-end;
+}
+
+.input-bar.initial-position {
+    margin-bottom: 0;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+        /* CHAT AREA */
+        .chat-area {
+            flex: 1;
+            width: 100%;
+            max-width: 800px;
+            padding: 10px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .bubble {
+            max-width: 70%;
+            margin: 5px;
+            padding: 10px 15px;
+            border-radius: 20px;
+            word-wrap: break-word;
+        }
+
+        .bubble.user {
+            background: #4a90e2;
+            color: #fff;
+            align-self: flex-end;
+        }
+
+        .bubble.bot {
+            background: #e5e5ea;
+            color: #000;
+            align-self: flex-start;
+        }
+
+        /* voice-note style */
+        .voice-note {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            color: #000;
+        }
+
+        .voice-note i {
+            font-size: 20px;
+        }
+
+        /* FILE PREVIEW */
+        #filePreviewContainer {
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 10px;
+        }
+
+        .file-preview {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 8px;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #fff;
+        }
+
+        .file-preview img {
+            max-height: 60px;
+            border-radius: 4px;
+        }
+
+        .file-preview audio {
+            max-width: 200px;
+        }
+
+        .file-preview .file-label {
+            color: #fff;
+            font-size: 14px;
+        }
+
+        .remove-preview {
+            margin-left: auto;
+            cursor: pointer;
+            font-size: 18px;
+            color: #f55;
+        }
+
+        /* INPUT BAR */
+        .input-bar {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            max-width: 800px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 30px;
+            padding: 0 15px;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-shrink: 0;
+        }
+
+        .input-bar input[type="text"] {
+            flex: 1;
+            border: none;
+            outline: none;
+            background: transparent;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .input-bar input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .input-bar button {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #fff;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .input-bar button:hover {
+            opacity: .8;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        /* RESPONSIVE: disable sidebar toggle on small */
+        @media(max-width:600px) {
+
+            #toggleSidebarBtnNav,
+            #toggleSidebarBtnSidebar {
+                pointer-events: none;
+                opacity: .4;
+            }
+
+            .input-bar {
+                height: 50px;
+            }
+
+            .input-bar button {
+                font-size: 18px;
+            }
+
+            .navbar {
+                padding: 0 10px;
+            }
+
+            .nav-left,
+            .nav-right {
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- SIDEBAR -->
+    <div id="sidebar">
+        <button id="toggleSidebarBtnSidebar"><i class="fas fa-bars"></i></button>
+        <h2>Chats</h2>
+        <div id="chatList"></div>
+    </div>
+
+    <div class="container">
+
+        <!-- NAVBAR -->
+        <nav class="navbar">
+            <div class="nav-left">
+                <button id="toggleSidebarBtnNav"><i class="fas fa-bars"></i></button>
+                <button id="newChatBtn" title="New Chat" disabled>
+                    <i class="fas fa-comments"></i>
+                </button>
+                <div class="dropdown" id="talkBotDropdownWrapper">
+                    <button id="talkBotBtn">Text <i class="fas fa-caret-down"></i></button>
+                    <div class="dropdown-content" id="talkBotDropdown">
+                        <a href="#" data-value="Talk Bot">Talk Bot</a>
+                        <a href="#" data-value="Text">Text</a>
+                        <a href="#" data-value="Image">Image</a>
+                        <a href="#" data-value="Voice">Voice</a>
+                    </div>
+                </div>
+            </div>
+            <div class="nav-right">
+                <button id="tempBtn">Temporary</button>
+                <div class="dropdown" id="profileDropdownWrapper">
+                    <button id="profileBtn"><i class="fas fa-user-circle"></i></button>
+                    <div class="dropdown-content" id="profileDropdown">
+                        <a href="#" id="deleteAllChats">Delete All Chats</a>
+                        <a href="#" id="customize">Customize</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content" id="mainContent">
+            <div id="filePreviewContainer"></div>
+            <div class="input-bar" id="inputBar">
+                <button id="attachBtn"><i class="fas fa-paperclip"></i></button>
+                <input type="file" id="fileInput">
+                <input type="text" id="chatInput" placeholder="Type a message…">
+                <button id="voiceBtn"><i class="fas fa-microphone"></i></button>
+                <button id="sendBtn"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        (function () {
+            // ELEMENTS
+            const sidebar = document.getElementById('sidebar');
+            const container = document.querySelector('.container');
+            const chatList = document.getElementById('chatList');
+            const btnNav = document.getElementById('toggleSidebarBtnNav');
+            const btnSide = document.getElementById('toggleSidebarBtnSidebar');
+            const mainContent = document.getElementById('mainContent');
+            const chatInput = document.getElementById('chatInput');
+            const fileInput = document.getElementById('fileInput');
+            const filePreview = document.getElementById('filePreviewContainer');
+            const newChatBtn = document.getElementById('newChatBtn');
+            const tempBtn = document.getElementById('tempBtn');
+            const voiceBtn = document.getElementById('voiceBtn');
+            const sendBtn = document.getElementById('sendBtn');
+            const talkBotBtn = document.getElementById('talkBotBtn');
+
+            // STATE
+            let chats = [], currentChat = null;
+            let staging = null; // {type:'text'|'image'|'audio'|'file'|'voice', content:...}
+            let isRecording = false, mediaRecorder, audioChunks = [];
+
+            // Reply mode
+            let replyMode = 'Talk Bot';// Text|Image|Voice
+
+            // Random replies/images
+            const randomTexts = ["How are you?", "That's interesting!", "Tell me more.", "I see.", "Could you explain that?", "👍", "🙂"];
+            const rndText = () => randomTexts[Math.floor(Math.random() * randomTexts.length)];
+            const rndImageURL = () => `https://picsum.photos/seed/${Math.floor(Math.random() * 1000)}/300/200`;
+
+            // STORAGE KEYS
+            const LS_CHATS = 'talkbot_chats', LS_CURRENT = 'talkbot_current', MOBILE_BREAK = 600;
+
+            // LOAD/SAVE
+            function loadChats() {
+                const s = localStorage.getItem(LS_CHATS);
+                chats = s ? JSON.parse(s) : [];
+            }
+            function saveChats() {
+                localStorage.setItem(LS_CHATS, JSON.stringify(chats));
+            }
+            function saveCurrent() {
+                if (currentChat && !currentChat.isTemporary) {
+                    localStorage.setItem(LS_CURRENT, currentChat.id);
+                } else localStorage.removeItem(LS_CURRENT);
+            }
+
+            // SIDEBAR TOGGLE
+            function syncToggles(open) {
+                sidebar.classList.toggle('closed', !open);
+                container.classList.toggle('full', !open);
+                document.body.classList.toggle('sidebar-open', open);
+                btnNav.style.display = open ? 'none' : 'block';
+                btnSide.style.display = open ? 'block' : 'none';
+            }
+            btnNav.onclick = () => window.innerWidth > MOBILE_BREAK && syncToggles(true);
+            btnSide.onclick = () => window.innerWidth > MOBILE_BREAK && syncToggles(false);
+            const initOpen = window.innerWidth > MOBILE_BREAK;
+            syncToggles(initOpen);
+            window.addEventListener('resize', () => {
+                if (window.innerWidth <= MOBILE_BREAK) syncToggles(false);
+            });
+
+            // RENDER SIDEBAR
+            function renderSidebar() {
+                chatList.innerHTML = '';
+                chats.forEach(c => {
+                    if (c.isTemporary) return;
+                    const row = document.createElement('div');
+                    row.className = 'history-item';
+                    row.dataset.id = c.id;            // ← stash the id
+                    const title = document.createElement('span');
+                    title.className = 'title';
+                    title.textContent = c.title || 'Chat';
+                    row.appendChild(title);
+
+                    const del = document.createElement('i');
+                    del.className = 'fas fa-trash del-chat';
+                    row.appendChild(del);
+
+                    chatList.appendChild(row);
+                });
+            }
+
+            chatList.addEventListener('click', ev => {
+                // 1) find the row
+                const row = ev.target.closest('.history-item');
+                if (!row) return;
+                const id = row.dataset.id;
+
+                // 2) detect a click *anywhere* inside the trash icon
+                const delIcon = ev.target.closest('.del-chat');
+                if (delIcon) {
+                    ev.stopPropagation();
+                    if (confirm('Delete this chat?')) {
+                        chats = chats.filter(c => c.id !== id);
+                        if (currentChat && currentChat.id === id) {
+                            clearChatArea();
+                            mainContent.classList.remove('chat-mode');
+                            currentChat = null;
+                            localStorage.removeItem(LS_CURRENT);
+                        }
+                        saveChats();
+                        renderSidebar();
+                        updateNewChatBtn();
+                    }
+                } else {
+                    // 3) anything else in the row opens the chat
+                    openChat(id);
+                }
+            });
+
+            // CHAT AREA
+            function clearChatArea() {
+                const a = document.querySelector('.chat-area'); if (a) a.remove();
+            }
+            function createChatArea() {
+                clearChatArea();
+                const area = document.createElement('div');
+                area.className = 'chat-area';
+                mainContent.insertBefore(area, filePreview);
+                return area;
+            }
+            function appendBubble(area, msg, isUser) {
+                const b = document.createElement('div'); b.className = 'bubble ' + (isUser ? 'user' : 'bot');
+                if (msg.type === 'text') {
+                    b.textContent = msg.content;
+                } else if (msg.type === 'image') {
+                    const img = document.createElement('img'); img.src = msg.content;
+                    img.style.maxWidth = '100%'; img.style.borderRadius = '5px';
+                    b.appendChild(img);
+                } else if (msg.type === 'audio') {
+                    const aud = document.createElement('audio'); aud.controls = true; aud.src = msg.content;
+                    b.appendChild(aud);
+                } else if (msg.type === 'file') {
+                    const span = document.createElement('span');
+                    span.textContent = msg.content;
+                    b.appendChild(span);
+                } else if (msg.type === 'voice') {
+                    const note = document.createElement('div'); note.className = 'voice-note';
+                    note.innerHTML = '<i class="fas fa-play"></i> Play';
+                    note.addEventListener('click', () => {
+                        const u = new SpeechSynthesisUtterance(msg.content);
+                        speechSynthesis.speak(u);
+                    });
+                    b.appendChild(note);
+                }
+                area.appendChild(b);
+                area.scrollTop = area.scrollHeight;
+            }
+
+            // OPEN CHAT
+            function openChat(id) {
+    const c = chats.find(x => x.id === id);
+    if (!c) return;
+    currentChat = c;
+    mainContent.classList.add('chat-mode', 'chat-active');
+    inputBar.classList.remove('initial-position');
+    const area = createChatArea();
+    c.messages.forEach(m => appendBubble(area, m, m.sender === 'user'));
+    saveCurrent(); 
+    updateNewChatBtn();
+}
+function newChat(isTemp) {
+    const id = 'chat_' + Date.now();
+    currentChat = { id, title: '', messages: [], isTemporary: isTemp };
+    if (!isTemp) {
+        chats.push(currentChat);
+        saveChats();
+        renderSidebar();
+    }
+    
+    // Clear and initialize chat area
+    mainContent.classList.add('chat-mode');
+    mainContent.classList.remove('chat-active');
+    clearChatArea();
+    createChatArea(); // Create chat area immediately for new chats
+    
+    // Position input bar in the middle initially
+    inputBar.classList.add('initial-position');
+    
+    filePreview.innerHTML = '';
+    staging = null;
+    chatInput.value = '';
+    saveCurrent();
+    updateNewChatBtn();
+    
+    // Set focus to input field
+    chatInput.focus();
+}
+
+function sendMessage() {
+    if (!currentChat) newChat(false);
+    const text = chatInput.value.trim();
+    if (!text && !staging) return;
+    
+    let area = document.querySelector('.chat-area');
+    if (!area) {
+        area = createChatArea();
+    }
+    
+    // After first message, move input bar to bottom
+    if (currentChat.messages.length === 0) {
+        inputBar.classList.remove('initial-position');
+        mainContent.classList.add('chat-active');
+    }
+    
+    // first message sets title
+    if (currentChat.messages.length === 0) {
+        currentChat.title = text ? text.split(/\s+/)[0]
+            : staging.type === 'file' ? staging.content
+                : staging.type === 'image' ? 'Image'
+                    : staging.type === 'audio' ? 'Audio'
+                        : staging.type === 'voice' ? 'Voice'
+                            : 'Chat';
+                            saveChats();
+        if (!currentChat.isTemporary) { 
+            saveChats(); 
+            renderSidebar(); 
+        }
+    }
+    
+    // user message obj
+    let userMsg;
+    if (staging) {
+        userMsg = { sender: 'user', type: staging.type, content: staging.content };
+    } else {
+        userMsg = { sender: 'user', type: 'text', content: text };
+    }
+    currentChat.messages.push(userMsg);
+    if (!currentChat.isTemporary) saveChats();
+    appendBubble(area, userMsg, true);
+
+    // bot reply according to replyMode
+    let botMsg;
+if (replyMode === 'Talk Bot') {
+    // Match user's message type
+    if (staging) {
+        botMsg = { sender: 'bot', type: staging.type, content: staging.type === 'text' ? rndText() : 
+                  staging.type === 'image' ? rndImageURL() : 
+                  staging.type === 'voice' ? rndText() : staging.content };
+    } else {
+        botMsg = { sender: 'bot', type: 'text', content: rndText() };
+    }
+} else if (replyMode === 'Text') {
+    botMsg = { sender: 'bot', type: 'text', content: rndText() };
+} else if (replyMode === 'Image') {
+    botMsg = { sender: 'bot', type: 'image', content: rndImageURL() };
+} else { // Voice
+    const rt = rndText();
+    botMsg = { sender: 'bot', type: 'voice', content: rt };
+}
+    currentChat.messages.push(botMsg);
+    if (!currentChat.isTemporary) saveChats();
+    appendBubble(area, botMsg, false);
+
+    // cleanup
+    staging = null; 
+    filePreview.innerHTML = ''; 
+    fileInput.value = '';
+    chatInput.value = ''; 
+    chatInput.focus();
+    updateNewChatBtn();
+}
+            newChatBtn.addEventListener('click', () => newChat(false));
+            tempBtn.addEventListener('click', () => newChat(true));
+            // DELETE ALL
+            document.getElementById('deleteAllChats').addEventListener('click', e => {
+                e.preventDefault();
+                if (confirm('Delete all chats?')) {
+                    chats = []; saveChats(); renderSidebar();
+                    if (currentChat && !currentChat.isTemporary) {
+                        clearChatArea(); mainContent.classList.remove('chat-mode'); currentChat = null; localStorage.removeItem(LS_CURRENT);
+                    }
+                    updateNewChatBtn();
+                }
+            });
+
+            // DROPDOWNS
+            function closeAll() { document.querySelectorAll('.dropdown.show').forEach(d => d.classList.remove('show')); }
+            function toggle(id) { closeAll(); document.getElementById(id).classList.toggle('show'); }
+            document.getElementById('talkBotBtn').onclick = e => { e.stopPropagation(); toggle('talkBotDropdownWrapper'); };
+            document.getElementById('profileBtn').onclick = e => { e.stopPropagation(); toggle('profileDropdownWrapper'); };
+            document.getElementById('talkBotDropdown').addEventListener('click', e => {
+                if (e.target.tagName === 'A') {
+                    e.preventDefault();
+                    replyMode = e.target.dataset.value;
+                    talkBotBtn.innerHTML = replyMode + ' <i class="fas fa-caret-down"></i>';
+                    closeAll();
+                }
+            });
+            document.addEventListener('click', closeAll);
+
+            // FILE ATTACH
+            document.getElementById('attachBtn').onclick = () => fileInput.click();
+            fileInput.onchange = () => {
+                if (!fileInput.files.length) return;
+                const f = fileInput.files[0], rd = new FileReader();
+                rd.onload = () => {
+                    if (f.type.startsWith('image/')) {
+                        staging = { type: 'image', content: rd.result };
+                    } else if (f.type.startsWith('audio/')) {
+                        staging = { type: 'audio', content: rd.result };
+                    } else {
+                        staging = { type: 'file', content: f.name };
+                    }
+                    showPreview(staging);
+                };
+                rd.readAsDataURL(f);
+            };
+            function showPreview(st) {
+                filePreview.innerHTML = '';
+                const d = document.createElement('div'); d.className = 'file-preview';
+                let elt;
+                if (st.type === 'image') {
+                    elt = document.createElement('img'); elt.src = st.content;
+                } else if (st.type === 'audio') {
+                    elt = document.createElement('audio'); elt.controls = true; elt.src = st.content;
+                } else {
+                    elt = document.createElement('span'); elt.className = 'file-label'; elt.textContent = st.content;
+                }
+                d.appendChild(elt);
+                const rem = document.createElement('i');
+                rem.className = 'fas fa-times remove-preview';
+                d.appendChild(rem);
+                d.appendChild(rem);
+                filePreview.appendChild(d);
+            }
+
+            filePreview.addEventListener('click', ev => {
+                const rem = ev.target.closest('.remove-preview');
+                if (!rem) return;
+                ev.stopPropagation();
+                staging = null;
+                filePreview.innerHTML = '';
+                fileInput.value = '';
+            });
+
+            // VOICE RECORDING
+            voiceBtn.onclick = async () => {
+                if (!isRecording) {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                    mediaRecorder.onstop = () => {
+                        const blob = new Blob(audioChunks, { type: 'audio/webm' });
+                        const url = URL.createObjectURL(blob);
+                        staging = { type: 'voice', content: url };
+                        showPreview(staging);
+                    };
+                    mediaRecorder.start();
+                    isRecording = true; voiceBtn.innerHTML = '<i class="fas fa-stop"></i>';
+                } else {
+                    mediaRecorder.stop(); isRecording = false;
+                    voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+                }
+            };
+
+            // ENABLE/DISABLE NEW CHAT BUTTON
+            function updateNewChatBtn() {
+                newChatBtn.disabled = !(currentChat && currentChat.messages.length > 0);
+            }
+
+            // SEND MESSAGE
+           
+            sendBtn.addEventListener('click', sendMessage);
+            chatInput.addEventListener('keypress', e => { if (e.key === 'Enter') { e.preventDefault(); sendMessage(); } });
+
+            // INIT
+            loadChats(); renderSidebar();
+            const last = localStorage.getItem(LS_CURRENT);
+            if (last && chats.find(c => c.id === last)) openChat(last);
+            else if (chats.length) openChat(chats[0].id);
+            updateNewChatBtn();
+        })();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Flight Tracker</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        /* Reset and base styles */
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: Arial, sans-serif;
+            background: #222;
+            color: #fff;
+        }
+
+        /* Header styles */
+        #header {
+            text-align: center;
+            padding: 10px;
+        }
+
+        #header h1 {
+            margin: 0;
+            font-size: 2rem;
+            margin-bottom: 20px;
+            /* more margin between heading and controls */
+        }
+
+        /* Controls: aligned to the left, with light grey label, rounded edges and padding */
+        #controls {
+            text-align: left;
+            margin-left: 20px;
+        }
+
+        #controls label {
+            color: #d3d3d3;
+            font-size: 1rem;
+            margin-right: 10px;
+        }
+
+        #controls select,
+        #controls button {
+            border-radius: 5px;
+            padding: 5px 10px;
+            font-size: 1rem;
+            margin-right: 10px;
+            border: 1px solid #ccc;
+        }
+
+        /* Main content area: map and charts side by side */
+        #main {
+            display: flex;
+            height: calc(100% - 100px);
+            /* leave room for header and controls */
+            gap: 10px;
+        }
+
+        /* Map container with margin and rounded corners */
+        #map {
+            flex: 2;
+            margin: 10px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        #charts {
+            height: 100%;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            border-radius: 10px;
+            background: #fff;
+            margin: 10px;
+        }
+
+        #charts canvas {
+            flex: 1 1 0;
+            min-height: 0;
+        }
+
+        /* Loading spinner styles */
+        #loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 50px;
+            height: 50px;
+            margin: -25px 0 0 -25px;
+            border: 5px solid rgba(211, 211, 211, 0.3);
+            border-top-color: #d3d3d3;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            z-index: 2000;
+            display: none;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header with title and controls -->
+    <div id="header">
+        <h1>Flights Tracker</h1>
+        <div id="controls">
+            <label for="countrySelect">Filter by Country:</label>
+            <select id="countrySelect">
+                <option value="All">All</option>
+            </select>
+            <button id="refreshBtn">Refresh Flights</button>
+        </div>
+    </div>
+    <!-- Main content: map on the left and charts on the right -->
+    <div id="main">
+        <div id="map"></div>
+        <div id="charts">
+            <canvas id="altitudeChart"></canvas>
+            <canvas id="regionChart"></canvas>
+        </div>
+    </div>
+    <!-- Loading spinner -->
+    <div id="loading"></div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Global chart variables
+        let altitudeChart = null;
+        let regionChart = null;
+
+        // Create a dark-themed Leaflet map using CartoDB Dark Matter tiles.
+        const map = L.map('map').setView([47, 10], 4);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap contributors, &copy; CARTO',
+            maxZoom: 19
+        }).addTo(map);
+
+        // Create a layer group for flight markers.
+        const markersLayer = L.layerGroup().addTo(map);
+
+        // Global variable to hold fetched flight data.
+        let flightsData = [];
+
+        // Define a custom light grey airplane icon.
+        // The SVG below uses a Material-style airplane path.
+        const flightIcon = L.icon({
+            iconUrl: 'data:image/svg+xml;utf8,' +
+                encodeURIComponent(`
+      <svg xmlns="http://www.w3.org/2000/svg"
+           viewBox="0 0 24 24" width="32" height="32">
+        <path fill="#d3d3d3"
+              d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5
+                 S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22
+                 l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+      </svg>
+    `),
+            iconSize: [32, 32],    // same as before
+            iconAnchor: [16, 16],
+            popupAnchor: [0, -16]
+        });
+
+        // Utility functions to show/hide the loading spinner.
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+        }
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        // Fetch flight data from the OpenSky Network API.
+        async function fetchFlights() {
+            showLoading();
+            const url = 'https://opensky-network.org/api/states/all?lamin=35.0&lomin=-10.0&lamax=60.0&lomax=30.0';
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await response.json();
+                flightsData = data.states || [];
+                updateCountryDropdown();
+                updateMarkers();
+                updateAltitudeChart();
+                updateRegionChart(); // Always update region chart with all flights.
+            } catch (error) {
+                console.error('Error fetching flights:', error);
+                alert('Error fetching flight data.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Update the country dropdown based on fetched flight data.
+        function updateCountryDropdown() {
+            const countrySelect = document.getElementById('countrySelect');
+            countrySelect.innerHTML = '<option value="All">All</option>';
+            const countries = new Set();
+            flightsData.forEach(state => {
+                if (state[2]) { // index 2: origin_country
+                    countries.add(state[2]);
+                }
+            });
+            Array.from(countries).sort().forEach(country => {
+                const option = document.createElement('option');
+                option.value = country;
+                option.textContent = country;
+                countrySelect.appendChild(option);
+            });
+        }
+
+        // Update flight markers on the map.
+        function updateMarkers() {
+            markersLayer.clearLayers();
+            const countryFilter = document.getElementById('countrySelect').value;
+            flightsData.forEach(state => {
+                const callsign = state[1] ? state[1].trim() : 'N/A';
+                const originCountry = state[2] || 'N/A';
+                const longitude = state[5];
+                const latitude = state[6];
+                if (latitude !== null && longitude !== null) {
+                    if (countryFilter !== "All" && originCountry !== countryFilter) {
+                        return;
+                    }
+                    const marker = L.marker([latitude, longitude], { icon: flightIcon });
+                    marker.bindPopup(
+                        `<strong>Callsign:</strong> ${callsign}<br>
+               <strong>Country:</strong> ${originCountry}<br>
+               <strong>Coordinates:</strong> ${latitude.toFixed(2)}, ${longitude.toFixed(2)}`
+                    );
+                    markersLayer.addLayer(marker);
+                }
+            });
+        }
+
+        // Update or create the altitude distribution bar chart.
+        // This chart is filtered by the country selection and only uses flights with non-null altitude.
+        function updateAltitudeChart() {
+            const countryFilter = document.getElementById('countrySelect').value;
+            const filteredFlights = flightsData.filter(state => {
+                const originCountry = state[2] || 'N/A';
+                if (countryFilter !== "All" && originCountry !== countryFilter) {
+                    return false;
+                }
+                return state[7] !== null;
+            });
+            const bins = ["<2000", "2000-4000", "4000-6000", "6000-8000", "8000-10000", ">10000"];
+            const binCounts = [0, 0, 0, 0, 0, 0];
+            filteredFlights.forEach(state => {
+                const alt = state[7];
+                if (alt < 2000) binCounts[0]++;
+                else if (alt < 4000) binCounts[1]++;
+                else if (alt < 6000) binCounts[2]++;
+                else if (alt < 8000) binCounts[3]++;
+                else if (alt < 10000) binCounts[4]++;
+                else binCounts[5]++;
+            });
+            const altitudeCtx = document.getElementById('altitudeChart').getContext('2d');
+            if (altitudeChart) {
+                altitudeChart.data.labels = bins;
+                altitudeChart.data.datasets[0].data = binCounts;
+                altitudeChart.update();
+            } else {
+                altitudeChart = new Chart(altitudeCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: bins,
+                        datasets: [{
+                            label: 'Flight Altitudes (m)',
+                            data: binCounts,
+                            backgroundColor: 'grey'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Update or create the region pie chart.
+        // This chart always uses all flights data regardless of the country filter.
+        function updateRegionChart() {
+            const regionCounts = {};
+            flightsData.forEach(state => {
+                const country = state[2] || 'N/A';
+                regionCounts[country] = (regionCounts[country] || 0) + 1;
+            });
+            const regionLabels = Object.keys(regionCounts);
+            const regionData = regionLabels.map(key => regionCounts[key]);
+            const regionCtx = document.getElementById('regionChart').getContext('2d');
+            const regionColors = regionLabels.map(() => `hsl(${Math.random() * 360}, 70%, 70%)`);
+            if (regionChart) {
+                regionChart.data.labels = regionLabels;
+                regionChart.data.datasets[0].data = regionData;
+                regionChart.data.datasets[0].backgroundColor = regionColors;
+                regionChart.update();
+            } else {
+                regionChart = new Chart(regionCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: regionLabels,
+                        datasets: [{
+                            label: 'Flights by Region',
+                            data: regionData,
+                            backgroundColor: regionColors
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+            }
+        }
+
+        // Event listeners:
+        // The refresh button fetches new flight data (updating both charts).
+        // Changing the country filter updates the markers and the altitude chart only.
+        document.getElementById('refreshBtn').addEventListener('click', fetchFlights);
+        document.getElementById('countrySelect').addEventListener('change', () => {
+            updateMarkers();
+            updateAltitudeChart();
+        });
+
+        // Fetch flights on initial page load.
+        fetchFlights();
+    </script>
+</body>
+
+</html>

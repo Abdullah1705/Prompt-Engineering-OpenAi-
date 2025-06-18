@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Bow & Arrow Game</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; font-family: sans-serif; }
+    /* MAIN MENU */
+    #menu {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: url('https://images.pexels.com/photos/6540700/pexels-photo-6540700.jpeg') no-repeat center/cover;
+      z-index: 10;
+    }
+    #menu h1 {
+      color: #fff; font-size: 3em; text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+      margin-bottom: 40px;
+    }
+    .btn {
+      padding: 15px 30px; margin: 10px;
+      font-size: 1.2em; cursor: pointer; color: #fff;
+      background: rgba(255,255,255,0.3); border: 2px solid #000;
+      border-radius: 24px;
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      transition: background .3s, transform .2s;
+    }
+    .btn:hover {
+      background: rgba(255,255,255,0.4);
+      transform: translateY(-2px);
+    }
+
+    /* OVERLAY & POP‑UPS */
+    #overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      display: none; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.5); z-index: 20;
+    }
+    #modal-wrapper {
+      display: flex; gap: 20px; margin-bottom: 20px;
+    }
+   .popup {
+  background: rgba(255,255,255,0.2);
+  border: 2px solid #000; border-radius: 24px;
+  padding: 20px; width: 260px; 
+  min-height: 200px; 
+  text-align: center;
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; 
+}
+    .popup h2 {
+      margin-bottom: 15px; font-size: 1.2em;
+    }
+    .popup input {
+      width: 100%; padding: 8px; font-size: 1em;
+      border: 1px solid #000; border-radius: 8px;
+      background: rgba(255,255,255,0.5);
+    }
+    #modal-controls {
+      display: flex; gap: 20px;
+    }
+    .popBtn {
+      padding: 10px 20px; font-size: 1em; cursor: pointer;
+      background: rgba(255,255,255,0.3); border: 2px solid #000;
+      border-radius: 24px; color: #fff;
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      transition: background .3s, transform .2s;
+    }
+    .popBtn:hover {
+      background: rgba(255,255,255,0.4);
+      transform: translateY(-2px);
+    }
+
+    /* GAME AREA */
+    #gameArea {
+      display: none; position: relative; width: 100%; height: 100%;
+      background: #87ceeb;
+    }
+    #score1, #score2, #highscore {
+      position: absolute; left: 10px;
+      background: rgba(255,255,255,0.8); padding: 5px 10px;
+      border-radius: 5px; font-size: 1em; z-index: 5;
+    }
+    #score1 { top: 10px; }
+    #score2 { bottom: 10px; }
+    #highscore {
+      top: 10px; right: 10px; left: auto;
+      display: none;
+    }
+    canvas { display: block; width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+
+  <!-- MAIN MENU -->
+  <div id="menu">
+    <h1>Bow &amp; Arrow</h1>
+    <button class="btn" id="singleBtn">Single Player</button>
+    <button class="btn" id="doubleBtn">Double Player</button>
+  </div>
+
+  <!-- OVERLAY (Nickname Entry & Game Over) -->
+  <div id="overlay">
+    <!-- content injected by JS -->
+  </div>
+
+  <!-- GAME AREA -->
+  <div id="gameArea">
+    <div id="score1"></div>
+    <div id="score2" style="display:none;"></div>
+    <div id="highscore"></div>
+    <canvas id="gameCanvas"></canvas>
+  </div>
+
+  <script>
+  // — MENU & MODAL MANAGEMENT —
+  const menu     = document.getElementById('menu'),
+        overlay  = document.getElementById('overlay'),
+        singleBtn= document.getElementById('singleBtn'),
+        doubleBtn= document.getElementById('doubleBtn'),
+        gameArea = document.getElementById('gameArea'),
+        score1El = document.getElementById('score1'),
+        score2El = document.getElementById('score2'),
+        highEl   = document.getElementById('highscore'),
+        canvas   = document.getElementById('gameCanvas'),
+        ctx      = canvas.getContext('2d');
+
+  let gameMode='single', playerNames=[], arrows, scores, arrowsLeft, t, gameOverFlag;
+
+  function openModal(mode){
+    gameMode = mode;
+    overlay.innerHTML = '';  
+    // Remove the buttons from main menu
+    singleBtn.style.display = 'none';
+    doubleBtn.style.display = 'none';
+    
+    // Build modal-wrapper
+    const wrap = document.createElement('div');
+    wrap.id = 'modal-wrapper';
+    // Single or Double?
+    const count = mode==='single'?1:2;
+    for(let i=1;i<=count;i++){
+      const p = document.createElement('div');
+      p.className = 'popup';
+      p.innerHTML = `<h2>Player ${i}</h2>
+                     <input id="player${i}" placeholder="Player ${i}">`;
+      wrap.appendChild(p);
+    }
+    overlay.appendChild(wrap);
+
+    // controls
+    const ctr = document.createElement('div');
+    ctr.id = 'modal-controls';
+    ctr.innerHTML =
+      `<button id="backBtn" class="popBtn">Back</button>
+       <button id="startBtn" class="popBtn">Start</button>`;
+    overlay.appendChild(ctr);
+
+    // show
+    overlay.style.display = 'flex';
+
+    // bind
+    document.getElementById('backBtn').onclick = () => {
+      overlay.style.display='none';
+      menu.style.display='flex';
+      // Show the buttons again when going back
+      singleBtn.style.display = 'block';
+      doubleBtn.style.display = 'block';
+    };
+    document.getElementById('startBtn').onclick = startGame;
+  }
+
+  singleBtn.onclick = ()=>openModal('single');
+  doubleBtn.onclick = ()=>openModal('double');
+
+  function startGame(){
+    playerNames = [];
+    for(let i=1; i<= (gameMode==='single'?1:2); i++){
+      const v = document.getElementById('player'+i).value.trim();
+      playerNames.push(v||`Player ${i}`);
+    }
+    overlay.style.display='none';
+    menu.style.display='none';
+    gameArea.style.display='block';
+    initGame();
+  }
+
+  // — GAME INITIALIZATION —
+  function resize(){ canvas.width=innerWidth; canvas.height=innerHeight; }
+  window.addEventListener('resize', resize);
+
+  function loadHigh(){
+    const h = localStorage.getItem('bowHigh');
+    return h? JSON.parse(h) : {name:'—',score:0};
+  }
+  function saveHigh(h){ localStorage.setItem('bowHigh', JSON.stringify(h)); }
+
+  function initGame(){
+    resize();
+    t=0; gameOverFlag=false;
+    arrows=[];
+    scores=[0,0];
+    arrowsLeft=[5, gameMode==='double'?5:0];
+    window.addEventListener('keydown', onKey);
+    score2El.style.display = gameMode==='double'?'block':'none';
+    highEl.style.display   = gameMode==='single'?'block':'none';
+    if(gameMode==='single'){
+      const hs = loadHigh();
+      highEl.textContent = `High: ${hs.name} – ${hs.score}`;
+    }
+    requestAnimationFrame(loop);
+  }
+
+  function onKey(e){
+    if(gameOverFlag) return;
+    if(e.code==='Space' && arrowsLeft[0]>0){
+      shoot(1); arrowsLeft[0]--;
+    }
+    if(e.code==='KeyX' && gameMode==='double' && arrowsLeft[1]>0){
+      shoot(2); arrowsLeft[1]--;
+    }
+  }
+
+  // — DRAWING & LOGIC —
+ const arrowSpeed=20, arrowLen=100, arrowHead=20, 
+      bowX=80, targetW=30, targetH=180;
+
+  function shoot(p){
+    const M=50, A=(innerHeight/2 - M), C=innerHeight/2;
+    const phase = p===1?0:Math.PI;
+    const y = C + A*Math.sin(t+phase);
+    arrows.push({ x: bowX+40, y, vx: arrowSpeed, owner: p });
+  }
+
+  function drawBow(x,y,col){
+    ctx.strokeStyle = col; ctx.lineWidth = 6;
+    ctx.beginPath(); ctx.arc(x,y,40,Math.PI/2,-Math.PI/2,true); ctx.stroke();
+    ctx.strokeStyle='#333'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(x,y-40); ctx.lineTo(x,y+40); ctx.stroke();
+  }
+
+  function drawStaticArrow(x,y){
+    ctx.save(); ctx.translate(x,y);
+    ctx.fillStyle='#333';
+    ctx.fillRect(0,-2,arrowLen-arrowHead,4);
+    ctx.beginPath();
+    ctx.moveTo(arrowLen-arrowHead,0);
+    ctx.lineTo(arrowLen-2*arrowHead,-arrowHead/2);
+    ctx.lineTo(arrowLen-2*arrowHead,arrowHead/2);
+    ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawArrow(ar){
+    ctx.save(); ctx.translate(ar.x,ar.y);
+    ctx.fillStyle='#333';
+    ctx.fillRect(0,-2,arrowLen-arrowHead,4);
+    ctx.beginPath();
+    ctx.moveTo(arrowLen-arrowHead,0);
+    ctx.lineTo(arrowLen-2*arrowHead,-arrowHead/2);
+    ctx.lineTo(arrowLen-2*arrowHead,arrowHead/2);
+    ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawTarget(y){
+    const top = y-targetH/2, third=targetH/3;
+    ctx.fillStyle='#3498db';
+    ctx.fillRect(innerWidth-80-targetW/2,top,targetW,third);
+    ctx.fillStyle='#e74c3c';
+    ctx.fillRect(innerWidth-80-targetW/2,top+third,targetW,third);
+    ctx.fillStyle='#3498db';
+    ctx.fillRect(innerWidth-80-targetW/2,top+2*third,targetW,third);
+    ctx.strokeStyle='#333'; ctx.lineWidth=2;
+    ctx.strokeRect(innerWidth-80-targetW/2,top,targetW,targetH);
+  }
+
+  function loop(){
+    t += 0.03;
+    ctx.clearRect(0,0,innerWidth,innerHeight);
+
+    // bows
+    const M=50, A=(innerHeight/2 - M), C=innerHeight/2;
+    const y1 = C + A*Math.sin(t),
+          y2 = C + A*Math.sin(t+Math.PI);
+    drawBow(bowX,y1,'#654321');
+    if(gameMode==='double') drawBow(bowX,y2,'#2e8b57');
+    if(arrowsLeft[0]>0) drawStaticArrow(bowX,y1);
+    if(gameMode==='double' && arrowsLeft[1]>0) drawStaticArrow(bowX,y2);
+
+    // target
+    const ty = C + (innerHeight/4)*Math.sin(t*1.5 + Math.PI/3);
+    drawTarget(ty);
+
+    // arrows
+    arrows.forEach((ar,i)=>{
+      ar.x += ar.vx;
+      drawArrow(ar);
+      // hit?
+      if(
+        ar.x > innerWidth-80-targetW/2 &&
+        ar.x < innerWidth-80+targetW/2 &&
+        ar.y > ty-targetH/2 &&
+        ar.y < ty+targetH/2
+      ){
+        const rel = ar.y - (ty-targetH/2), third=targetH/3;
+        scores[ar.owner-1] += (rel>third&&rel<2*third?10:5);
+        arrows.splice(i,1); return;
+      }
+      if(ar.x>innerWidth+50) arrows.splice(i,1);
+    });
+
+    // HUD
+    score1El.textContent =
+      `${playerNames[0]} – Score: ${scores[0]} | Turns: ${arrowsLeft[0]}`;
+    if(gameMode==='double'){
+      score2El.textContent =
+        `${playerNames[1]} – Score: ${scores[1]} | Turns: ${arrowsLeft[1]}`;
+    }
+
+    // game over?
+    if(!gameOverFlag &&
+       arrowsLeft[0]===0 &&
+       arrowsLeft[1]===0 &&
+       arrows.length===0)
+    {
+      gameOverFlag = true;
+      setTimeout(showGameOver, 200);
+    } else if(!gameOverFlag) {
+      requestAnimationFrame(loop);
+    }
+  }
+
+  function showGameOver(){
+    // single: update highscore
+    if(gameMode==='single'){
+      const hs = loadHigh();
+      if(scores[0] > hs.score){
+        saveHigh({ name: playerNames[0], score: scores[0] });
+        highEl.textContent = `High: ${playerNames[0]} – ${scores[0]}`;
+      }
+    }
+
+    // build game-over popup
+    overlay.innerHTML = '';
+    const p = document.createElement('div');
+    p.className = 'popup';
+    let msg = `<h2>Game Over</h2>`;
+    if(gameMode==='single'){
+      msg += `<p style="margin-bottom: 20px;">${playerNames[0]} scored ${scores[0]} points</p>`;
+    } else {
+      msg += `<p style="margin-bottom: 20px;">${playerNames[0]}: ${scores[0]}<br>${playerNames[1]}: ${scores[1]}</p>`;
+    }
+    
+    // Create button container with gap
+    const buttonContainer = document.createElement('div');
+    buttonContainer.style.display = 'flex';
+    buttonContainer.style.flexDirection = 'column';
+    buttonContainer.style.gap = '15px'; // Space between buttons
+    
+    const restartBtn = document.createElement('button');
+    restartBtn.id = 'restartBtn';
+    restartBtn.className = 'popBtn';
+    restartBtn.textContent = 'Restart';
+    
+    const backMainBtn = document.createElement('button');
+    backMainBtn.id = 'backMainBtn';
+    backMainBtn.className = 'popBtn';
+    backMainBtn.textContent = 'Back to Main';
+    
+    buttonContainer.appendChild(restartBtn);
+    buttonContainer.appendChild(backMainBtn);
+    
+    p.innerHTML = msg;
+    p.appendChild(buttonContainer);
+    overlay.appendChild(p);
+    overlay.style.display='flex';
+
+    restartBtn.onclick = ()=>{
+      overlay.style.display='none';
+      initGame();
+    };
+   document.getElementById('backMainBtn').onclick = ()=>{
+  overlay.style.display='none';
+  gameArea.style.display='none';
+  menu.style.display='flex';
+ 
+  singleBtn.style.display = 'block';
+  doubleBtn.style.display = 'block';
+  window.removeEventListener('keydown', onKey);
+};
+}
+  </script>
+</body>
+</html>

@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Silhouettes & Stats</title>
+    <!-- Moon Dance font -->
+    <link href="https://fonts.googleapis.com/css2?family=Moon+Dance&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f0f0;
+        }
+
+        header {
+            text-align: center;
+            padding: 1rem 0;
+            font-family: 'Moon Dance', cursive;
+            font-size: 2.5rem;
+            color: #20232a;
+        }
+
+        nav {
+            display: flex;
+            justify-content: center;
+            background: #282c34;
+        }
+
+        nav button {
+            background: none;
+            border: none;
+            color: #bbb;
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        nav button.active,
+        nav button:hover {
+            color: #61dafb;
+        }
+
+        .section {
+            display: none;
+            padding: 1rem;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .controls {
+            margin-bottom: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .controls label {
+            font-weight: bold;
+        }
+
+        .controls input,
+        .controls select,
+        .controls button {
+            padding: 0.4rem;
+            font-size: 1rem;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .card {
+            position: relative;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            padding-bottom: 0.5rem;
+            transition: color 0.3s;
+        }
+
+        /* Episodes & Locations accent animation */
+        .card.episode,
+        .card.location {
+            --accent-color: #61dafb;
+            background-image: linear-gradient(to right, var(--accent-color), var(--accent-color));
+            background-repeat: no-repeat;
+            background-size: 6px 100%;
+            background-position: left top;
+            transition: background-size 0.5s ease, color 0.3s;
+        }
+
+        .card.episode:hover,
+        .card.location:hover {
+            background-size: 100% 100%;
+            color: #fff;
+        }
+
+        .card.episode:hover h4,
+        .card.episode:hover p,
+        .card.episode:hover small,
+        .card.location:hover h4,
+        .card.location:hover p,
+        .card.location:hover small {
+            color: #fff;
+        }
+
+        .card img {
+            width: 100%;
+            display: block;
+        }
+
+        .pagination {
+            margin-top: 1rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .pagination button {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: #61dafb;
+            color: #20232a;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .pagination button:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+        }
+
+        .page-numbers {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .page-circle {
+            display: inline-block;
+            width: 2em;
+            height: 2em;
+            line-height: 2em;
+            background: #add8e6;
+            color: #20232a;
+            border-radius: 50%;
+            text-align: center;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .page-circle.selected {
+            background: #83cdea;
+        }
+
+        /* Guess section */
+        #guessSection {
+            text-align: center;
+        }
+
+        #silhouette {
+            width: 300px;
+            height: 300px;
+            object-fit: cover;
+            filter: blur(12px) brightness(50%);
+            margin-bottom: 1rem;
+            transition: filter 0.3s ease;
+            border-radius: 8px;
+            background: #fff;
+        }
+
+        #blurControl {
+            margin-bottom: 1rem;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        #blurControl label {
+            font-weight: bold;
+        }
+
+        #blurSlider {
+            width: 200px;
+        }
+
+        #choices {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        #choices button {
+            flex: 1 1 auto;
+            min-width: 120px;
+            padding: 0.6rem;
+            font-size: 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background: #61dafb;
+            color: #20232a;
+            transition: background 0.2s;
+        }
+
+        #choices button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        #newGuess {
+            padding: 0.6rem 1rem;
+            font-size: 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background: #61dafb;
+            color: #20232a;
+            display: none;
+            margin-bottom: 1rem;
+        }
+
+        #result {
+            margin-top: 1rem;
+            font-size: 1.2rem;
+            min-height: 1.4em;
+        }
+
+        /* Celebration emojis */
+        #celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .emoji {
+            position: absolute;
+            font-size: 1.5rem;
+            animation: fall 1.2s ease-out forwards;
+        }
+
+        @keyframes fall {
+            from {
+                transform: translateY(0);
+                opacity: 1;
+            }
+
+            to {
+                transform: translateY(100vh);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>Silhouettes &amp; Stats</header>
+    <nav>
+        <button id="tabCharacters" class="active">Characters</button>
+        <button id="tabEpisodes">Episodes</button>
+        <button id="tabLocations">Locations</button>
+        <button id="tabGuess">Guess Character</button>
+    </nav>
+    <main>
+        <!-- Characters Section -->
+        <section id="charactersSection" class="section active">
+            <div class="controls">
+                <label for="statusFilter">Status:</label>
+                <select id="statusFilter">
+                    <option value="">All</option>
+                    <option value="alive">Alive</option>
+                    <option value="dead">Dead</option>
+                    <option value="unknown">Unknown</option>
+                </select>
+                <label for="speciesFilter">Species:</label>
+                <select id="speciesFilter">
+                    <option value="">All</option>
+                </select>
+                <label for="genderFilter">Gender:</label>
+                <select id="genderFilter">
+                    <option value="">All</option>
+                    <option value="female">Female</option>
+                    <option value="male">Male</option>
+                    <option value="genderless">Genderless</option>
+                    <option value="unknown">Unknown</option>
+                </select>
+            </div>
+            <div id="charactersContainer" class="cards"></div>
+            <div class="pagination">
+                <button id="charsPrev">Prev</button>
+                <div class="page-numbers" id="charsPageNumbers"></div>
+                <button id="charsNext">Next</button>
+            </div>
+        </section>
+
+        <!-- Episodes Section -->
+        <section id="episodesSection" class="section">
+            <div class="controls">
+                <label for="dateFrom">From:</label>
+                <input id="dateFrom" type="date">
+                <label for="dateTo">To:</label>
+                <input id="dateTo" type="date">
+                <button id="applyDateFilter">Apply</button>
+            </div>
+            <div id="episodesContainer" class="cards"></div>
+            <div class="pagination">
+                <button id="epsPrev">Prev</button>
+                <div class="page-numbers" id="epsPageNumbers"></div>
+                <button id="epsNext">Next</button>
+            </div>
+        </section>
+
+        <!-- Locations Section -->
+        <section id="locationsSection" class="section">
+            <div class="controls">
+                <label for="typeFilter">Type:</label>
+                <select id="typeFilter">
+                    <option value="">All</option>
+                </select>
+                <label for="dimensionFilter">Dimension:</label>
+                <select id="dimensionFilter">
+                    <option value="">All</option>
+                </select>
+                <button id="applyLocFilter">Apply</button>
+            </div>
+            <div id="locationsContainer" class="cards"></div>
+            <div class="pagination">
+                <button id="locPrev">Prev</button>
+                <div class="page-numbers" id="locPageNumbers"></div>
+                <button id="locNext">Next</button>
+            </div>
+        </section>
+
+        <!-- Guess Character Section -->
+        <section id="guessSection" class="section">
+            <img id="silhouette" src="" alt="Silhouette" />
+            <div id="blurControl">
+                <label for="blurSlider">Blur:</label>
+                <input type="range" id="blurSlider" step="1">
+            </div>
+            <div id="choices"></div>
+            <button id="newGuess">Next Character</button>
+            <div id="result"></div>
+        </section>
+    </main>
+
+    <div id="celebration"></div>
+
+    <script>
+        // Tab navigation
+        const tabs = {
+            tabCharacters: 'charactersSection',
+            tabEpisodes: 'episodesSection',
+            tabLocations: 'locationsSection',
+            tabGuess: 'guessSection'
+        };
+        Object.keys(tabs).forEach(id => {
+            document.getElementById(id).onclick = () => {
+                document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+                document.getElementById(id).classList.add('active');
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                document.getElementById(tabs[id]).classList.add('active');
+            };
+        });
+
+        // Pagination rendering
+        function renderPageNumbers(type, page, total) {
+            const container = document.getElementById(type + 'PageNumbers');
+            container.innerHTML = '';
+            let start = Math.max(1, page - 2);
+            let end = Math.min(total, start + 4);
+            if (end - start < 4) start = Math.max(1, end - 4);
+            for (let p = start; p <= end; p++) {
+                const span = document.createElement('span');
+                span.className = 'page-circle' + (p === page ? ' selected' : '');
+                span.textContent = p;
+                span.onclick = () => {
+                    if (p === page) return;
+                    if (type === 'chars') { charPage = p; fetchChars(); }
+                    if (type === 'eps') { epsPage = p; renderEps(); }
+                    if (type === 'loc') { locPage = p; fetchLoc(); }
+                };
+                container.appendChild(span);
+            }
+        }
+
+        // --- CHARACTERS ---
+        let charPage = 1, charTotal = 1;
+        const statusF = document.getElementById('statusFilter'),
+            speciesF = document.getElementById('speciesFilter'),
+            genderF = document.getElementById('genderFilter'),
+            charsPrev = document.getElementById('charsPrev'),
+            charsNext = document.getElementById('charsNext');
+        [statusF, speciesF, genderF].forEach(e => e.onchange = () => { charPage = 1; fetchChars(); });
+        charsPrev.onclick = () => { if (charPage > 1) { charPage--; fetchChars(); } };
+        charsNext.onclick = () => { if (charPage < charTotal) { charPage++; fetchChars(); } };
+
+        async function fetchChars() {
+            const s = statusF.value ? `&status=${statusF.value}` : '';
+            const sp = speciesF.value ? `&species=${encodeURIComponent(speciesF.value)}` : '';
+            const g = genderF.value ? `&gender=${genderF.value}` : '';
+            let res = await fetch(`https://rickandmortyapi.com/api/character?page=${charPage}${s}${sp}${g}`);
+            if (!res.ok) {
+                document.getElementById('charactersContainer').innerHTML = '<p>No results.</p>';
+                charTotal = 1;
+            } else {
+                let j = await res.json();
+                charTotal = j.info.pages;
+                renderCards(j.results, 'charactersContainer', 'character');
+            }
+            charsPrev.disabled = charPage <= 1;
+            charsNext.disabled = charPage >= charTotal;
+            renderPageNumbers('chars', charPage, charTotal);
+        }
+        async function loadSpecies() {
+            let set = new Set(), url = 'https://rickandmortyapi.com/api/character';
+            while (url) {
+                let { info, results } = await (await fetch(url)).json();
+                results.forEach(c => set.add(c.species));
+                url = info.next;
+            }
+            [...set].sort().forEach(sp => speciesF.append(new Option(sp, sp)));
+        }
+
+        // --- EPISODES ---
+        let allEps = [], filtEps = [], epsPage = 1, epsTotal = 1;
+        const epsPrev = document.getElementById('epsPrev'),
+            epsNext = document.getElementById('epsNext'),
+            dFrom = document.getElementById('dateFrom'),
+            dTo = document.getElementById('dateTo'),
+            applyDate = document.getElementById('applyDateFilter');
+
+        epsPrev.onclick = () => { if (epsPage > 1) { epsPage--; renderEps(); } };
+        epsNext.onclick = () => { if (epsPage < epsTotal) { epsPage++; renderEps(); } };
+        applyDate.onclick = () => {
+            let f = dFrom.value ? new Date(dFrom.value) : null;
+            let t = dTo.value ? new Date(dTo.value) : null;
+            filtEps = allEps.filter(ep => {
+                let d = new Date(ep.air_date);
+                return (!f || d >= f) && (!t || d <= t);
+            });
+            epsPage = 1;
+            epsTotal = Math.ceil(filtEps.length / 20) || 1;
+            renderEps();
+        };
+
+        async function fetchAllEps() {
+            let url = 'https://rickandmortyapi.com/api/episode';
+            allEps = [];
+            while (url) {
+                let { info, results } = await (await fetch(url)).json();
+                allEps.push(...results);
+                url = info.next;
+            }
+            filtEps = allEps;
+            epsTotal = Math.ceil(filtEps.length / 20);
+            renderEps();
+        }
+        function renderEps() {
+            let slice = filtEps.slice((epsPage - 1) * 20, epsPage * 20);
+            renderCards(slice, 'episodesContainer', 'episode');
+            epsPrev.disabled = epsPage <= 1;
+            epsNext.disabled = epsPage >= epsTotal;
+            renderPageNumbers('eps', epsPage, epsTotal);
+        }
+
+        // --- LOCATIONS ---
+        let locPage = 1, locTotal = 1;
+        const locPrev = document.getElementById('locPrev'),
+            locNext = document.getElementById('locNext'),
+            typeF = document.getElementById('typeFilter'),
+            dimF = document.getElementById('dimensionFilter'),
+            applyLoc = document.getElementById('applyLocFilter');
+
+        locPrev.onclick = () => { if (locPage > 1) { locPage--; fetchLoc(); } };
+        locNext.onclick = () => { if (locPage < locTotal) { locPage++; fetchLoc(); } };
+        applyLoc.onclick = () => { locPage = 1; fetchLoc(); };
+
+        async function fetchLoc() {
+            let t = typeF.value ? `&type=${encodeURIComponent(typeF.value)}` : '';
+            let d = dimF.value ? `&dimension=${encodeURIComponent(dimF.value)}` : '';
+            let res = await fetch(`https://rickandmortyapi.com/api/location?page=${locPage}${t}${d}`);
+            if (!res.ok) {
+                document.getElementById('locationsContainer').innerHTML = '<p>No results.</p>';
+                locTotal = 1;
+            } else {
+                let j = await res.json();
+                locTotal = j.info.pages;
+                renderCards(j.results, 'locationsContainer', 'location');
+            }
+            locPrev.disabled = locPage <= 1;
+            locNext.disabled = locPage >= locTotal;
+            renderPageNumbers('loc', locPage, locTotal);
+        }
+        async function loadLocOptions() {
+            let types = new Set(), dims = new Set(), url = 'https://rickandmortyapi.com/api/location';
+            while (url) {
+                let { info, results } = await (await fetch(url)).json();
+                results.forEach(l => { if (l.type) types.add(l.type); if (l.dimension) dims.add(l.dimension); });
+                url = info.next;
+            }
+            [...types].sort().forEach(t => typeF.append(new Option(t, t)));
+            [...dims].sort().forEach(d => dimF.append(new Option(d, d)));
+        }
+
+        // Render cards
+        function renderCards(arr, containerId, type) {
+            const c = document.getElementById(containerId);
+            c.innerHTML = '';
+            arr.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'card ' + type;
+                if (type === 'character') {
+                    card.innerHTML = `
+          <img src="${item.image}" alt="${item.name}" />
+          <h4>${item.name}</h4>
+          <p>${item.species} – ${item.gender}</p>`;
+                } else if (type === 'episode') {
+                    const colors = ['#ffadad', '#ffd6a5', '#fdffb6', '#caffbf', '#9bf6ff', '#a0c4ff', '#bdb2ff', '#ffc6ff'];
+                    card.style.setProperty('--accent-color', colors[Math.floor(Math.random() * colors.length)]);
+                    card.innerHTML = `
+          <h4>${item.episode}</h4>
+          <p>${item.name}</p>
+          <small>${item.air_date}</small>`;
+                } else if (type === 'location') {
+                    const colors = ['#a8e6cf', '#dcedc1', '#ffd3b6', '#ffaaa5', '#ff8b94'];
+                    card.style.setProperty('--accent-color', colors[Math.floor(Math.random() * colors.length)]);
+                    card.innerHTML = `
+          <h4>${item.name}</h4>
+          <p>${item.type}</p>
+          <small>${item.dimension}</small>`;
+                }
+                c.appendChild(card);
+            });
+        }
+
+        // --- Guess & Blur & Celebration ---
+        let currentAnswer = '';
+        const sil = document.getElementById('silhouette'),
+            choices = document.getElementById('choices'),
+            newG = document.getElementById('newGuess'),
+            resD = document.getElementById('result'),
+            blurC = document.getElementById('blurControl'),
+            blurS = document.getElementById('blurSlider'),
+            cele = document.getElementById('celebration');
+
+        const minimalBlurWhenCorrect = 3;
+        const minimalBlurWhenIncorrect = 12;
+        const initialBlur = 12;
+        let stored = parseInt(localStorage.getItem('silhouetteBlur'));
+        if (!stored || stored < minimalBlurWhenCorrect || stored > initialBlur) {
+            stored = initialBlur;
+        }
+        blurS.max = initialBlur
+        let allowBlurNextTurn = localStorage.getItem('allowBlurNextTurn') === 'true';
+
+        function applyBlur(v) {
+            sil.style.filter = `blur(${v}px) brightness(50%)`;
+        }
+        blurS.oninput = () => {
+            let currentMin = Number(blurS.min);
+            let v = Math.max(Number(blurS.value), currentMin);
+            blurS.value = v;
+            localStorage.setItem('silhouetteBlur', v);
+            stored = v;
+            applyBlur(v);
+        };
+
+
+        function celebrate() {
+            for (let i = 0; i < 50; i++) {
+                const e = document.createElement('div');
+                e.className = 'emoji';
+                e.textContent = '🎉';
+                e.style.top = "-50px";
+                e.style.left = Math.random() * 100 + 'vw';
+                e.style.animationDelay = (Math.random() * 0.5) + 's';
+                cele.appendChild(e);
+                setTimeout(() => e.remove(), 1500);
+            }
+        }
+
+        async function loadSil() {
+            resD.textContent = ''; newG.style.display = 'none';
+            choices.innerHTML = '';
+
+            applyBlur(initialBlur);
+
+            if (allowBlurNextTurn) {
+                blurS.min = minimalBlurWhenCorrect;
+                blurC.style.display = 'flex';
+
+                allowBlurNextTurn = false;
+                localStorage.removeItem('allowBlurNextTurn');
+            } else {
+                blurS.min = minimalBlurWhenIncorrect;
+                blurC.style.display = 'none';
+            }
+            // Reset slider value to default blur (12)
+            blurS.value = initialBlur;
+
+            let info = await (await fetch('https://rickandmortyapi.com/api/character')).json();
+            let id = Math.floor(Math.random() * info.info.count) + 1;
+            let c = await (await fetch(`https://rickandmortyapi.com/api/character/${id}`)).json();
+            currentAnswer = c.name;
+            sil.src = c.image;
+            let set = new Set([c.name]);
+            while (set.size < 4) {
+                let r = Math.floor(Math.random() * info.info.count) + 1;
+                let c2 = await (await fetch(`https://rickandmortyapi.com/api/character/${r}`)).json();
+                set.add(c2.name);
+            }
+            let opts = [...set].sort(() => Math.random() - 0.5);
+            opts.forEach(name => {
+                let btn = document.createElement('button');
+                btn.textContent = name;
+                btn.onclick = () => {
+                    let ok = name === currentAnswer;
+                    resD.style.color = ok ? 'green' : 'red';
+                    resD.textContent = ok
+                        ? `🎉 Correct! It's ${currentAnswer}!`
+                        : `❌ Wrong! It was ${currentAnswer}.`;
+                    sil.style.filter = 'none';
+                    choices.querySelectorAll('button').forEach(b => b.disabled = true);
+                    newG.style.display = 'inline-block';
+                    if (ok) {
+                        celebrate();
+                        allowBlurNextTurn = true;
+                        localStorage.setItem('allowBlurNextTurn', 'true');
+                    }
+                };
+                choices.appendChild(btn);
+            });
+        }
+        newG.onclick = loadSil;
+
+        // Initialize
+        fetchChars();
+        loadSpecies();
+        fetchAllEps();
+        loadLocOptions();
+        fetchLoc();
+        loadSil();
+    </script>
+</body>
+
+</html>

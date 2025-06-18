@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>US Facts</title>
+  <!-- Include Chart.js for pie charts -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>US Facts</title>
+  <!-- Include Chart.js for pie charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 20px;
+    }
+
+    header {
+      background-color: #003366;
+      color: #fff;
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 20px;
+      transition: background-color 0.3s;
+      position: relative;
+    }
+
+    .chart-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 40px;
+      margin: 0 auto;
+      max-width: 350px;
+    }
+
+    header h1 {
+      margin: 0;
+      transition: transform 0.3s, font-size 0.3s;
+    }
+
+    header:hover {
+      background-color: #0055aa;
+    }
+
+    header:hover h1 {
+      transform: scale(1.05);
+      font-size: 2em;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background-color: #fff;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .controls-row {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .control-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .control-item label {
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    .control-item select,
+    .control-item input {
+      padding: 8px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      min-width: 120px;
+    }
+
+    .control-item button {
+      padding: 10px 16px;
+      font-size: 16px;
+      background-color: #003366;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      min-width: 100px;
+    }
+
+    .control-item button:hover {
+      background-color: #0055aa;
+    }
+
+    #usPopulationDisplay {
+      font-weight: bold;
+      font-size: 20px;
+      margin: 20px 0;
+      text-align: center;
+    }
+
+    #dataDisplay {
+      margin-top: 20px;
+    }
+
+    .data-section {
+      margin: 0 auto;
+      max-width: 600px;
+      text-align: left;
+    }
+
+    .data-section h2 {
+      color: #003366;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .data-section ul {
+      padding-left: 20px;
+      margin: 0 auto;
+      display: table;
+    }
+
+    .data-section li {
+      font-size: 16px;
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+
+    .error {
+      color: red;
+    }
+
+    .loading {
+      color: #555;
+      font-style: italic;
+    }
+
+    .chart-group {
+      margin: 20px auto;
+      max-width: 350px;
+      transition: transform 0.3s, filter 0.3s;
+    }
+
+    .chart-group:hover {
+      transform: scale(1.05);
+      filter: brightness(0.9);
+    }
+
+    .chart-group h3 {
+      margin-bottom: 10px;
+      font-weight: bold;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>US Facts</h1>
+  </header>
+
+  <div class="container">
+    <!-- Controls Row: Year dropdown, State search(s), and Compare button -->
+    <div class="controls-row">
+      <div class="control-item">
+        <label for="yearSelect">Year</label>
+        <select id="yearSelect">
+          <option value="2014">2014</option>
+          <option value="2015">2015</option>
+          <option value="2016">2016</option>
+          <option value="2017">2017</option>
+          <option value="2018">2018</option>
+          <option value="2019">2019</option>
+          <option value="2020">2020</option>
+          <option value="2021">2021</option>
+          <option value="2022">2022</option>
+          <option value="2023" selected>2023</option>
+        </select>
+      </div>
+      <div class="control-item" id="stateInput1Container">
+        <label for="stateInput1">State 1</label>
+        <input type="text" id="stateInput1" placeholder="Enter state">
+      </div>
+      <div class="control-item" id="stateInput2Container" style="display: none;">
+        <label for="stateInput2">State 2</label>
+        <input type="text" id="stateInput2" placeholder="Enter second state">
+      </div>
+      <div class="control-item">
+        <label>&nbsp;</label>
+        <button id="compareBtn">Compare</button>
+      </div>
+    </div>
+
+    <!-- US Population Display (always in the middle and bold) -->
+    <div id="usPopulationDisplay"></div>
+
+    <!-- Data Display Area (for state info in normal mode or pie charts in compare mode) -->
+    <div id="dataDisplay"></div>
+  </div>
+
+  <script>
+
+    let nationData = null, statePopData = null, stateUnempData = null;
+    let compareModeActive = false;
+    let populationChart = null, unemploymentChart = null;
+
+    const nationEndpoint = "https://datausa.io/api/data?drilldowns=Nation&measures=Population";
+    const statePopulationEndpoint = "https://datausa.io/api/data?drilldowns=State&measures=Population";
+    const stateUnemploymentEndpoint = "https://datausa.io/api/data?drilldowns=State&measures=Unemployment";
+
+    async function loadAllData() {
+      try {
+        const [nationRes, statePopRes, stateUnempRes] = await Promise.all([
+          fetch(nationEndpoint),
+          fetch(statePopulationEndpoint),
+          fetch(stateUnemploymentEndpoint)
+        ]);
+        if (!nationRes.ok || !statePopRes.ok || !stateUnempRes.ok) {
+          throw new Error("Failed to fetch one or more data sets.");
+        }
+        nationData = await nationRes.json();
+        statePopData = await statePopRes.json();
+        stateUnempData = await stateUnempRes.json();
+        updateUsPopulationDisplay();
+        updateNormalModeData();
+      } catch (error) {
+        document.getElementById("dataDisplay").innerHTML = `<p class="error">${error.message}</p>`;
+      }
+    }
+
+    function updateUsPopulationDisplay() {
+      const year = parseInt(document.getElementById("yearSelect").value);
+      const displayDiv = document.getElementById("usPopulationDisplay");
+      if (nationData) {
+        const record = nationData.data.find(item => parseInt(item.Year) === year);
+        if (record) {
+          displayDiv.innerHTML = `US Population for ${year}: ${Number(record.Population).toLocaleString()}`;
+        } else {
+          displayDiv.innerHTML = `US Population for ${year}: Data not available`;
+        }
+      } else {
+        displayDiv.innerHTML = `<span class="loading">Loading US data...</span>`;
+      }
+    }
+
+    function updateNormalModeData() {
+      updateUsPopulationDisplay();
+      const stateName = document.getElementById("stateInput1").value.trim();
+      const year = parseInt(document.getElementById("yearSelect").value);
+      const dataDisplay = document.getElementById("dataDisplay");
+
+      if (stateName === "") {
+        dataDisplay.innerHTML = "";
+        return;
+      }
+
+      const popRecord = statePopData.data.find(item =>
+        item.State.toLowerCase() === stateName.toLowerCase() && parseInt(item.Year) === year
+      );
+      const unempRecord = stateUnempData.data.find(item =>
+        item.State.toLowerCase() === stateName.toLowerCase() && parseInt(item.Year) === year
+      );
+
+      if (!popRecord && !unempRecord) {
+        dataDisplay.innerHTML = `<p class="error">Data for state "${stateName}" in ${year} not found.</p>`;
+        return;
+      }
+
+      let html = `<div class="data-section">
+                    <h2>${popRecord ? popRecord.State : stateName} Data for ${year}</h2>
+                    <ul>`;
+      if (popRecord) {
+        html += `<li><strong>Population:</strong> ${Number(popRecord.Population).toLocaleString()}</li>`;
+      } else {
+        html += `<li><strong>Population:</strong> Data not available.</li>`;
+      }
+      if (unempRecord) {
+        html += `<li><strong>Unemployment Rate:</strong> ${unempRecord.Unemployment}${typeof unempRecord.Unemployment === 'number' ? '%' : ''}</li>`;
+      } else {
+        html += `<li><strong>Unemployment Rate:</strong> Data not available.</li>`;
+      }
+      html += `</ul></div>`;
+      dataDisplay.innerHTML = html;
+    }
+
+    function updateCompareModeData() {
+      updateUsPopulationDisplay();
+      const state1 = document.getElementById("stateInput1").value.trim();
+      const state2 = document.getElementById("stateInput2").value.trim();
+      const year = parseInt(document.getElementById("yearSelect").value);
+      const dataDisplay = document.getElementById("dataDisplay");
+
+      if (!state1 || !state2) {
+        dataDisplay.innerHTML = `<p class="loading">Please enter both states for comparison.</p>`;
+        return;
+      }
+
+      const popRecord1 = statePopData.data.find(item =>
+        item.State.toLowerCase() === state1.toLowerCase() && parseInt(item.Year) === year
+      );
+      const popRecord2 = statePopData.data.find(item =>
+        item.State.toLowerCase() === state2.toLowerCase() && parseInt(item.Year) === year
+      );
+      const unempRecord1 = stateUnempData.data.find(item =>
+        item.State.toLowerCase() === state1.toLowerCase() && parseInt(item.Year) === year
+      );
+      const unempRecord2 = stateUnempData.data.find(item =>
+        item.State.toLowerCase() === state2.toLowerCase() && parseInt(item.Year) === year
+      );
+
+      if (!popRecord1 || !popRecord2 || !unempRecord1 || !unempRecord2) {
+        dataDisplay.innerHTML = `<p class="error">Data for one or both states in ${year} not found.</p>`;
+        return;
+      }
+
+      const popData = [Number(popRecord1.Population), Number(popRecord2.Population)];
+      const unempData = [parseFloat(unempRecord1.Unemployment), parseFloat(unempRecord2.Unemployment)];
+
+      dataDisplay.innerHTML = `
+  <div class="chart-container">
+    <div class="chart-group">
+      <h3>Population Comparison</h3>
+      <canvas id="populationChart" width="300" height="300"></canvas>
+    </div>
+    <div class="chart-group">
+      <h3>Unemployment Comparison</h3>
+      <canvas id="unemploymentChart" width="300" height="300"></canvas>
+    </div>
+  </div>
+`;
+
+      if (populationChart) { populationChart.destroy(); populationChart = null; }
+      if (unemploymentChart) { unemploymentChart.destroy(); unemploymentChart = null; }
+
+      const popCtx = document.getElementById("populationChart").getContext("2d");
+      populationChart = new Chart(popCtx, {
+        type: 'pie',
+        data: {
+          labels: [popRecord1.State, popRecord2.State],
+          datasets: [{
+            data: popData,
+            backgroundColor: ['#003366', '#0055aa']
+          }]
+        },
+        options: {
+          responsive: false,
+          plugins: {
+            title: {
+              display: true,
+              text: `Population Comparison (${year})`
+            }
+          }
+        }
+      });
+
+      const unempCtx = document.getElementById("unemploymentChart").getContext("2d");
+      unemploymentChart = new Chart(unempCtx, {
+        type: 'pie',
+        data: {
+          labels: [unempRecord1.State, unempRecord2.State],
+          datasets: [{
+            data: unempData,
+            backgroundColor: ['#cc0000', '#ff3300']
+          }]
+        },
+        options: {
+          responsive: false,
+          plugins: {
+            title: {
+              display: true,
+              text: `Unemployment Comparison (${year})`
+            }
+          }
+        }
+      });
+    }
+
+    function switchToCompareMode() {
+      compareModeActive = true;
+
+      document.getElementById("stateInput2Container").style.display = "flex";
+
+      document.getElementById("stateInput2").value = "";
+
+      document.getElementById("compareBtn").textContent = "Exit Compare";
+      updateCompareModeData();
+    }
+
+    function switchToNormalMode() {
+      compareModeActive = false;
+
+      document.getElementById("stateInput2Container").style.display = "none";
+      document.getElementById("stateInput2").value = "";
+      document.getElementById("compareBtn").textContent = "Compare";
+      updateNormalModeData();
+    }
+
+    document.getElementById("yearSelect").addEventListener("change", function () {
+      updateUsPopulationDisplay();
+      if (compareModeActive) {
+        updateCompareModeData();
+      } else {
+        updateNormalModeData();
+      }
+    });
+
+    document.getElementById("stateInput1").addEventListener("input", function () {
+      if (compareModeActive) {
+        updateCompareModeData();
+      } else {
+        updateNormalModeData();
+      }
+    });
+
+    document.getElementById("stateInput2").addEventListener("input", function () {
+      if (compareModeActive) {
+        updateCompareModeData();
+      }
+    });
+
+    document.getElementById("compareBtn").addEventListener("click", function () {
+      if (!compareModeActive) {
+        switchToCompareMode();
+      } else {
+        switchToNormalMode();
+      }
+    });
+
+    window.addEventListener("DOMContentLoaded", loadAllData);
+  </script>
+</body>
+
+</html>

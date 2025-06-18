@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Dashboard - Shopping Website</title>
+  <style>
+    /* Global Styles */
+    * {
+      box-sizing: border-box;
+    }
+    body,
+    html {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      height: 100%;
+    }
+    /* Dashboard Layout */
+    .dashboard {
+      display: flex;
+      height: 100vh;
+    }
+    .sidebar {
+      width: 220px;
+      background-color: #2c3e50;
+      color: #ecf0f1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .sidebar h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 1.5em;
+    }
+    .sidebar ul {
+      list-style: none;
+      padding: 0;
+    }
+    .sidebar ul li {
+      padding: 10px;
+      margin-bottom: 10px;
+      background: #34495e;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .sidebar ul li:hover {
+      background: #3d5a73;
+    }
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    /* Top Navigation */
+    .top-nav {
+      background: #fff;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .top-nav .search-container {
+      flex: 1;
+    }
+    .top-nav input[type="text"] {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .admin-container {
+      position: relative;
+    }
+    .admin-profile {
+      margin-left: 20px;
+      padding: 8px 16px;
+      background: #2c3e50;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .admin-profile:hover {
+      background: #34495e;
+    }
+    /* Admin Dropdown */
+    .admin-dropdown {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      min-width: 120px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      z-index: 100;
+    }
+    .admin-dropdown ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .admin-dropdown ul li {
+      padding: 10px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .admin-dropdown ul li:hover {
+      background: #f4f4f4;
+    }
+    /* Content Area */
+    .content-area {
+      padding: 20px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    /* Product Cards */
+    .product-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 20px;
+    }
+    .product-card {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .product-card:hover {
+      transform: scale(1.02);
+    }
+    .product-card img {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+    }
+    .product-card .card-content {
+      padding: 10px;
+    }
+    .product-card .card-content h3 {
+      margin: 0 0 10px 0;
+      font-size: 1.1em;
+      color: #333;
+    }
+    .product-card .card-content p {
+      margin: 0;
+      font-weight: bold;
+      color: #e74c3c;
+    }
+    /* Product Details View */
+    .product-details {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .product-details img {
+      width: 100%;
+      max-height: 400px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .product-details h2 {
+      margin-top: 0;
+    }
+    .product-details p {
+      line-height: 1.6;
+    }
+    .back-button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background: #2c3e50;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .back-button:hover {
+      background: #34495e;
+    }
+    /* Admin Settings Page */
+    .admin-settings {
+      padding: 20px;
+      position: relative;
+    }
+    .admin-section {
+      margin-bottom: 30px;
+    }
+    .admin-section form label {
+      font-weight: bold;
+      margin-top: 10px;
+      display: block;
+    }
+    .admin-section form input,
+    .admin-section form textarea,
+    .admin-section form select {
+      display: block;
+      margin: 5px 0 10px 0;
+      padding: 8px;
+      width: 100%;
+      max-width: 400px;
+    }
+    .admin-section form button {
+      margin-top: 10px;
+      padding: 8px 16px;
+    }
+    .admin-product {
+      background: #fff;
+      padding: 10px;
+      margin: 5px 0;
+      border: 1px solid #ccc;
+    }
+    .admin-product button {
+      margin-right: 5px;
+    }
+    .admin-product-edit label {
+      font-weight: bold;
+      margin-top: 10px;
+      display: block;
+    }
+    .admin-product-edit input,
+    .admin-product-edit textarea,
+    .admin-product-edit select {
+      display: block;
+      margin: 5px 0 10px 0;
+      padding: 5px;
+      width: 100%;
+      max-width: 400px;
+    }
+    .admin-product-edit button {
+      margin-right: 5px;
+    }
+    /* Custom Scrollbar for Sidebar and Content */
+    .sidebar::-webkit-scrollbar,
+    .content-area::-webkit-scrollbar {
+      width: 6px;
+    }
+    .sidebar::-webkit-scrollbar-track,
+    .content-area::-webkit-scrollbar-track {
+      background: #34495e;
+    }
+    .sidebar::-webkit-scrollbar-thumb,
+    .content-area::-webkit-scrollbar-thumb {
+      background: #2c3e50;
+      border-radius: 3px;
+    }
+    /* Dark Mode Overrides */
+    .dark-mode body {
+      background: #121212;
+      color: #f4f4f4;
+    }
+    .dark-mode .sidebar {
+      background-color: #1e1e1e;
+      color: #f4f4f4;
+    }
+    .dark-mode .sidebar ul li {
+      background: #333;
+    }
+    .dark-mode .sidebar ul li:hover {
+      background: #444;
+    }
+    .dark-mode .top-nav {
+      background: #1e1e1e;
+    }
+    .dark-mode .top-nav input[type="text"] {
+      background: #333;
+      color: #f4f4f4;
+      border: 1px solid #555;
+    }
+    .dark-mode .admin-profile {
+      background: #333;
+    }
+    .dark-mode .content-area {
+      background: #121212;
+      color: #f4f4f4;
+    }
+    .dark-mode .product-card {
+      background: #1e1e1e;
+      color: #f4f4f4;
+    }
+    .dark-mode .product-details {
+      background: #1e1e1e;
+      color: #f4f4f4;
+    }
+    .dark-mode .admin-dropdown {
+      background: #1e1e1e;
+      color: #f4f4f4;
+      border: 1px solid #555;
+    }
+    /* Tabs for Admin Settings */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid #ccc;
+      margin-bottom: 20px;
+    }
+    /* Add this to the style section */
+#editProductFormContainer label,
+#editProductFormContainer input,
+#editProductFormContainer textarea,
+#editProductFormContainer select,
+#editProductFormContainer button,
+#editProductFormContainer img {
+  display: block;
+  margin-bottom: 10px;
+  width: 100%;
+  max-width: 400px;
+}
+
+#editProductFormContainer button {
+  margin-top: 10px;
+  padding: 8px 16px;
+  width: auto;
+}
+    .tab-button {
+      background: #f4f4f4;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+      font-size: 1em;
+    }
+    .tab-button.active {
+      background: #2c3e50;
+      color: #fff;
+    }
+    .tab-panel {
+      display: none;
+    }
+    .tab-panel.active {
+      display: block;
+    }
+    .discount-management {
+      margin-bottom: 20px;
+    }
+    /* Sub-tabs styling */
+    .sub-tabs {
+      display: flex;
+      border-bottom: 1px solid #ccc;
+      margin-bottom: 10px;
+    }
+    .sub-tab-button {
+      background: #f4f4f4;
+      border: none;
+      padding: 8px 16px;
+      cursor: pointer;
+      margin-right: 5px;
+    }
+    .sub-tab-button.active {
+      background: #2c3e50;
+      color: #fff;
+    }
+    .sub-tab-content {
+      /* Container for sub-tab panels */
+    }
+    .sub-tab-panel {
+      display: none;
+    }
+    .sub-tab-panel.active {
+      display: block;
+    }
+    /* Vertical alignment for Add Product form inputs with headings */
+    #addProductForm label,
+    #addProductForm input,
+    #addProductForm textarea,
+    #addProductForm select,
+    #addProductForm button {
+      display: block;
+      width: 100%;
+      margin-bottom: 10px;
+    }
+    /* Slightly push the back-to-dashboard button further down */
+    #backToDashboardBR {
+      bottom: 40px;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard">
+    <!-- Sidebar with Categories -->
+    <div class="sidebar">
+      <h2>Categories</h2>
+      <ul id="categoryList">
+        <!-- Categories will be populated dynamically -->
+      </ul>
+    </div>
+    <!-- Main Content Area -->
+    <div class="main-content">
+      <!-- Top Navigation Bar -->
+      <div class="top-nav">
+        <div class="search-container">
+          <input type="text" id="searchInput" placeholder="Search products..." />
+        </div>
+        <div class="admin-container">
+          <button class="admin-profile" id="adminProfileButton">Admin Profile</button>
+          <div class="admin-dropdown" id="adminDropdown" style="display: none;">
+            <ul>
+              <li id="darkModeOption">Dark mode</li>
+              <li id="settingsOption">Settings</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <!-- Dynamic Content Area -->
+      <div class="content-area" id="contentArea">
+        <h2>Please select a category from the sidebar.</h2>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Global variables
+    let currentProducts = [];
+    let currentCategory = "";
+    let adminProducts = [];
+    let adminCategories = [];
+    let globalDiscount = 0;
+    let darkModeEnabled = false;
+    let adminProductIdCounter = 10000;
+    let categoryDiscounts = {};
+    let productDiscounts = {};
+    // Object to store default (dummy) products per category
+    let defaultProductsByCategory = {};
+
+    // Helper: merge two arrays of products
+    function mergeProducts(apiProducts, extraProducts) {
+      let merged = apiProducts.slice();
+      extraProducts.forEach((prod) => {
+        let index = merged.findIndex((p) => p.id === prod.id);
+        if (index !== -1) {
+          merged[index] = prod;
+        } else {
+          merged.push(prod);
+        }
+      });
+      return merged;
+    }
+
+    // Helper: return all products (dummy + admin) for a category
+    function getAllProductsByCategory(category) {
+      let dummy = defaultProductsByCategory[category.toLowerCase()] || [];
+      let admin = adminProducts.filter(prod => prod.category.toLowerCase() === category.toLowerCase());
+      return mergeProducts(dummy, admin);
+    }
+
+    // Populate sidebar with categories
+    function populateSidebar(categories) {
+      const categoryList = document.getElementById("categoryList");
+      categoryList.innerHTML = "";
+      categories.forEach((category) => {
+        const li = document.createElement("li");
+        li.textContent = category.charAt(0).toUpperCase() + category.slice(1);
+        li.addEventListener("click", () => {
+          currentCategory = category;
+          loadProducts(category);
+        });
+        categoryList.appendChild(li);
+      });
+    }
+
+    // Load categories from API and save to adminCategories
+    function loadCategories() {
+      fetch("https://dummyjson.com/products/categories")
+        .then((response) => response.json())
+        .then((categories) => {
+          adminCategories = categories.slice();
+          populateSidebar(adminCategories);
+        })
+        .catch((error) => {
+          console.error("Error fetching categories:", error);
+          adminCategories = ["smartphones", "laptops", "fragrances", "skincare", "groceries", "home-decoration"];
+          populateSidebar(adminCategories);
+        });
+    }
+
+    // Load products for a given category and store dummy products if not already stored
+    // Load products for a given category and store dummy products if not already stored
+function loadProducts(category) {
+  const contentArea = document.getElementById("contentArea");
+  contentArea.innerHTML = "<h2>Loading products...</h2>";
+  
+  // Check if we already have default products for this category
+  if (defaultProductsByCategory[category.toLowerCase()]) {
+    let extraProducts = adminProducts.filter(prod => prod.category.toLowerCase() === category.toLowerCase());
+    let merged = mergeProducts(defaultProductsByCategory[category.toLowerCase()], extraProducts);
+    currentProducts = merged;
+    renderProductCards(currentProducts);
+    return;
+  }
+
+  // Only fetch from API if we don't have the default products yet
+  if (category.toLowerCase() === "skincare") {
+    fetch("https://dummyjson.com/products")
+      .then((response) => response.json())
+      .then((data) => {
+        let allProducts = data.products;
+        allProducts.sort(() => 0.5 - Math.random());
+        let dummySkincareProducts = allProducts.slice(0, 6).map((product) => {
+          return { ...product, category: "skincare" };
+        });
+        defaultProductsByCategory["skincare"] = dummySkincareProducts;
+        let extraProducts = adminProducts.filter(prod => prod.category.toLowerCase() === "skincare");
+        let merged = mergeProducts(dummySkincareProducts, extraProducts);
+        currentProducts = merged;
+        renderProductCards(currentProducts);
+      })
+      .catch((error) => {
+        console.error("Error fetching dummy skincare products:", error);
+        contentArea.innerHTML = "<h2>Error loading products.</h2>";
+      });
+  } else {
+    fetch(`https://dummyjson.com/products/category/${encodeURIComponent(category)}`)
+      .then((response) => response.json())
+      .then((data) => {
+        defaultProductsByCategory[category.toLowerCase()] = data.products;
+        let extraProducts = adminProducts.filter(prod => prod.category.toLowerCase() === category.toLowerCase());
+        let merged = mergeProducts(data.products, extraProducts);
+        currentProducts = merged;
+        renderProductCards(currentProducts);
+      })
+      .catch((error) => {
+        console.error("Error fetching products:", error);
+        contentArea.innerHTML = "<h2>Error loading products.</h2>";
+      });
+  }
+}
+    // Render product cards in the content area
+    function renderProductCards(products) {
+      const contentArea = document.getElementById("contentArea");
+      if (products.length === 0) {
+        contentArea.innerHTML = "<h2>No products found in this category.</h2>";
+        return;
+      }
+      const cardsContainer = document.createElement("div");
+      cardsContainer.className = "product-cards";
+      products.forEach((product) => {
+        let effectiveDiscount =
+          (productDiscounts[product.id] && productDiscounts[product.id] > 0)
+            ? productDiscounts[product.id]
+            : (categoryDiscounts[product.category] &&
+              categoryDiscounts[product.category] > 0)
+            ? categoryDiscounts[product.category]
+            : (product.discount && product.discount > 0
+                ? product.discount
+                : (globalDiscount > 0 ? globalDiscount : 0));
+        let priceHTML = "";
+        if (effectiveDiscount > 0) {
+          let discountedPrice = (product.price * (1 - effectiveDiscount / 100)).toFixed(2);
+          priceHTML = `<p><del>$${product.price}</del> $${discountedPrice} (${effectiveDiscount}% off)</p>`;
+        } else {
+          priceHTML = `<p>$${product.price}</p>`;
+        }
+        const card = document.createElement("div");
+        card.className = "product-card";
+        card.innerHTML = `
+          <img src="${product.thumbnail}" alt="${product.title}">
+          <div class="card-content">
+            <h3>${product.title}</h3>
+            ${priceHTML}
+          </div>
+        `;
+        card.addEventListener("click", () => {
+          showProductDetails(product);
+        });
+        cardsContainer.appendChild(card);
+      });
+      contentArea.innerHTML = "";
+      contentArea.appendChild(cardsContainer);
+    }
+
+    // Display detailed view for a single product
+    function showProductDetails(product) {
+      const contentArea = document.getElementById("contentArea");
+      let effectiveDiscount =
+        (productDiscounts[product.id] && productDiscounts[product.id] > 0)
+          ? productDiscounts[product.id]
+          : (categoryDiscounts[product.category] &&
+            categoryDiscounts[product.category] > 0)
+          ? categoryDiscounts[product.category]
+          : (product.discount && product.discount > 0
+              ? product.discount
+              : (globalDiscount > 0 ? globalDiscount : 0));
+      let discountHTML = "";
+      if (effectiveDiscount > 0) {
+        let discountedPrice = (product.price * (1 - effectiveDiscount / 100)).toFixed(2);
+        discountHTML = `<p><strong>Discount:</strong> ${effectiveDiscount}%</p>
+                        <p><strong>Discounted Price:</strong> $${discountedPrice}</p>`;
+      }
+      const detailsHTML = `
+        <div class="product-details">
+          <img src="${product.thumbnail}" alt="${product.title}">
+          <h2>${product.title}</h2>
+          <p><strong>Description:</strong> ${product.description}</p>
+          <p><strong>Category:</strong> ${product.category}</p>
+          <p><strong>Price:</strong> $${product.price}</p>
+          ${discountHTML}
+          <p><strong>Tags:</strong> ${product.tags ? product.tags : "New, Featured"}</p>
+          <p><strong>Ratings:</strong> ${product.rating}</p>
+          <p><strong>Stock:</strong> ${product.stock}</p>
+          <button class="back-button" id="backButton">Back</button>
+        </div>
+      `;
+      contentArea.innerHTML = detailsHTML;
+      document.getElementById("backButton").addEventListener("click", () => {
+        renderProductCards(currentProducts);
+      });
+    }
+
+    // Filter products based on search input
+    function filterProducts(searchTerm) {
+      const filteredProducts = currentProducts.filter((product) =>
+        product.title.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      renderProductCards(filteredProducts);
+    }
+    document.getElementById("searchInput").addEventListener("input", (e) => {
+      const searchTerm = e.target.value;
+      if (currentProducts.length > 0) {
+        filterProducts(searchTerm);
+      }
+    });
+
+    // Admin Dropdown toggle
+    const adminProfileButton = document.getElementById("adminProfileButton");
+    const adminDropdown = document.getElementById("adminDropdown");
+    adminProfileButton.addEventListener("click", () => {
+      adminDropdown.style.display = adminDropdown.style.display === "none" ? "block" : "none";
+    });
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".admin-container")) {
+        adminDropdown.style.display = "none";
+      }
+    });
+
+    // Dark mode toggle
+    const darkModeOption = document.getElementById("darkModeOption");
+    darkModeOption.addEventListener("click", () => {
+      darkModeEnabled = !darkModeEnabled;
+      if (darkModeEnabled) {
+        document.body.classList.add("dark-mode");
+        darkModeOption.textContent = "Light mode";
+      } else {
+        document.body.classList.remove("dark-mode");
+        darkModeOption.textContent = "Dark mode";
+      }
+      adminDropdown.style.display = "none";
+    });
+
+    // Functions for Product Management Sub-Tabs (Remove & Edit)
+    function updateRemoveProductDropdown() {
+      const removeCategorySelect = document.getElementById("removeProductCategory");
+      const removeProductSelect = document.getElementById("removeProductSelect");
+      if (removeCategorySelect && removeProductSelect) {
+        removeCategorySelect.innerHTML = "";
+        adminCategories.forEach(category => {
+          const option = document.createElement("option");
+          option.value = category;
+          option.textContent = category;
+          removeCategorySelect.appendChild(option);
+        });
+        updateRemoveProductSelect();
+      }
+    }
+    function updateRemoveProductSelect() {
+      const removeCategorySelect = document.getElementById("removeProductCategory");
+      const removeProductSelect = document.getElementById("removeProductSelect");
+      if (removeCategorySelect && removeProductSelect) {
+        const selectedCategory = removeCategorySelect.value;
+        removeProductSelect.innerHTML = "";
+        let allProducts = getAllProductsByCategory(selectedCategory);
+        if(allProducts.length === 0){
+          fetch(`https://dummyjson.com/products/category/${encodeURIComponent(selectedCategory)}`)
+            .then(response => response.json())
+            .then(data => {
+              defaultProductsByCategory[selectedCategory.toLowerCase()] = data.products;
+              let allProducts = getAllProductsByCategory(selectedCategory);
+              removeProductSelect.innerHTML = "";
+              allProducts.forEach(prod => {
+                const option = document.createElement("option");
+                option.value = prod.id;
+                option.textContent = prod.title;
+                removeProductSelect.appendChild(option);
+              });
+            });
+        } else {
+          allProducts.forEach(prod => {
+            const option = document.createElement("option");
+            option.value = prod.id;
+            option.textContent = prod.title;
+            removeProductSelect.appendChild(option);
+          });
+        }
+      }
+    }
+    function updateEditProductDropdown() {
+      const editCategorySelect = document.getElementById("editProductCategory");
+      const editProductSelect = document.getElementById("editProductSelect");
+      if (editCategorySelect && editProductSelect) {
+        editCategorySelect.innerHTML = "";
+        adminCategories.forEach(category => {
+          const option = document.createElement("option");
+          option.value = category;
+          option.textContent = category;
+          editCategorySelect.appendChild(option);
+        });
+        updateEditProductSelect();
+      }
+    }
+    function updateEditProductSelect() {
+      const editCategorySelect = document.getElementById("editProductCategory");
+      const editProductSelect = document.getElementById("editProductSelect");
+      if (editCategorySelect && editProductSelect) {
+        const selectedCategory = editCategorySelect.value;
+        editProductSelect.innerHTML = "";
+        let allProducts = getAllProductsByCategory(selectedCategory);
+        if(allProducts.length === 0){
+          fetch(`https://dummyjson.com/products/category/${encodeURIComponent(selectedCategory)}`)
+            .then(response => response.json())
+            .then(data => {
+              defaultProductsByCategory[selectedCategory.toLowerCase()] = data.products;
+              let allProducts = getAllProductsByCategory(selectedCategory);
+              editProductSelect.innerHTML = "";
+              allProducts.forEach(prod => {
+                const option = document.createElement("option");
+                option.value = prod.id;
+                option.textContent = prod.title;
+                editProductSelect.appendChild(option);
+              });
+            });
+        } else {
+          allProducts.forEach(prod => {
+            const option = document.createElement("option");
+            option.value = prod.id;
+            option.textContent = prod.title;
+            editProductSelect.appendChild(option);
+          });
+        }
+      }
+    }
+    function updateDiscountProductDropdown2() {
+      const discountProductCategory = document.getElementById("discountProductCategory");
+      const discountProductSelect = document.getElementById("discountProductSelect");
+      if (discountProductCategory && discountProductSelect) {
+        discountProductCategory.innerHTML = "";
+        adminCategories.forEach(category => {
+          const option = document.createElement("option");
+          option.value = category;
+          option.textContent = category;
+          discountProductCategory.appendChild(option);
+        });
+        updateDiscountProductSelect2();
+      }
+    }
+    function updateDiscountProductSelect2() {
+      const discountProductCategory = document.getElementById("discountProductCategory");
+      const discountProductSelect = document.getElementById("discountProductSelect");
+      if (discountProductCategory && discountProductSelect) {
+        const selectedCategory = discountProductCategory.value;
+        discountProductSelect.innerHTML = "";
+        let allProducts = getAllProductsByCategory(selectedCategory);
+        if(allProducts.length === 0){
+          fetch(`https://dummyjson.com/products/category/${encodeURIComponent(selectedCategory)}`)
+            .then(response => response.json())
+            .then(data => {
+              defaultProductsByCategory[selectedCategory.toLowerCase()] = data.products;
+              let allProducts = getAllProductsByCategory(selectedCategory);
+              discountProductSelect.innerHTML = "";
+              allProducts.forEach(prod => {
+                const option = document.createElement("option");
+                option.value = prod.id;
+                option.textContent = prod.title;
+                discountProductSelect.appendChild(option);
+              });
+            });
+        } else {
+          allProducts.forEach(prod => {
+            const option = document.createElement("option");
+            option.value = prod.id;
+            option.textContent = prod.title;
+            discountProductSelect.appendChild(option);
+          });
+        }
+      }
+    }
+
+    // Initialize sub-tab switching functionality
+    function initializeSubTabs() {
+      const subTabButtons = document.querySelectorAll('.sub-tab-button');
+      subTabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          const subTabsContainer = button.closest('.sub-tabs');
+          const allSubButtons = subTabsContainer.querySelectorAll('.sub-tab-button');
+          allSubButtons.forEach(btn => btn.classList.remove('active'));
+          const subTabContentContainer = subTabsContainer.nextElementSibling;
+          const allSubPanels = subTabContentContainer.querySelectorAll('.sub-tab-panel');
+          allSubPanels.forEach(panel => panel.classList.remove('active'));
+          button.classList.add('active');
+          const subTabId = button.getAttribute('data-subtab');
+          document.getElementById(subTabId).classList.add('active');
+        });
+      });
+    }
+
+    // Show admin settings page with tabbed interface
+    const settingsOption = document.getElementById("settingsOption");
+    settingsOption.addEventListener("click", () => {
+      showAdminSettings();
+      adminDropdown.style.display = "none";
+    });
+    function showAdminSettings() {
+      const contentArea = document.getElementById("contentArea");
+      contentArea.innerHTML = `
+        <div class="admin-settings">
+          <h2>Admin Settings</h2>
+          <div class="tabs">
+            <button class="tab-button active" data-tab="categoryTab">Category Management</button>
+            <button class="tab-button" data-tab="productTab">Product Management</button>
+            <button class="tab-button" data-tab="discountTab">Discount Management</button>
+          </div>
+          <div class="tab-content">
+            <div id="categoryTab" class="tab-panel active">
+              <form id="addCategoryForm">
+                <label for="newCategoryInput">New Category Name:</label>
+                <input type="text" id="newCategoryInput" placeholder="New Category Name" required>
+                <button type="submit">Add Category</button>
+              </form>
+              <ul id="adminCategoryList"></ul>
+            </div>
+            <div id="productTab" class="tab-panel">
+              <div class="sub-tabs">
+                <button class="sub-tab-button active" data-subtab="addProductTab">Add Product</button>
+                <button class="sub-tab-button" data-subtab="removeProductTab">Remove Product</button>
+                <button class="sub-tab-button" data-subtab="editProductTab">Edit Product</button>
+              </div>
+              <div class="sub-tab-content">
+                <div id="addProductTab" class="sub-tab-panel active">
+                  <form id="addProductForm">
+                    <label for="productName">Product Name:</label>
+                    <input type="text" id="productName" placeholder="Product Name" required>
+                    <label for="productImage">Product Image:</label>
+                    <input type="file" id="productImage" accept="image/*" required>
+                    <label for="productTags">Product Tags:</label>
+                    <input type="text" id="productTags" placeholder="Tags (comma separated)" required>
+                    <label for="productDescription">Product Description:</label>
+                    <textarea id="productDescription" placeholder="Description" required></textarea>
+                    <label for="productPrice">Product Price:</label>
+                    <input type="number" id="productPrice" placeholder="Price" required>
+                    <label for="productStock">Product Stock:</label>
+                    <input type="number" id="productStock" placeholder="Stock" required>
+                    <label for="productCategory">Product Category:</label>
+                    <select id="productCategory" required></select>
+                    <button type="submit">Add Product</button>
+                  </form>
+                </div>
+                <div id="removeProductTab" class="sub-tab-panel">
+                  <form id="removeProductForm">
+                    <label for="removeProductCategory">Select Category:</label>
+                    <select id="removeProductCategory" required></select>
+                    <label for="removeProductSelect">Select Product:</label>
+                    <select id="removeProductSelect" required></select>
+                    <button type="submit">Remove Product</button>
+                  </form>
+                </div>
+                <div id="editProductTab" class="sub-tab-panel">
+                  <form id="editProductSelectForm">
+                    <label for="editProductCategory">Select Category:</label>
+                    <select id="editProductCategory" required></select>
+                    <label for="editProductSelect">Select Product:</label>
+                    <select id="editProductSelect" required></select>
+                    <button type="button" id="loadEditProduct">Load Product</button>
+                  </form>
+                  <div id="editProductFormContainer"></div>
+                </div>
+              </div>
+            </div>
+            <div id="discountTab" class="tab-panel">
+              <div class="sub-tabs">
+                <button class="sub-tab-button active" data-subtab="globalDiscountTab">Global</button>
+                <button class="sub-tab-button" data-subtab="categoryDiscountTab">Category</button>
+                <button class="sub-tab-button" data-subtab="productDiscountTab">Products</button>
+              </div>
+              <div class="sub-tab-content">
+                <div id="globalDiscountTab" class="sub-tab-panel active">
+                  <div class="discount-management">
+                    <h3>Global Discount</h3>
+                    <form id="globalDiscountForm">
+                      <input type="number" id="globalDiscountInput" placeholder="Global Discount (%)" min="0" max="100" required>
+                      <button type="submit">Apply Global Discount</button>
+                    </form>
+                  </div>
+                  <button class="remove-all-discounts back-button">Remove All Discounts</button>
+                </div>
+                <div id="categoryDiscountTab" class="sub-tab-panel">
+                  <div class="discount-management">
+                    <h3>Category Discount</h3>
+                    <form id="categoryDiscountForm">
+                      <select id="discountCategorySelect" required></select>
+                      <input type="number" id="categoryDiscountInput" placeholder="Discount (%)" min="0" max="100" required>
+                      <button type="submit">Apply Category Discount</button>
+                    </form>
+                  </div>
+                  <button class="remove-all-discounts back-button">Remove All Discounts</button>
+                </div>
+                <div id="productDiscountTab" class="sub-tab-panel">
+                  <div class="discount-management">
+                    <h3>Product Discount</h3>
+                    <form id="productDiscountForm">
+                      <label for="discountProductCategory">Select Category:</label>
+                      <select id="discountProductCategory" required></select>
+                      <label for="discountProductSelect">Select Product:</label>
+                      <select id="discountProductSelect" required></select>
+                      <input type="number" id="productDiscountInputSpecific" placeholder="Discount (%)" min="0" max="100" required>
+                      <button type="submit">Apply Product Discount</button>
+                    </form>
+                  </div>
+                  <button class="remove-all-discounts back-button">Remove All Discounts</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button id="backToDashboardBR" class="back-button" style="position: absolute; right: 20px; bottom: 40px;">Back to Dashboard</button>
+        </div>
+      `;
+
+      // Back to dashboard button event
+      document.getElementById("backToDashboardBR").addEventListener("click", () => {
+        contentArea.innerHTML = "<h2>Please select a category from the sidebar.</h2>";
+      });
+
+      // Main tab switching functionality
+      const tabButtons = document.querySelectorAll('.tab-button');
+      const tabPanels = document.querySelectorAll('.tab-panel');
+      tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          tabButtons.forEach(btn => btn.classList.remove('active'));
+          tabPanels.forEach(panel => panel.classList.remove('active'));
+          button.classList.add('active');
+          const tabId = button.getAttribute('data-tab');
+          document.getElementById(tabId).classList.add('active');
+          initializeSubTabs();
+        });
+      });
+
+      // Initialize sub-tabs
+      initializeSubTabs();
+
+      // Populate dropdowns for Category Management
+      updateAdminCategoryList();
+      updateProductCategoryDropdown();
+      updateDiscountCategoryDropdown();
+      // For product management sub-tabs
+      updateRemoveProductDropdown();
+      updateEditProductDropdown();
+      // For discount products tab
+      updateDiscountProductDropdown2();
+
+      // Event listeners for sub-tab dropdown changes
+      document.getElementById("removeProductCategory").addEventListener("change", updateRemoveProductSelect);
+      document.getElementById("editProductCategory").addEventListener("change", updateEditProductSelect);
+      document.getElementById("discountProductCategory").addEventListener("change", updateDiscountProductSelect2);
+
+      // Handle add category form
+      document.getElementById("addCategoryForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const newCategory = document.getElementById("newCategoryInput").value.trim().toLowerCase();
+        if (newCategory && !adminCategories.includes(newCategory)) {
+          adminCategories.push(newCategory);
+          updateAdminCategoryList();
+          updateProductCategoryDropdown();
+          updateDiscountCategoryDropdown();
+          populateSidebar(adminCategories);
+          document.getElementById("newCategoryInput").value = "";
+        } else {
+          alert("Category already exists or is invalid.");
+        }
+      });
+
+      // Handle add product form with headings
+      document.getElementById("addProductForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const name = document.getElementById("productName").value.trim();
+        const imageInput = document.getElementById("productImage");
+        if (!imageInput.files[0]) {
+          alert("Please upload an image.");
+          return;
+        }
+        const file = imageInput.files[0];
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+          const imageData = ev.target.result;
+          const tags = document.getElementById("productTags").value.trim();
+          const description = document.getElementById("productDescription").value.trim();
+          const price = parseFloat(document.getElementById("productPrice").value);
+          const stock = parseInt(document.getElementById("productStock").value);
+          const category = document.getElementById("productCategory").value;
+          if (name && tags && description && !isNaN(price) && !isNaN(stock) && category) {
+            const newProduct = {
+              id: adminProductIdCounter++,
+              title: name,
+              thumbnail: imageData,
+              tags: tags,
+              description: description,
+              price: price,
+              stock: stock,
+              discount: 0,
+              category: category,
+              rating: 0,
+            };
+            adminProducts.push(newProduct);
+            alert("Product added.");
+            updateEditProductDropdown();
+            updateRemoveProductDropdown();
+            updateDiscountProductDropdown2();
+            document.getElementById("addProductForm").reset();
+            if (currentCategory.toLowerCase() === category.toLowerCase()) {
+              renderProductCards(getAllProductsByCategory(category));
+            }
+          } else {
+            alert("Please fill in all required fields.");
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+
+      // Handle remove product form
+      // Handle remove product form
+document.getElementById("removeProductForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const removeProductSelect = document.getElementById("removeProductSelect");
+  const productId = parseInt(removeProductSelect.value);
+  let removedFromAdmin = false;
+  
+  adminProducts = adminProducts.filter(prod => {
+    if(prod.id === productId) {
+      removedFromAdmin = true;
+      return false;
+    }
+    return true;
+  });
+  
+  if(!removedFromAdmin) {
+    const selectedCategory = document.getElementById("removeProductCategory").value;
+    if(defaultProductsByCategory[selectedCategory.toLowerCase()]) {
+      defaultProductsByCategory[selectedCategory.toLowerCase()] =
+        defaultProductsByCategory[selectedCategory.toLowerCase()].filter(prod => prod.id !== productId);
+    }
+  }
+  
+  alert("Product removed.");
+  updateRemoveProductDropdown();
+  updateEditProductDropdown();
+  updateDiscountProductDropdown2();
+  
+  // Update the dashboard view immediately
+  const remCategory = document.getElementById("removeProductCategory").value;
+  if(currentCategory.toLowerCase() === remCategory.toLowerCase()){
+    currentProducts = getAllProductsByCategory(remCategory);
+    renderProductCards(currentProducts);
+  }
+});
+
+      // Handle edit product load button with vertical alignment
+      document.getElementById("loadEditProduct").addEventListener("click", () => {
+        const editProductSelect = document.getElementById("editProductSelect");
+        const selectedId = parseInt(editProductSelect.value);
+        const product = adminProducts.find(prod => prod.id === selectedId) || getAllProductsByCategory(document.getElementById("editProductCategory").value).find(prod => prod.id === selectedId);
+        if (product) {
+          const container = document.getElementById("editProductFormContainer");
+          container.innerHTML = `
+            <label for="editName${product.id}">Product Name:</label>
+            <input type="text" id="editName${product.id}" value="${product.title}">
+            <label for="editImage${product.id}">Product Image:</label>
+            <input type="file" id="editImage${product.id}" accept="image/*">
+            <img src="${product.thumbnail}" alt="Current Image" style="max-width:100px; display:block; margin-bottom:5px;">
+            <label for="editTags${product.id}">Product Tags:</label>
+            <input type="text" id="editTags${product.id}" value="${product.tags}">
+            <label for="editDescription${product.id}">Product Description:</label>
+            <textarea id="editDescription${product.id}">${product.description}</textarea>
+            <label for="editPrice${product.id}">Product Price:</label>
+            <input type="number" id="editPrice${product.id}" value="${product.price}">
+            <label for="editStock${product.id}">Product Stock:</label>
+            <input type="number" id="editStock${product.id}" value="${product.stock}">
+            <label for="editDiscount${product.id}">Product Discount:</label>
+            <input type="number" id="editDiscount${product.id}" value="${product.discount || 0}" min="0" max="100">
+            <label for="editCategory${product.id}">Product Category:</label>
+            <select id="editCategory${product.id}"></select>
+            <button id="saveEdit${product.id}">Save</button>
+            <button id="cancelEdit${product.id}">Cancel</button>
+          `;
+          const editCategorySelect = document.getElementById(`editCategory${product.id}`);
+          adminCategories.forEach((cat) => {
+            const option = document.createElement("option");
+            option.value = cat;
+            option.textContent = cat;
+            if (cat === product.category) option.selected = true;
+            editCategorySelect.appendChild(option);
+          });
+          document.getElementById(`saveEdit${product.id}`).addEventListener("click", () => {
+  product.title = document.getElementById(`editName${product.id}`).value.trim();
+  const imageInput = document.getElementById(`editImage${product.id}`);
+  if (imageInput.files && imageInput.files[0]) {
+    const file = imageInput.files[0];
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      product.thumbnail = e.target.result;
+      continueSaveEdit();
+    }
+    reader.readAsDataURL(file);
+  } else {
+    continueSaveEdit();
+  }
+  
+  function continueSaveEdit() {
+    product.tags = document.getElementById(`editTags${product.id}`).value.trim();
+    product.description = document.getElementById(`editDescription${product.id}`).value.trim();
+    product.price = parseFloat(document.getElementById(`editPrice${product.id}`).value);
+    product.stock = parseInt(document.getElementById(`editStock${product.id}`).value);
+    product.discount = parseFloat(document.getElementById(`editDiscount${product.id}`).value) || 0;
+    product.category = document.getElementById(`editCategory${product.id}`).value;
+    
+    alert("Product updated.");
+    document.getElementById("editProductFormContainer").innerHTML = "";
+    updateEditProductDropdown();
+    
+    // Update dashboard view immediately
+    if(currentCategory.toLowerCase() === product.category.toLowerCase()){
+      currentProducts = getAllProductsByCategory(product.category);
+      renderProductCards(currentProducts);
+    }
+  }
+});
+          document.getElementById(`cancelEdit${product.id}`).addEventListener("click", () => {
+            document.getElementById("editProductFormContainer").innerHTML = "";
+          });
+        }
+      });
+
+      // Handle global discount form
+      document.getElementById("globalDiscountForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const discountValue = parseFloat(document.getElementById("globalDiscountInput").value);
+        if (!isNaN(discountValue) && discountValue >= 0 && discountValue <= 100) {
+          globalDiscount = discountValue;
+          alert("Global discount applied.");
+          if(currentCategory){
+            renderProductCards(getAllProductsByCategory(currentCategory));
+          }
+        } else {
+          alert("Please enter a valid discount percentage (0-100).");
+        }
+      });
+
+      // Handle category discount form
+      document.getElementById("categoryDiscountForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const selectedCategory = document.getElementById("discountCategorySelect").value;
+        const discountValue = parseFloat(document.getElementById("categoryDiscountInput").value);
+        if (!isNaN(discountValue) && discountValue >= 0 && discountValue <= 100) {
+          categoryDiscounts[selectedCategory] = discountValue;
+          alert(`Discount of ${discountValue}% applied to category ${selectedCategory}.`);
+          if(currentCategory.toLowerCase() === selectedCategory.toLowerCase()){
+            renderProductCards(getAllProductsByCategory(selectedCategory));
+          }
+        } else {
+          alert("Please enter a valid discount percentage (0-100).");
+        }
+      });
+
+      // Handle product discount form
+      document.getElementById("productDiscountForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const selectedProductId = parseInt(document.getElementById("discountProductSelect").value);
+        const discountValue = parseFloat(document.getElementById("productDiscountInputSpecific").value);
+        if (!isNaN(discountValue) && discountValue >= 0 && discountValue <= 100) {
+          productDiscounts[selectedProductId] = discountValue;
+          alert(`Discount of ${discountValue}% applied to the selected product.`);
+          if(currentCategory){
+            renderProductCards(getAllProductsByCategory(currentCategory));
+          }
+        } else {
+          alert("Please enter a valid discount percentage (0-100).");
+        }
+      });
+
+      // Handle Remove All Discounts buttons in all discount sub-tabs
+      document.querySelectorAll(".remove-all-discounts").forEach(btn => {
+        btn.addEventListener("click", () => {
+          globalDiscount = 0;
+          categoryDiscounts = {};
+          productDiscounts = {};
+          alert("All discounts removed.");
+          if(currentCategory){
+            renderProductCards(getAllProductsByCategory(currentCategory));
+          }
+        });
+      });
+    }
+
+    // Update admin category list display with edit and delete options
+    function updateAdminCategoryList() {
+      const adminCategoryList = document.getElementById("adminCategoryList");
+      if (adminCategoryList) {
+        adminCategoryList.innerHTML = "";
+        adminCategories.forEach((category, index) => {
+          const li = document.createElement("li");
+          li.textContent = category + " ";
+          const editBtn = document.createElement("button");
+          editBtn.textContent = "Edit";
+          editBtn.addEventListener("click", () => {
+            const newName = prompt("Enter new category name:", category);
+            if (newName && newName.trim() !== "" && !adminCategories.includes(newName.trim().toLowerCase())) {
+              adminCategories[index] = newName.trim().toLowerCase();
+              adminProducts.forEach(prod => {
+                if(prod.category === category) {
+                  prod.category = newName.trim().toLowerCase();
+                }
+              });
+              if(categoryDiscounts[category]) {
+                categoryDiscounts[newName.trim().toLowerCase()] = categoryDiscounts[category];
+                delete categoryDiscounts[category];
+              }
+              updateAdminCategoryList();
+              updateProductCategoryDropdown();
+              updateDiscountCategoryDropdown();
+              populateSidebar(adminCategories);
+            } else {
+              alert("Invalid or duplicate category name.");
+            }
+          });
+          li.appendChild(editBtn);
+          const deleteBtn = document.createElement("button");
+          deleteBtn.textContent = "Delete";
+          deleteBtn.addEventListener("click", () => {
+            if(confirm(`Are you sure you want to delete the category "${category}"?`)) {
+              adminCategories.splice(index, 1);
+              updateAdminCategoryList();
+              updateProductCategoryDropdown();
+              updateDiscountCategoryDropdown();
+              populateSidebar(adminCategories);
+            }
+          });
+          li.appendChild(deleteBtn);
+          adminCategoryList.appendChild(li);
+        });
+      }
+    }
+
+    // Update product category dropdown in add product form
+    function updateProductCategoryDropdown() {
+      const productCategorySelect = document.getElementById("productCategory");
+      if (productCategorySelect) {
+        productCategorySelect.innerHTML = "";
+        adminCategories.forEach((category) => {
+          const option = document.createElement("option");
+          option.value = category;
+          option.textContent = category;
+          productCategorySelect.appendChild(option);
+        });
+      }
+    }
+
+    // Update discount category dropdown in discount section
+    function updateDiscountCategoryDropdown() {
+      const discountCategorySelect = document.getElementById("discountCategorySelect");
+      if (discountCategorySelect) {
+        discountCategorySelect.innerHTML = "";
+        adminCategories.forEach((category) => {
+          const option = document.createElement("option");
+          option.value = category;
+          option.textContent = category;
+          discountCategorySelect.appendChild(option);
+        });
+      }
+    }
+
+    // Initialize the dashboard by loading categories
+    loadCategories();
+  </script>
+</body>
+</html>

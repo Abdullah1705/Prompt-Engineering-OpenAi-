@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Learn Words</title>
+    <!-- Import Winky Sans font -->
+    <link href="https://fonts.googleapis.com/css2?family=Winky+Sans&display=swap" rel="stylesheet">
+    <style>
+        /* Global Styles */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: lightgrey;
+            font-family: 'Winky Sans', cursive;
+        }
+
+        header {
+            text-align: center;
+            font-size: 36px;
+            padding: 20px;
+        }
+
+        /* Main Layout: Left (40%) and Right (60%) panels */
+        .main-container {
+            display: flex;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 20px;
+        }
+
+        .left-panel {
+            width: 40%;
+            padding-right: 20px;
+        }
+
+        .right-panel {
+            width: 60%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Right Panel Heading */
+        .right-panel h2 {
+            color: #000;
+            font-size: 24px;
+        }
+
+        /* Search Bar Styles */
+        .search-section {
+            margin-bottom: 20px;
+        }
+
+        .search-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .search-bar input {
+            flex: 1;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 30px;
+            /* very rounded edges */
+            outline: none;
+        }
+
+        .search-bar input::placeholder {
+            font-family: 'Winky Sans', cursive;
+        }
+
+        .search-bar button {
+            margin-left: 10px;
+            /* margin between search bar and button */
+            padding: 10px 15px;
+            font-size: 16px;
+            border: 1px solid #000;
+            background-color: #000;
+            color: #fff;
+            border-radius: 30px;
+            /* very rounded edges */
+            cursor: pointer;
+            font-family: 'Winky Sans', cursive;
+        }
+
+        .search-bar button:hover {
+            background-color: #333;
+        }
+
+        /* Card Styles for Word Details */
+        .card {
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
+            /* initially white background */
+            /* CSS variable for accent color, set uniquely for each card */
+            --fill-color: purple;
+            margin: 15px;
+        }
+
+        /* Pseudo-element for fill animation (from right to left) */
+        .card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 0;
+            background-color: var(--fill-color);
+            z-index: 1;
+            transition: width 0.5s ease;
+            pointer-events: none;
+        }
+
+        .card:hover::before {
+            width: 100%;
+        }
+
+        /* Pseudo-element for the vertical colored line */
+        .card::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 8px;
+            /* a little wider */
+            background-color: var(--fill-color);
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* Ensure card content appears above the fill animation */
+        .card>* {
+            position: relative;
+            z-index: 3;
+        }
+
+        .card h2 {
+            margin-top: 0;
+            text-transform: capitalize;
+        }
+
+        .card .phonetics,
+        .card .meanings {
+            margin-top: 10px;
+        }
+
+        .card audio {
+            margin-top: 5px;
+            width: 100%;
+        }
+
+        .meaning {
+            margin-bottom: 15px;
+        }
+
+        .meaning h4 {
+            margin: 5px 0;
+        }
+
+        .definition p {
+            margin: 5px 0;
+        }
+
+        /* Audio icon styles */
+        .audio-icon {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: transparent;
+            border: none;
+            color: #fff;
+            /* white sound icon */
+            font-size: 20px;
+            cursor: pointer;
+            z-index: 4;
+        }
+
+        .audio-icon svg {
+            filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.6));
+        }
+
+
+        /* Loading text style */
+        .loading {
+            font-size: 18px;
+            color: #000;
+            font-family: 'Winky Sans', cursive;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+
+            .left-panel,
+            .right-panel {
+                width: 100%;
+                padding: 0;
+            }
+
+            .right-panel {
+                margin-top: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>Learn Words</header>
+    <div class="main-container">
+        <!-- Left Panel: Search Bar and Search Result Card -->
+        <div class="left-panel">
+            <div class="search-section">
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="Enter a word...">
+                    <button id="searchButton">Search</button>
+                </div>
+                <!-- Search result will be displayed here -->
+                <div id="searchResult"></div>
+            </div>
+        </div>
+        <!-- Right Panel: Heading and Random Word Cards -->
+        <div class="right-panel">
+            <h2>Four Words to Learn Today</h2>
+            <div id="randomWordsContainer">
+                <p class="loading">Loading...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Fetch the dictionary details for a word using the Free Dictionary API.
+         * Returns a promise that resolves with data if valid, otherwise rejects.
+         */
+        function fetchWordDetailsPromise(word) {
+            return fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (Array.isArray(data)) {
+                        return data;
+                    } else {
+                        return Promise.reject(new Error("Invalid data"));
+                    }
+                });
+        }
+
+        /**
+         * Fetch one valid random word.
+         * If the fetched word's details result in an error, try again until valid details are returned.
+         * Returns a promise that resolves with an object: { data, word }.
+         */
+        function fetchOneValidRandomWord() {
+            return new Promise((resolve) => {
+                function tryFetch() {
+                    fetch("https://random-word-api.herokuapp.com/word?number=1")
+                        .then(response => response.json())
+                        .then(words => {
+                            let word = words[0];
+                            fetchWordDetailsPromise(word)
+                                .then(data => {
+                                    resolve({ data: data, word: word });
+                                })
+                                .catch(() => {
+                                    // On error, try fetching another random word.
+                                    tryFetch();
+                                });
+                        })
+                        .catch(() => {
+                            // If fetching the random word fails, try again.
+                            tryFetch();
+                        });
+                }
+                tryFetch();
+            });
+        }
+
+        /**
+         * Fetch 4 valid random words concurrently and display their details as cards.
+         * Ensures that each card has a unique fill color.
+         */
+        function fetchValidRandomWords() {
+            const promises = [];
+            for (let i = 0; i < 4; i++) {
+                promises.push(fetchOneValidRandomWord());
+            }
+            Promise.all(promises)
+                .then(results => {
+                    const container = document.getElementById('randomWordsContainer');
+                    container.innerHTML = "";
+                    // Define an array of available colors.
+                    const availableColors = ["purple", "orange", "pink", "yellow", "brown"];
+                    // Shuffle the available colors.
+                    availableColors.sort(() => 0.5 - Math.random());
+                    // Pick the first 4 unique colors.
+                    const selectedColors = availableColors.slice(0, 4);
+                    results.forEach((result, index) => {
+                        const fillColor = selectedColors[index];
+                        const card = createWordCard(result.data, result.word, fillColor);
+                        container.appendChild(card);
+                    });
+                })
+                .catch(err => {
+                    console.error("Error fetching valid random words:", err);
+                    const container = document.getElementById('randomWordsContainer');
+                    container.innerHTML = "<p class='loading'>Error loading words. Please refresh the page.</p>";
+                });
+        }
+
+        /**
+         * Create a card element displaying the details of a word.
+         * If data is invalid, display an error message in the card.
+         * The fillColor parameter sets the accent color for the vertical line and fill animation.
+         */
+        function createWordCard(data, searchedWord, fillColor) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            // Set the fill color using the provided fillColor.
+            if (fillColor) {
+                card.style.setProperty("--fill-color", fillColor);
+            } else {
+                const colors = ["purple", "orange", "pink", "yellow", "brown"];
+                const chosenColor = colors[Math.floor(Math.random() * colors.length)];
+                card.style.setProperty("--fill-color", chosenColor);
+            }
+
+            let audioUrl = null;
+            // Check if any phonetic has a valid audio URL.
+            if (Array.isArray(data)) {
+                const entry = data[0];
+
+                if (entry.phonetics && entry.phonetics.length > 0) {
+                    for (let phonetic of entry.phonetics) {
+                        if (phonetic.audio) {
+                            audioUrl = phonetic.audio;
+                            break;
+                        }
+                    }
+                }
+
+                // If audioUrl exists, add an audio icon to the top right of the card.
+                if (audioUrl) {
+                    const audioIcon = document.createElement('span');
+                    audioIcon.className = 'audio-icon';
+                    // Use a sound icon (Unicode "SPEAKER WITH THREE SOUND WAVES")
+                    audioIcon.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" fill="#fff" height="24" viewBox="0 0 24 24" width="24">
+          <path d="M0 0h24v24H0z" fill="none"/>
+          <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.06c1.48-.74 2.5-2.26 2.5-4.03z"/>
+        </svg>
+    `;
+                    audioIcon.title = "Play Sound";
+                    audioIcon.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        const audio = new Audio(audioUrl);
+                        audio.play();
+                    });
+                    card.appendChild(audioIcon);
+                }
+
+                // Word Title
+                const wordTitle = document.createElement('h2');
+                wordTitle.textContent = entry.word;
+                card.appendChild(wordTitle);
+
+                // If no audio icon was added, optionally show phonetics text.
+                if (!audioUrl && entry.phonetics && entry.phonetics.length > 0) {
+                    const phoneticsDiv = document.createElement('div');
+                    phoneticsDiv.className = 'phonetics';
+                    const phoneticsHeader = document.createElement('h3');
+                    phoneticsHeader.textContent = 'Phonetics';
+                    phoneticsDiv.appendChild(phoneticsHeader);
+                    entry.phonetics.forEach(phonetic => {
+                        if (phonetic.text) {
+                            const p = document.createElement('p');
+                            p.textContent = phonetic.text;
+                            phoneticsDiv.appendChild(p);
+                        }
+                    });
+                    card.appendChild(phoneticsDiv);
+                }
+
+                // Meanings Section
+                if (entry.meanings && entry.meanings.length > 0) {
+                    const meaningsDiv = document.createElement('div');
+                    meaningsDiv.className = 'meanings';
+                    const meaningsHeader = document.createElement('h3');
+                    meaningsHeader.textContent = 'Meanings';
+                    meaningsDiv.appendChild(meaningsHeader);
+                    entry.meanings.forEach(meaning => {
+                        const meaningDiv = document.createElement('div');
+                        meaningDiv.className = 'meaning';
+                        const partOfSpeech = document.createElement('h4');
+                        partOfSpeech.textContent = 'Part of Speech: ' + meaning.partOfSpeech;
+                        meaningDiv.appendChild(partOfSpeech);
+
+                        meaning.definitions.forEach((def, index) => {
+                            const definitionDiv = document.createElement('div');
+                            definitionDiv.className = 'definition';
+                            const defPara = document.createElement('p');
+                            defPara.innerHTML = '<strong>Definition ' + (index + 1) + ':</strong> ' + def.definition;
+                            definitionDiv.appendChild(defPara);
+                            if (def.example) {
+                                const exPara = document.createElement('p');
+                                exPara.innerHTML = '<strong>Example:</strong> ' + def.example;
+                                definitionDiv.appendChild(exPara);
+                            }
+                            if (def.synonyms && def.synonyms.length > 0) {
+                                const synPara = document.createElement('p');
+                                synPara.innerHTML = '<strong>Synonyms:</strong> ' + def.synonyms.join(', ');
+                                definitionDiv.appendChild(synPara);
+                            }
+                            meaningDiv.appendChild(definitionDiv);
+                        });
+                        meaningsDiv.appendChild(meaningDiv);
+                    });
+                    card.appendChild(meaningsDiv);
+                }
+            } else {
+                // Display an error message if no valid data is available.
+                const errorPara = document.createElement('p');
+                errorPara.textContent = "No details found for '" + searchedWord + "'.";
+                card.appendChild(errorPara);
+            }
+            return card;
+        }
+
+        // --- Search Functionality (Left Panel) ---
+        document.getElementById('searchButton').addEventListener('click', function () {
+            const word = document.getElementById('searchInput').value.trim();
+            if (word !== "") {
+                fetchWordDetailsPromise(word)
+                    .then(data => {
+                        displaySearchResult(data, word);
+                    })
+                    .catch(() => {
+                        displaySearchResult(null, word);
+                    });
+            }
+        });
+        document.getElementById('searchInput').addEventListener('keyup', function (event) {
+            if (event.key === 'Enter') {
+                const word = document.getElementById('searchInput').value.trim();
+                if (word !== "") {
+                    fetchWordDetailsPromise(word)
+                        .then(data => {
+                            displaySearchResult(data, word);
+                        })
+                        .catch(() => {
+                            displaySearchResult(null, word);
+                        });
+                }
+            }
+        });
+        function displaySearchResult(data, word) {
+            const container = document.getElementById('searchResult');
+            container.innerHTML = "";
+            const card = createWordCard(data, word, "#0991bf");
+            container.appendChild(card);
+        }
+
+        // --- On Page Load: Fetch 4 Valid Random Words ---
+        document.addEventListener("DOMContentLoaded", function () {
+            fetchValidRandomWords();
+        });
+    </script>
+</body>
+
+</html>

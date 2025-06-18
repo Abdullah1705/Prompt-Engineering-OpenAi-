@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>John Doe - Portfolio</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #3d2b56; /* Dark purple background */
+            color: #fff;
+            line-height: 1.6;
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            /* No background for the top navigation */
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #9e74c9; /* Slightly darker purple for the logo text */
+            text-decoration: none;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+
+        nav ul li {
+            margin-left: 2rem;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: #fff;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        nav ul li a:hover {
+            color: #c095e8; /* Light purple for hover effect */
+        }
+
+        .main-content {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            padding-top: 80px;
+        }
+
+        .column {
+            max-width: 800px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 1.5rem; /* Default gap between rows */
+            margin-top: 3rem; /* Added more margin at the top */
+        }
+
+        .heading {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.5rem;
+        }
+
+        .subheading {
+            font-size: 1.2rem;
+            color: #e2d7f0;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .cta-button {
+            background-color: #9e74c9; /* Darker purple for button */
+            color: #fff; /* White text for contrast */
+            border: none;
+            padding: 0.8rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(158, 116, 201, 0.3);
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .cta-button:hover {
+            background-color: #b58eda;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(158, 116, 201, 0.4);
+        }
+
+        .flower-container {
+            width: 300px;
+            height: 280px; /* Reduced height */
+            margin-top: 0.5rem; /* Reduced margin above flower container */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .flower svg {
+            width: 300px;
+            height: 280px; /* Reduced height */
+        }
+
+        /* SVG styles */
+        .petal {
+            fill-opacity: 0.9;
+        }
+
+        /* Specific row spacing */
+        .row-3 {
+            margin-bottom: 0.5rem; /* Reduced margin after button row */
+        }
+
+        @media (max-width: 768px) {
+            .heading {
+                font-size: 2.5rem;
+            }
+
+            .subheading {
+                font-size: 1rem;
+            }
+
+            header {
+                padding: 1rem;
+            }
+
+            nav ul li {
+                margin-left: 1rem;
+            }
+
+            .flower-container {
+                width: 250px;
+                height: 230px;
+            }
+            
+            .flower svg {
+                width: 250px;
+                height: 230px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .heading {
+                font-size: 2rem;
+            }
+        }
+
+        .journey-text {
+            display: block;
+            margin-top: 0.2rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="#home" class="logo">John Doe's Portfolio</a>
+        <nav>
+            <ul>
+                <li><a href="#home">Home</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#projects">Projects</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="main-content" id="home">
+        <div class="column">
+            <div class="row row-1">
+                <h1 class="heading">Hi, I'm John Doe!</h1>
+            </div>
+            <div class="row row-2">
+                <p class="subheading">Welcome to my creative space. Explore my projects, skills, and
+                    <span class="journey-text">journey.</span>
+                </p>
+            </div>
+            <div class="row row-3">
+                <a href="projects.html" class="cta-button">See My Work</a>
+            </div>
+            <div class="row row-4">
+                <div class="flower-container">
+                    <div class="flower">
+                        <svg viewBox="0 0 300 280" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Petal 1 (Top-left, darkest purple) - Positioned at 240° -->
+                            <path class="petal" d="M150,35 C170,55 180,75 150,110 C120,75 130,55 150,35" fill="#3d156b" transform="rotate(240, 150, 140)"/>
+                            
+                            <!-- Petal 2 (Left, slightly lighter) - Positioned at 300° -->
+                            <path class="petal" d="M150,35 C170,55 180,75 150,110 C120,75 130,55 150,35" fill="#4e2580" transform="rotate(300, 150, 140)"/>
+                            
+                            <!-- Petal 3 (Top-left, lighter) - Positioned at 0° -->
+                            <path class="petal" d="M150,35 C170,55 180,75 150,110 C120,75 130,55 150,35" fill="#613595" transform="rotate(0, 150, 140)"/>
+                            
+                            <!-- Petal 4 (Top, even lighter) - Positioned at 60° -->
+                            <path class="petal" d="M150,35 C170,55 180,75 150,110 C120,75 130,55 150,35" fill="#7645aa" transform="rotate(60, 150, 140)"/>
+                            
+                            <!-- Petal 5 (Right, lighter still) - Positioned at 120° -->
+                            <path class="petal" d="M150,35 C170,55 180,75 150,110 C120,75 130,55 150,35" fill="#8b56bf" transform="rotate(120, 150, 140)"/>
+                            
+                            <!-- Petal 6 (Bottom, lightest) - Positioned at 180° -->
+                            <path class="petal" d="M150,35 C170,55 180,75 150,110 C120,75 130,55 150,35" fill="#a066d4" transform="rotate(180, 150, 140)"/>
+                            
+                            <!-- Center Circle (Light purple but not white) -->
+                            <circle cx="150" cy="140" r="15" fill="#bf8be6"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

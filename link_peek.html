@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Link Peek</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+        }
+
+        #title,
+        #join-button,
+        #profile-btn,
+        #search-container {
+            position: fixed;
+            z-index: 100;
+        }
+
+        #title {
+            top: 20px;
+            left: 20px;
+            font-size: 24px;
+            transform: none;
+        }
+
+        #join-button,
+        #profile-btn {
+            top: 20px;
+            right: 20px;
+        }
+
+        #search-container {
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 700px;
+        }
+
+
+        body.scrolled #title {
+            top: 20px;
+            left: 20px;
+            transform: none;
+            font-size: 24px;
+        }
+
+        body.scrolled #search-container {
+            top: 80px;
+            transform: translateX(-50%);
+        }
+
+        /* Background */
+        #bg {
+            position: fixed;
+            top: -10px;
+            /* Extend beyond viewport */
+            left: -10px;
+            width: calc(100% + 20px);
+            /* Compensate for extension */
+            height: calc(100% + 20px);
+            background: url('https://images.pexels.com/photos/11938257/pexels-photo-11938257.jpeg') center/cover no-repeat;
+            z-index: -2;
+            transition: filter 0.5s ease;
+            filter: blur(0);
+        }
+
+        body.scrolled #bg {
+            filter: blur(8px);
+        }
+
+
+        #results.saved+#section-heading {
+            margin-top: 150px;
+        }
+
+        /* Title */
+        #title {
+            position: absolute;
+            top: 30%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+
+            font-size: 68px;
+            color: #fff;
+            transition: all 0.5s ease;
+            z-index: 10;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        body.scrolled #title {
+            top: 20px;
+            left: 20px;
+            transform: none;
+            font-size: 24px;
+        }
+
+        /* Join & Profile */
+        #join-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 10;
+            padding: 10px 16px;
+            /* Increased padding */
+            background: transparent;
+            color: #fff;
+            border: 2px solid rgba(255, 255, 255, 0.7);
+            border-radius: 24px;
+            cursor: pointer;
+            transition: background 0.3s, border-color 0.3s;
+            display: flex;
+            align-items: center;
+            font-size: 15px;
+            /* Slightly larger font */
+            font-weight: 500;
+            /* Optional: slightly bolder text */
+        }
+
+        #profile-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 10;
+            padding: 8px 12px;
+            background: transparent;
+            color: #fff;
+            border: 0px solid rgba(255, 255, 255, 0.7);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s, border-color 0.3s;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        #join-button:hover,
+        #profile-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: #fff;
+        }
+
+        #profile-btn img,
+        #profile-btn i {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        /* Profile Dropdown */
+        #profile-menu {
+            position: absolute;
+            top: 60px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            display: none;
+            z-index: 10;
+            color: #fff;
+        }
+
+        #profile-menu ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        #profile-menu li {
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        #profile-menu li.username {
+            font-weight: bold;
+            cursor: default;
+        }
+
+        #profile-menu li:hover:not(.username) {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Search */
+        #search-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.5s ease;
+            width: 90%;
+            max-width: 700px;
+            z-index: 10;
+        }
+
+        #search-input:hover {
+            transform: scale(1.02);
+            /* Slight scale up */
+            box-shadow: 0 10px 25px rgba(254, 254, 254, 0.3);
+            /* Subtle shadow */
+        }
+
+        body.scrolled #search-container {
+            top: 60px;
+            transform: translateX(-50%);
+        }
+
+        #search-form {
+            position: relative;
+            width: 100%;
+        }
+
+        #search-input {
+            width: 100%;
+            padding: 0 60px 0 20px;
+            height: 60px;
+            font-size: 18px;
+            border: 2px solid #fff;
+            border-radius: 30px;
+            background: transparent;
+            color: #fff;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        #search-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        #search-input:focus {
+            border-color: #fff;
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .search-icon:hover {
+            color: #eee;
+        }
+
+        /* Export button (outside search bar) */
+        #export-btn {
+            position: absolute;
+            top: 80px;
+            right: 240px;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 24px;
+            color: #fff;
+            cursor: pointer;
+            display: none;
+            transition: background 0.3s;
+            z-index: 11;
+        }
+
+        #export-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        /* Section heading */
+        #section-heading {
+            text-align: center;
+            color: #fff;
+            margin-top: 100px;
+            /* Increase this value */
+            margin-bottom: -20px;
+            font-size: 28px;
+            transition: opacity 0.3s;
+        }
+
+        #section-heading.hidden {
+            opacity: 0;
+            height: 0;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        /* Results */
+        #results {
+            max-width: 900px;
+            margin: 20px auto 40px;
+            padding: 0 20px;
+            position: relative;
+            z-index: 5;
+        }
+
+        /* Default card */
+
+        .card {
+            position: relative;
+            display: flex;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            color: #fff8f8;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+
+
+
+        }
+
+        .card:hover {
+            transform: scale(1.02);
+
+            box-shadow: 0 10px 25px rgba(254, 254, 254, 0.3);
+        }
+
+        .card-image {
+            flex: 0 0 150px;
+            overflow: hidden;
+        }
+
+        .card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .card-content {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .card-content h2,
+        .card-content .status,
+        .card-content p,
+        .card-content .timestamp {
+            color: #fff;
+        }
+
+        .timestamp {
+            font-size: 0.9em;
+            margin-top: 8px;
+        }
+
+        .save-icon {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            color: #ffffff;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .save-icon.saved {
+            color: #e74c3c;
+        }
+
+        .visit-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            border-radius: 24px;
+            text-decoration: none;
+            transition: background 0.3s;
+            align-self: flex-end;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .visit-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .error {
+            color: #fff;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        /* Saved grid */
+        #results.saved .cards-grid {
+            display: flex;
+            flex-wrap: wrap;
+            margin: -10px -5px;
+        }
+
+        #results.saved .card {
+            flex: 0 0 calc(33.333% - 20px);
+            flex-direction: column;
+            margin: 10px;
+            width: auto;
+        }
+
+        #results.saved .card-image {
+            width: 100%;
+            height: 150px;
+            flex: none;
+        }
+
+        #results.saved .card-content {
+            padding: 10px;
+        }
+
+        /* Pagination */
+        #pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .saved-heading {
+            margin-top: 150px !important;
+            transition: margin-top 0.3s ease;
+        }
+
+        #pagination button {
+            margin: 0 5px;
+            padding: 8px 12px;
+            border: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        #pagination button:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        #pagination button:disabled {
+            opacity: 0.5;
+            cursor: default;
+        }
+
+        /* Top5 cards */
+        .top5-cards {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            margin-bottom: 40px;
+        }
+
+        .top5-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 8px;
+            width: calc(20% - 20px);
+            margin: 10px;
+            padding: 10px;
+            cursor: pointer;
+            text-align: center;
+            color: #fff;
+        }
+
+        .top5-card img {
+            max-width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .top5-cards h3 {
+            color: #fff !important;
+        }
+
+        .top5-card h4,
+        .top5-card .visits {
+            color: #fff;
+        }
+
+        /* Charts */
+        .chart-container {
+            background: transparent !important;
+            backdrop-filter: none !important;
+            padding: 10px !important;
+            margin-bottom: 20px !important;
+        }
+
+        #todayChart,
+        #weekChart {
+            max-width: 300px;
+            max-height: 300px;
+            margin: 0 auto;
+        }
+
+        .chart-container h3 {
+            margin-top: 0;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+
+
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px;
+            position: relative;
+            color: #fff;
+            border: 2px solid rgba(255, 255, 255, 0.7);
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+            text-align: center;
+            color: #fff;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .auth-form {
+            display: none;
+        }
+
+        .auth-form.active {
+            display: block;
+        }
+
+        .auth-form label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .auth-form input[type=text],
+        .auth-form input[type=password] {
+            width: 100%;
+            margin-bottom: 15px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 24px;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        .auth-form input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .auth-form button {
+            display: block;
+            width: 50%;
+            padding: 12px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            border: none;
+            border-radius: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.7);
+        }
+
+
+        .auth-form button:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .switch-text {
+            text-align: center;
+            margin-top: 10px;
+            color: #fff;
+        }
+
+        .switch-text a {
+            color: #fff;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        /* Upload circle */
+        .upload-circle {
+            width: 100px;
+            height: 100px;
+            border: 2px dashed #ccc;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            cursor: pointer;
+            color: #fff;
+            font-size: 14px;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .upload-circle:hover {
+            border-color: #fff;
+            color: #fff;
+        }
+
+        #signup-pic {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="bg"></div>
+    <div id="title">Link Peek</div>
+    <button id="join-button">Join</button>
+    <button id="profile-btn" style="display:none;"></button>
+    <div id="profile-menu">
+        <ul>
+            <li class="username" id="menu-username"></li>
+            <li id="menu-saved">Saved</li>
+            <li id="menu-history">History</li>
+            <li id="menu-logout">Logout</li>
+        </ul>
+    </div>
+
+    <div id="search-container">
+        <form id="search-form">
+            <input id="search-input" type="url" placeholder="Enter a website URL…" required>
+            <button type="submit" class="search-icon"><i class="fas fa-search"></i></button>
+        </form>
+    </div>
+    <button id="export-btn">Export</button>
+
+    <h2 id="section-heading" class="hidden"></h2>
+    <div id="results" data-section="results"></div>
+    <div id="pagination"></div>
+
+    <!-- Modal Login/Signup -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn"><i class="fas fa-times"></i></button>
+            <form id="login-form" class="auth-form active">
+                <h3>Login</h3>
+                <label for="login-id">ID</label>
+                <input type="text" id="login-id" placeholder="Your ID" required>
+                <label for="login-password">Password</label>
+                <input type="password" id="login-password" placeholder="Your password" required>
+                <button type="submit">Login</button>
+                <p class="switch-text">Don't have an account? <a id="to-signup">Signup!</a></p>
+            </form>
+            <form id="signup-form" class="auth-form">
+                <h3>Signup</h3>
+                <label>Picture</label>
+                <label for="signup-pic" class="upload-circle">Upload</label>
+                <input type="file" id="signup-pic" accept="image/*">
+                <label for="signup-name">Name</label>
+                <input type="text" id="signup-name" placeholder="Your name" required>
+                <label for="signup-id">ID</label>
+                <input type="text" id="signup-id" placeholder="Choose an ID" required>
+                <label for="signup-password">Password</label>
+                <input type="password" id="signup-password" placeholder="Choose a password" required>
+                <button type="submit">Sign Up</button>
+                <p class="switch-text">Already have an account? <a id="to-login">Login!</a></p>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let savedList = [], filteredList = [], currentPage = 1, totalPages = 1;
+        let historyList = [], filteredHistory = [];
+        let historyExportData = null;
+
+        const joinBtn = document.getElementById('join-button');
+        const profileBtn = document.getElementById('profile-btn');
+        const profileMenu = document.getElementById('profile-menu');
+        const menuUsername = document.getElementById('menu-username');
+        const menuSaved = document.getElementById('menu-saved');
+        const menuHistory = document.getElementById('menu-history');
+        const menuLogout = document.getElementById('menu-logout');
+        const title = document.getElementById('title');
+
+        const modal = document.getElementById('modal');
+        const closeBtn = modal.querySelector('.close-btn');
+        const loginForm = document.getElementById('login-form');
+        const signupForm = document.getElementById('signup-form');
+        const toSignup = document.getElementById('to-signup');
+        const toLogin = document.getElementById('to-login');
+
+        const form = document.getElementById('search-form');
+        const input = document.getElementById('search-input');
+        const results = document.getElementById('results');
+        const sectionHeading = document.getElementById('section-heading');
+        const paginationEl = document.getElementById('pagination');
+        const exportBtn = document.getElementById('export-btn');
+
+        /* Storage utils */
+        function getUserData(id) { return JSON.parse(localStorage.getItem(`user_${id}`) || 'null'); }
+        function setUserData(id, data) { localStorage.setItem(`user_${id}`, JSON.stringify(data)); }
+        function getSaved(id) { return JSON.parse(localStorage.getItem(`saved_${id}`) || '[]'); }
+        function setSaved(id, list) { localStorage.setItem(`saved_${id}`, JSON.stringify(list)); }
+        function getHistory(id) { return JSON.parse(localStorage.getItem(`history_${id}`) || '[]'); }
+        function setHistory(id, list) { localStorage.setItem(`history_${id}`, JSON.stringify(list)); }
+
+        function clearSearch() { input.value = ''; }
+        // Image upload preview
+        const signupPicInput = document.getElementById('signup-pic');
+        const uploadCircle = document.querySelector('.upload-circle');
+        let uploadedImageData = null; // Store the image data globally
+
+        signupPicInput.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    uploadedImageData = event.target.result; // Store the image data
+                    uploadCircle.innerHTML = `<img src="${uploadedImageData}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                uploadedImageData = null; // Reset if no file
+                uploadCircle.textContent = 'Upload';
+            }
+        });
+
+        // Modified signup form submission
+        signupForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const id = document.getElementById('signup-id').value.trim();
+            const name = document.getElementById('signup-name').value.trim();
+            const pass = document.getElementById('signup-password').value;
+
+            if (getUserData(id)) {
+                alert('ID already exists');
+                return;
+            }
+
+            // Create user with or without image
+            const user = {
+                id,
+                name,
+                password: pass,
+                picData: uploadedImageData || ''
+            };
+
+            setUserData(id, user);
+            currentUser = user;
+            onLogin();
+            modal.classList.remove('show');
+
+            // Reset form and image state
+            signupForm.reset();
+            uploadCircle.textContent = 'Upload';
+            uploadedImageData = null;
+        });
+
+        function createCard(data) {
+            const card = document.createElement('div'); card.className = 'card';
+            ['url', 'name', 'status', 'description', 'image', 'timestamp'].forEach(k => {
+                if (data[k] != null) card.dataset[k] = data[k];
+            });
+            const saveIcon = document.createElement('div'); saveIcon.className = 'save-icon';
+            saveIcon.innerHTML = '<i class="fas fa-bookmark"></i>';
+            if (currentUser && getSaved(currentUser.id).some(i => i.url === data.url)) saveIcon.classList.add('saved');
+            card.appendChild(saveIcon);
+            if (data.image) {
+                const imgWrap = document.createElement('div'); imgWrap.className = 'card-image';
+                const img = document.createElement('img'); img.src = data.image; img.alt = data.name;
+                imgWrap.appendChild(img); card.appendChild(imgWrap);
+            }
+            const content = document.createElement('div'); content.className = 'card-content';
+            content.innerHTML = `
+        <h2>${data.name}</h2>
+        <div class="status">Status: ${data.status}</div>
+        <p>${data.description}</p>
+      `;
+            if (data.timestamp) {
+                const ts = document.createElement('div');
+                ts.className = 'timestamp';
+                ts.textContent = new Date(+data.timestamp).toLocaleString();
+                content.appendChild(ts);
+            }
+            const visit = document.createElement('a');
+            visit.className = 'visit-btn';
+            visit.href = data.url; visit.target = '_blank';
+            visit.textContent = 'Visit Site';
+            content.appendChild(visit);
+            card.appendChild(content);
+            return card;
+        }
+
+        /* HOME */
+        function goHome() {
+            document.body.classList.remove('scrolled');
+            clearSearch();
+            sectionHeading.classList.add('hidden');
+            results.innerHTML = ''; paginationEl.innerHTML = '';
+            results.classList.remove('saved', 'history');
+            results.dataset.section = 'results';
+            exportBtn.style.display = 'none';
+        }
+        title.addEventListener('click', goHome);
+
+        /* SAVED */
+        function renderSavedPage() {
+            results.innerHTML = ''; results.classList.add('saved'); results.classList.remove('history');
+            const start = (currentPage - 1) * 15, pageItems = filteredList.slice(start, start + 15);
+            const grid = document.createElement('div'); grid.className = 'cards-grid';
+            pageItems.forEach(item => grid.appendChild(createCard(item)));
+            results.appendChild(grid);
+            totalPages = Math.ceil(filteredList.length / 15) || 1;
+            paginationEl.innerHTML = '';
+            const back = document.createElement('button'), next = document.createElement('button');
+            back.textContent = 'Back'; back.disabled = currentPage === 1;
+            next.textContent = 'Next'; next.disabled = currentPage === totalPages;
+            back.onclick = () => { currentPage--; renderSavedPage(); };
+            next.onclick = () => { currentPage++; renderSavedPage(); };
+            paginationEl.appendChild(back); paginationEl.appendChild(next);
+        }
+        function showSaved() {
+            if (!currentUser) return;
+            clearSearch(); sectionHeading.textContent = 'Saved'; sectionHeading.classList.remove('hidden');
+            document.body.classList.add('scrolled'); profileMenu.style.display = 'none';
+            exportBtn.style.display = 'none';
+            savedList = getSaved(currentUser.id); filteredList = [...savedList]; currentPage = 1;
+            results.dataset.section = 'saved';
+            sectionHeading.classList.add('saved-heading');
+            renderSavedPage();
+        }
+        menuSaved.addEventListener('click', showSaved);
+
+        /* HISTORY */
+        function showHistory() {
+            if (!currentUser) return;
+            clearSearch(); sectionHeading.textContent = 'History'; sectionHeading.classList.remove('hidden');
+            document.body.classList.add('scrolled'); profileMenu.style.display = 'none';
+            exportBtn.style.display = 'inline-block';
+            historyList = getHistory(currentUser.id);
+            renderHistoryCharts();
+        }
+        menuHistory.addEventListener('click', showHistory);
+
+        function renderHistoryCharts() {
+            results.innerHTML = ''; paginationEl.innerHTML = ''; results.classList.remove('saved'); results.classList.add('history');
+            exportBtn.style.display = 'inline-block';
+            // TODAY pie
+            const todayContainer = document.createElement('div'); todayContainer.className = 'chart-container';
+            todayContainer.innerHTML = '<h3>Today</h3><canvas id="todayChart"></canvas>';
+            results.appendChild(todayContainer);
+            const now = new Date(), startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+            const todayItems = historyList.filter(i => i.timestamp >= startOfDay);
+            const aggToday = {};
+            todayItems.forEach(i => {
+                aggToday[i.url] = aggToday[i.url] ? { ...aggToday[i.url], count: aggToday[i.url].count + 1 }
+                    : { name: i.name, count: 1, url: i.url };
+            });
+            const labelsT = Object.values(aggToday).map(o => o.name);
+            const dataT = Object.values(aggToday).map(o => o.count);
+            const urlsT = Object.values(aggToday).map(o => o.url);
+            new Chart(document.getElementById('todayChart'), {
+                type: 'pie',
+                data: { labels: labelsT, datasets: [{ data: dataT, backgroundColor: labelsT.map((_, i) => `hsl(${i * 360 / labelsT.length},70%,50%)`) }] },
+                options: { onClick: (evt, els) => { if (els.length) window.open(urlsT[els[0].index], '_blank'); } }
+            });
+            // TOP5
+            const aggAll = {}, allUrls = [];
+            historyList.forEach(i => {
+                if (aggAll[i.url]) aggAll[i.url].count++;
+                else { aggAll[i.url] = { name: i.name, count: 1, image: i.image, url: i.url }; allUrls.push(i.url); }
+            });
+            const top5 = Object.values(aggAll).sort((a, b) => b.count - a.count).slice(0, 5);
+            const top5Container = document.createElement('div'); top5Container.innerHTML = '<h3>Top 5</h3>';
+            const cardsDiv = document.createElement('div'); cardsDiv.className = 'top5-cards';
+            const top5Urls = top5.map(o => o.url);
+            top5.forEach(o => {
+                const c = document.createElement('div'); c.className = 'top5-card';
+                if (o.image) c.innerHTML = `<img src="${o.image}" alt=""><h4>${o.name}</h4><div class="visits">Visits: ${o.count}</div>`;
+                else c.innerHTML = `<h4>${o.name}</h4><div class="visits">Visits: ${o.count}</div>`;
+                c.onclick = () => window.open(o.url, '_blank');
+                cardsDiv.appendChild(c);
+            });
+            top5Container.appendChild(cardsDiv);
+            results.appendChild(top5Container);
+            // WEEK bar
+            const weekContainer = document.createElement('div'); weekContainer.className = 'chart-container';
+            weekContainer.innerHTML = '<h3>Last 7 Days</h3><canvas id="weekChart"></canvas>';
+            results.appendChild(weekContainer);
+            const weekStart = now.getTime() - 7 * 24 * 3600 * 1000;
+            const weekItems = historyList.filter(i => i.timestamp >= weekStart);
+            const aggWeek = {};
+            weekItems.forEach(i => {
+                aggWeek[i.url] = aggWeek[i.url] ? { ...aggWeek[i.url], count: aggWeek[i.url].count + 1 }
+                    : { name: i.name, count: 1, url: i.url };
+            });
+            const labelsW = Object.values(aggWeek).map(o => o.name);
+            const dataW = Object.values(aggWeek).map(o => o.count);
+            const urlsW = Object.values(aggWeek).map(o => o.url);
+            new Chart(document.getElementById('weekChart'), {
+                type: 'bar',
+                data: { labels: labelsW, datasets: [{ label: 'Visits', data: dataW, backgroundColor: 'rgba(54,162,235,0.7)' }] },
+                options: {
+                    onClick: (evt, els) => { if (els.length) window.open(urlsW[els[0].index], '_blank'); },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+            // prepare export data
+            const allUnique = Object.keys(aggAll);
+            window.historyExportData = { allUnique, todayUrls: urlsT, weekUrls: urlsW, top5Urls };
+        }
+
+        /* EXPORT */
+        exportBtn.addEventListener('click', () => {
+            if (!window.historyExportData) return;
+            const { allUnique, todayUrls, weekUrls, top5Urls } = window.historyExportData;
+            const rows = [['URL', 'Today', 'Last week', 'Top 5']];
+            allUnique.forEach(url => {
+                rows.push([
+                    url,
+                    todayUrls.includes(url) ? 'True' : 'False',
+                    weekUrls.includes(url) ? 'True' : 'False',
+                    top5Urls.includes(url) ? 'True' : 'False'
+                ]);
+            });
+            const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'history_export.csv';
+            a.click();
+        });
+
+        /* SEARCH */
+        form.addEventListener('submit', async e => {
+            e.preventDefault();
+            if (results.dataset.section === 'saved' || results.dataset.section === 'history') return;
+            const url = input.value.trim(); if (!url) return;
+            document.body.classList.add('scrolled');
+            sectionHeading.classList.add('hidden');
+            results.innerHTML = ''; paginationEl.innerHTML = '';
+            exportBtn.style.display = 'none';
+            try {
+                const res = await fetch(`https://list.ly/api/v4/meta?url=${encodeURIComponent(url)}`);
+                if (!res.ok) throw 0;
+                const data = await res.json(), md = data.metadata || {};
+                const cardData = {
+                    url,
+                    name: md.name || '—',
+                    status: md.status || '—',
+                    description: md.description || 'No description.',
+                    image: (md.images && md.images[0]) || '',
+                    timestamp: Date.now()
+                };
+                if (currentUser) {
+                    const h = getHistory(currentUser.id);
+                    h.unshift(cardData);
+                    setHistory(currentUser.id, h.slice(0, 50));
+                }
+                results.appendChild(createCard(cardData));
+                results.dataset.section = 'results';
+            } catch {
+                results.innerHTML = '<div class="error">Could not fetch metadata.</div>';
+            }
+        });
+
+        /* HISTORY FILTER */
+        input.addEventListener('input', () => {
+            const q = input.value.toLowerCase();
+            if (results.dataset.section === 'history') {
+                if (!q) return renderHistoryCharts();
+                // filter historyList
+                const matches = historyList.filter(i =>
+                    i.name.toLowerCase().includes(q) || i.url.toLowerCase().includes(q)
+                );
+                results.innerHTML = '';
+                paginationEl.innerHTML = '';
+                exportBtn.style.display = 'inline-block';
+                matches.forEach(item => {
+                    results.appendChild(createCard(item));
+                });
+            }
+            if (results.dataset.section === 'saved') {
+                filteredList = savedList.filter(item => item.name.toLowerCase().includes(q));
+                currentPage = 1; renderSavedPage();
+            }
+        });
+
+        /* SAVE/UNSAVE */
+        results.addEventListener('click', e => {
+            const icon = e.target.closest('.save-icon');
+            if (!icon) return;
+            if (!currentUser) {
+                loginForm.classList.add('active');
+                signupForm.classList.remove('active');
+                modal.classList.add('show');
+                return;
+            }
+            const cardEl = icon.parentElement;
+            const cd = {};
+            ['url', 'name', 'status', 'description', 'image', 'timestamp'].forEach(k => cd[k] = cardEl.dataset[k]);
+            let saved = getSaved(currentUser.id);
+            const exists = saved.find(i => i.url === cd.url);
+            if (exists) {
+                saved = saved.filter(i => i.url !== cd.url);
+                setSaved(currentUser.id, saved);
+                icon.classList.remove('saved');
+                if (results.dataset.section === 'saved') {
+                    cardEl.remove();
+                    if (!saved.length) results.innerHTML = '<p class="error">No items to display.</p>';
+                }
+            } else {
+                saved.unshift(cd);
+                setSaved(currentUser.id, saved);
+                icon.classList.add('saved');
+            }
+        });
+
+        /* PROFILE MENU */
+        profileBtn.addEventListener('click', e => {
+            e.stopPropagation();
+            profileMenu.style.display = profileMenu.style.display === 'block' ? 'none' : 'block';
+        });
+        document.addEventListener('click', () => profileMenu.style.display = 'none');
+        menuLogout.addEventListener('click', () => {
+            currentUser = null;
+            profileBtn.style.display = 'none';
+            joinBtn.style.display = 'flex';
+            profileMenu.style.display = 'none';
+            goHome();
+        });
+
+        /* MODAL */
+        joinBtn.addEventListener('click', () => {
+            clearSearch();
+            loginForm.classList.add('active');
+            signupForm.classList.remove('active');
+            modal.classList.add('show');
+        });
+        closeBtn.addEventListener('click', () => modal.classList.remove('show'));
+        modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('show'); });
+        toSignup.addEventListener('click', e => { e.preventDefault(); loginForm.classList.remove('active'); signupForm.classList.add('active'); });
+        toLogin.addEventListener('click', e => { e.preventDefault(); signupForm.classList.remove('active'); loginForm.classList.add('active'); });
+
+        /* LOGIN/SIGNUP */
+        loginForm.addEventListener('submit', e => {
+            e.preventDefault();
+            const id = document.getElementById('login-id').value.trim();
+            const pass = document.getElementById('login-password').value;
+            const user = getUserData(id);
+            if (!user || user.password !== pass) { alert('Invalid credentials'); return; }
+            currentUser = user; onLogin(); modal.classList.remove('show');
+        });
+
+        function onLogin() {
+            joinBtn.style.display = 'none';
+            profileBtn.style.display = 'flex';
+            const pic = currentUser.picData
+                ? `<img src="${currentUser.picData}" alt="Profile">`
+                : `<i class="fas fa-user-circle"></i>`;
+            profileBtn.innerHTML = pic;
+            menuUsername.textContent = currentUser.name;
+        }
+
+        // Initialize main screen
+        goHome();
+    </script>
+</body>
+
+</html>

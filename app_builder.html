@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>App Builder</title>
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f0f0f0;
+    display: flex;
+    height: 100vh;
+  }
+
+  .sidebar {
+    width: 220px;
+    background-color: #004d4d; /* Dark green-blue background */
+    padding: 10px;
+  }
+
+  .sidebar h2 {
+    margin-top: 0;
+    text-align: center;
+    font-weight: 600;
+    color: #ffffff;
+  }
+
+  .draggable {
+    background: #006666; /* Lighter version of the background */
+    padding: 8px;
+    margin: 6px 0;
+    cursor: move;
+    text-align: center;
+    border-radius: 4px;
+    color: #ffffff;
+  }
+
+  .draggable:hover {
+    background: #008080; /* Slightly lighter on hover */
+  }
+
+  .reset-btn {
+    display: block;
+    width: 100%;
+    margin: 10px 0;
+    background: #c0392b;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    padding: 10px;
+    cursor: pointer;
+    text-align: center;
+  }
+
+  .reset-btn:hover {
+    background: #a93226;
+  }
+
+  .main {
+    flex: 1;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .open-app-button {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: #1E90FF; /* Dark sky blue */
+    color: #fff;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  .open-app-button:hover {
+    background: #187bcd;
+  }
+
+  /* Phone container styling */
+  .phone {
+    width: 375px;
+    height: 667px;
+    background: #ffffff; /* No black outline */
+    border-radius: 30px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: none;
+    border: none;
+  }
+
+  .phone-screen {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* No scrolling */
+  }
+
+  /* Fixed Navbar (cannot be moved or removed) */
+  .fixed-navbar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50px;
+    background-color: #003333; /* Darker shade of sidebar background */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #fff;
+    padding: 0 10px;
+    z-index: 2;
+  }
+
+  .nav-left, .nav-right {
+    width: 40px;
+    text-align: center;
+    font-size: 18px;
+    cursor: default;
+  }
+
+  .nav-center {
+    flex: 1;
+    text-align: center;
+    font-weight: bold;
+    cursor: default;
+  }
+
+  /* Container for user-dropped elements (below the navbar) */
+  #phone-contents {
+    position: absolute;
+    top: 50px; /* Below navbar */
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden; /* Hide overflow, no scrolling */
+  }
+
+  /* Elements dropped inside phone-contents */
+  .added-element {
+    position: absolute; /* Placed exactly where dropped or dragged */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+    cursor: move;
+    padding: 4px;
+  }
+
+  /* Hide remove button by default; show on hover */
+  .remove-btn {
+    display: none;
+    margin-left: 8px;
+    border-radius: 50%;
+    background-color: #ff0000;
+    color: #ffffff;
+    width: 24px;
+    height: 24px;
+    text-align: center;
+    line-height: 24px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+  }
+
+  .added-element:hover .remove-btn {
+    display: inline-block;
+  }
+
+  /* Editable elements */
+  .label-element {
+    background: #f8f9fa;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 6px 12px;
+  }
+
+  .card-element {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 10px;
+    background: #fff;
+  }
+
+  .image-field-label-element {
+    background: #f8f9fa;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 6px;
+  }
+
+  .image-field-element {
+    margin-left: 5px;
+  }
+
+  .button-element {
+    background: #28a745;
+    color: #fff;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+  }
+
+  .menu-element {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+
+  .menu-element li {
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+  }
+
+  .menu-element li:last-child {
+    border-bottom: none;
+  }
+
+  .divider-element {
+    width: 100%;
+    height: 1px;
+    background: grey;
+    border: none;
+    margin: 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <h2>App builder</h2>
+  <div class="draggable" draggable="true" data-type="Navbar">Navbar</div>
+  <div class="draggable" draggable="true" data-type="Button">Button</div>
+  <div class="draggable" draggable="true" data-type="Label">Label</div>
+  <div class="draggable" draggable="true" data-type="Image Field">Image Field</div>
+  <div class="draggable" draggable="true" data-type="Image">Image</div>
+  <div class="draggable" draggable="true" data-type="Card">Card</div>
+  <div class="draggable" draggable="true" data-type="Menu">Menu</div>
+  <div class="draggable" draggable="true" data-type="Divider">Divider</div>
+  <button class="reset-btn" onclick="resetPhone()">Reset screen</button>
+</div>
+
+<div class="main">
+  <button class="open-app-button" onclick="openApp()">Create app</button>
+  <div class="phone">
+    <div class="phone-screen" id="phone-screen"
+         ondragover="allowDrop(event)"
+         ondrop="dropElement(event)">
+      <div id="phone-contents"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let draggedElementType = null;
+
+  // Make items in the sidebar draggable (HTML5 DnD)
+  document.querySelectorAll(".draggable").forEach(item => {
+    item.addEventListener("dragstart", function(e) {
+      draggedElementType = e.target.dataset.type;
+    });
+  });
+
+  // Allow dropping on the phone-screen only
+  function allowDrop(e) {
+    e.preventDefault();
+  }
+
+  // Drop a new element in the phone screen at exact coordinates (clamped to container)
+  function dropElement(e) {
+    e.preventDefault();
+
+    // Special case for the Navbar
+    if (draggedElementType === "Navbar") {
+      if (!document.getElementById("fixed-navbar")) {
+        createFixedNavbar();
+      }
+      return;
+    }
+
+    // Calculate drop position relative to phone-contents
+    const phoneContents = document.getElementById("phone-contents");
+    const rect = phoneContents.getBoundingClientRect();
+    let x = e.clientX - rect.left;
+    let y = e.clientY - rect.top;
+
+    // Temporarily create wrapper at 0,0 so we can measure it
+    const wrapper = document.createElement("div");
+    wrapper.classList.add("added-element");
+    wrapper.style.left = "0px";
+    wrapper.style.top = "0px";
+
+    // Create remove button
+    const removeBtn = document.createElement("button");
+    removeBtn.textContent = "X";
+    removeBtn.classList.add("remove-btn");
+    removeBtn.addEventListener("click", () => {
+      wrapper.remove();
+    });
+
+    // Create the content based on dragged type
+    let content;
+    switch (draggedElementType) {
+      case "Button":
+        content = document.createElement("button");
+        content.classList.add("button-element");
+        content.textContent = "Button";
+        break;
+      case "Label":
+        content = document.createElement("span");
+        content.classList.add("label-element");
+        content.contentEditable = "true";
+        content.textContent = "Label";
+        break;
+      case "Image Field": {
+        // Container for label + file input
+        const fieldContainer = document.createElement("div");
+        fieldContainer.style.display = "inline-flex";
+        fieldContainer.style.alignItems = "center";
+
+        const fieldLabel = document.createElement("span");
+        fieldLabel.classList.add("image-field-label-element");
+        fieldLabel.contentEditable = "true";
+        fieldLabel.textContent = "Image Field";
+
+        const fileInput = document.createElement("input");
+        fileInput.type = "file";
+        fileInput.classList.add("image-field-element");
+
+        fieldContainer.appendChild(fieldLabel);
+        fieldContainer.appendChild(fileInput);
+
+        content = fieldContainer;
+        break;
+      }
+      case "Image":
+        content = document.createElement("img");
+        content.classList.add("image-element");
+        content.src = "https://via.placeholder.com/150";
+        content.alt = "Placeholder";
+        break;
+      case "Card":
+        content = document.createElement("div");
+        content.classList.add("card-element");
+        content.contentEditable = "true";
+        content.textContent = "Card Content";
+        break;
+      case "Menu":
+        content = document.createElement("ul");
+        content.classList.add("menu-element");
+        content.innerHTML = "<li>Menu Item 1</li><li>Menu Item 2</li>";
+        break;
+      case "Divider":
+        content = document.createElement("hr");
+        content.classList.add("divider-element");
+        break;
+      default:
+        return;
+    }
+
+    wrapper.appendChild(content);
+    wrapper.appendChild(removeBtn);
+    phoneContents.appendChild(wrapper);
+
+    // Measure the newly added element
+    const elementWidth = wrapper.offsetWidth;
+    const elementHeight = wrapper.offsetHeight;
+
+    // Now clamp the drop position so the element is fully within the phone container
+    const phoneWidth = phoneContents.clientWidth;
+    const phoneHeight = phoneContents.clientHeight;
+
+    if (x + elementWidth > phoneWidth) x = phoneWidth - elementWidth;
+    if (y + elementHeight > phoneHeight) y = phoneHeight - elementHeight;
+    if (x < 0) x = 0;
+    if (y < 0) y = 0;
+
+    // Position the element at the clamped coordinates
+    wrapper.style.left = x + "px";
+    wrapper.style.top = y + "px";
+
+    // Make the element draggable by mouse
+    makeElementDraggable(wrapper);
+  }
+
+  // Create the fixed navbar at the top, cannot be moved or removed
+  function createFixedNavbar() {
+    const navBar = document.createElement("div");
+    navBar.id = "fixed-navbar";
+    navBar.classList.add("fixed-navbar");
+
+    // Left icon
+    const navLeft = document.createElement("div");
+    navLeft.classList.add("nav-left");
+    navLeft.innerHTML = "&larr;";
+
+    // Center heading
+    const navCenter = document.createElement("div");
+    navCenter.classList.add("nav-center");
+    navCenter.textContent = "App Navbar";
+
+    // Right icon (hamburger)
+    const navRight = document.createElement("div");
+    navRight.classList.add("nav-right");
+    navRight.innerHTML = "&#9776;";
+
+    navBar.appendChild(navLeft);
+    navBar.appendChild(navCenter);
+    navBar.appendChild(navRight);
+
+    // Insert into phone-screen above phone-contents
+    const phoneScreen = document.getElementById("phone-screen");
+    const phoneContents = document.getElementById("phone-contents");
+    phoneScreen.insertBefore(navBar, phoneContents);
+  }
+
+  // Implement mouse-based drag logic for relocating elements
+  let isDragging = false;
+  let currentElement = null;
+  let offsetX = 0;
+  let offsetY = 0;
+  let containerRect = null;
+
+  const phoneContents = document.getElementById("phone-contents");
+
+  phoneContents.addEventListener("mousedown", (e) => {
+    // If user clicked on an added-element or its child, prepare to drag
+    const target = e.target.closest(".added-element");
+    if (target) {
+      isDragging = true;
+      currentElement = target;
+      containerRect = phoneContents.getBoundingClientRect();
+
+      // Compute offset from element's top-left corner
+      offsetX = e.clientX - containerRect.left - currentElement.offsetLeft;
+      offsetY = e.clientY - containerRect.top - currentElement.offsetTop;
+    }
+  });
+
+  phoneContents.addEventListener("mousemove", (e) => {
+    if (isDragging && currentElement) {
+      let x = e.clientX - containerRect.left - offsetX;
+      let y = e.clientY - containerRect.top - offsetY;
+
+      // Clamp so the element stays within the container
+      const phoneWidth = phoneContents.clientWidth;
+      const phoneHeight = phoneContents.clientHeight;
+      const w = currentElement.offsetWidth;
+      const h = currentElement.offsetHeight;
+
+      if (x + w > phoneWidth) x = phoneWidth - w;
+      if (y + h > phoneHeight) y = phoneHeight - h;
+      if (x < 0) x = 0;
+      if (y < 0) y = 0;
+
+      currentElement.style.left = x + "px";
+      currentElement.style.top = y + "px";
+    }
+  });
+
+  phoneContents.addEventListener("mouseup", () => {
+    isDragging = false;
+    currentElement = null;
+  });
+
+  phoneContents.addEventListener("mouseleave", () => {
+    // If the mouse leaves the phone-contents area, stop dragging
+    isDragging = false;
+    currentElement = null;
+  });
+
+  // Helper to make an element draggable after creation
+  function makeElementDraggable(el) {
+    el.addEventListener("mousedown", (e) => {
+      isDragging = true;
+      currentElement = el;
+      containerRect = phoneContents.getBoundingClientRect();
+
+      offsetX = e.clientX - containerRect.left - el.offsetLeft;
+      offsetY = e.clientY - containerRect.top - el.offsetTop;
+
+      e.stopPropagation(); // Prevent re-triggering on parent
+    });
+  }
+
+  // Reset the phone container (remove all items and navbar if present)
+  function resetPhone() {
+    phoneContents.innerHTML = "";
+    const fixedNavbar = document.getElementById("fixed-navbar");
+    if (fixedNavbar) {
+      fixedNavbar.remove();
+    }
+  }
+
+  // Open the app in a new tab (show the phone interface as it is developed)
+  function openApp() {
+    const phoneScreen = document.getElementById("phone-screen");
+    const styleTag = document.querySelector("style").outerHTML;
+
+    // Clone the phone-screen to reproduce exactly as is
+    const phoneClone = phoneScreen.cloneNode(true);
+
+    // Build new HTML
+    let newHTML = "<!DOCTYPE html><html><head><title>My App</title>" + styleTag + "</head><body>";
+    newHTML += "<div class='phone'>" + phoneClone.outerHTML + "</div>";
+    newHTML += "</body></html>";
+
+    const newWin = window.open("", "_blank");
+    newWin.document.write(newHTML);
+    newWin.document.close();
+  }
+</script>
+
+</body>
+</html>

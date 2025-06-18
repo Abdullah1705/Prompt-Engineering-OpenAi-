@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Study App</title>
+  <style>
+    /* Global Styles */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+    body {
+      background-color: #f4f4f4;
+    }
+    /* All forms have transparent backgrounds */
+    form {
+      background: transparent !important;
+    }
+    
+    /* Form Group for vertical alignment */
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+    }
+    /* Add border radius to all buttons */
+button {
+  border-radius: 24px !important;
+}
+
+/* Add hover effects to all buttons */
+button:hover {
+  transform: scale(1.05);
+  filter: brightness(1.1);
+}
+
+/* Specific button hover effects */
+#loginForm button:hover {
+  background: #555 !important;
+}
+
+.logout-btn:hover {
+  background: #c9302c !important;
+}
+
+.sidebar button:hover, .student-sidebar button:hover {
+  background: #666 !important;
+}
+
+.tab-button:hover, #testManagementSubTabs .tab-button:hover {
+  background: #ccc !important;
+}
+
+.student-sidebar button.active:hover {
+  background: #777 !important;
+}
+    /* Login Page Styles */
+    #loginPage {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    /* Login form is now a form element */
+    #loginForm {
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      width: 300px;
+    }
+    #loginForm h2 {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    #loginForm button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 15px;
+      background: #333;
+      color: #fff;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    #loginForm button:hover {
+      background: #555;
+    }
+    .error {
+      color: red;
+      margin-top: 10px;
+      text-align: center;
+    }
+    #manageStudentsSection h3 {
+  margin-bottom: 20px;
+}
+#addStudentForm button[type="submit"] {
+  background-color: #4CAF50; /* Green color */
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 24px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  width: auto; /* Override any full-width styles */
+  margin-top: 15px;
+}
+
+#addStudentForm button[type="submit"]:hover {
+  background-color: #45a049; /* Darker green on hover */
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+    
+    /* Dashboard Common Styles */
+    .dashboard-header {
+  display: flex;
+  justify-content: center; /* This centers the h2 horizontally */
+  align-items: center; /* This centers vertically if needed */
+  background: #000000;
+  color: #fff;
+  padding: 10px 20px;
+}
+
+.dashboard-header h2 {
+  margin: 0; /* Remove any default margins */
+}
+
+/* Keep the logout button positioned to the right */
+.logout-btn {
+  position: absolute;
+  right: 20px;
+}
+
+/* Style for all submit buttons with center alignment */
+button[type="submit"] {
+  background-color: #4CAF50; /* Green color */
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 24px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  display: block; /* Change to block to allow margin auto to work */
+  margin: 10px auto; /* Top/bottom 10px, left/right auto for centering */
+  width: fit-content; /* Makes button only as wide as its content */
+}
+
+/* Hover effect */
+button[type="submit"]:hover {
+  background-color: #45a049;
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+/* Focus state */
+button[type="submit"]:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.4);
+}
+
+/* Active state */
+button[type="submit"]:active {
+  transform: scale(0.98);
+}
+    .logout-btn {
+      background: #d9534f;
+      border: none;
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    .logout-btn:hover {
+      background: #c9302c;
+    }
+    
+    /* Teacher Dashboard Styles */
+    #teacherDashboard {
+      display: none;
+      height: 100vh;
+    }
+    .main-container {
+      display: flex;
+      height: calc(100vh - 50px);
+    }
+    .sidebar {
+      background: #262626;
+      width: 200px;
+      padding: 20px;
+      color: #fff;
+    }
+    .sidebar button {
+      background: #555;
+      border: none;
+      color: #fff;
+      padding: 10px;
+      margin-bottom: 10px;
+      width: 100%;
+      text-align: left;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    .sidebar button:hover {
+      background: #666;
+    }
+    .content {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    
+    /* Tab Styles for Manage Students and Tests */
+    .tab-button {
+      padding: 8px 12px;
+      margin-right: 5px;
+      border: none;
+      border-radius: 3px;
+      background: #ddd;
+      cursor: pointer;
+    }
+    .tab-button.active {
+      background: #bbb;
+    }
+    .tab-content {
+      background: #fff;
+      padding: 15px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      margin-top: 10px;
+    }
+    .hidden {
+      display: none;
+    }
+    
+    /* Styles for sub-tabs (for test management) */
+    #testManagementSubTabs {
+      margin-bottom: 10px;
+    }
+    #testManagementSubTabs .tab-button {
+      margin-right: 5px;
+    }
+    
+    /* Student Dashboard Styles */
+    #studentDashboard {
+      display: none;
+      height: 100vh;
+    }
+    .student-container {
+      display: flex;
+      height: calc(100vh - 50px);
+    }
+    .student-sidebar {
+      background: #444;
+      width: 200px;
+      padding: 20px;
+      color: #fff;
+    }
+    .student-sidebar button {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      background: #555;
+      border: none;
+      border-radius: 3px;
+      color: #fff;
+      cursor: pointer;
+      text-align: left;
+    }
+    .student-sidebar button.active {
+      background: #666;
+    }
+    .student-content {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+    th, td {
+      padding: 8px;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <!-- Login Page -->
+  <div id="loginPage">
+    <form id="loginForm">
+      <h2>Study Live</h2>
+      <div class="error" id="loginError"></div>
+      <div class="form-group">
+        <label for="roleSelect">Login as:</label>
+        <select id="roleSelect">
+          <option value="teacher">Teacher</option>
+          <option value="student">Student</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="username">Username/ID:</label>
+        <input type="text" id="username" placeholder="Enter username or ID" required>
+      </div>
+      <div class="form-group">
+        <label for="password">Password:</label>
+        <input type="password" id="password" placeholder="Enter password" required>
+      </div>
+      <button type="button" id="loginButton">Login</button>
+    </form>
+  </div>
+  
+  <!-- Teacher Dashboard -->
+  <div id="teacherDashboard">
+    <div class="dashboard-header">
+      <h2>Teacher Dashboard</h2>
+      <button class="logout-btn" id="teacherLogout">Logout</button>
+    </div>
+    <div class="main-container">
+      <div class="sidebar">
+        <button id="manageStudentsBtn">Manage Students</button>
+        <button id="manageTestsBtn">Manage Tests</button>
+      </div>
+      <div class="content">
+        <!-- Manage Students Section (unchanged) -->
+        <div id="manageStudentsSection">
+          <h3>Manage Students</h3>
+          <div id="studentTabs">
+            <button id="tabAddStudent" class="tab-button active">Add</button>
+            <button id="tabEditStudent" class="tab-button">Edit</button>
+            <button id="tabDeleteStudent" class="tab-button">Delete</button>
+          </div>
+          <div id="studentTabContent">
+            <!-- Add Student Tab -->
+            <div id="addStudentTab" class="tab-content">
+              <form id="addStudentForm">
+                <div class="form-group">
+                  <label for="studentName">Name:</label>
+                  <input type="text" id="studentName" required>
+                </div>
+                <div class="form-group">
+                  <label for="studentAge">Age:</label>
+                  <input type="number" id="studentAge" required>
+                </div>
+                <div class="form-group">
+                  <label for="studentQualification">Qualification:</label>
+                  <input type="text" id="studentQualification" required>
+                </div>
+                <div class="form-group">
+                  <label for="studentID">ID:</label>
+                  <input type="text" id="studentID" required>
+                </div>
+                <div class="form-group">
+                  <label for="studentPassword">Password:</label>
+                  <input type="password" id="studentPassword" required>
+                </div>
+                <button type="submit">Add Student</button>
+              </form>
+            </div>
+            <!-- Edit Student Tab -->
+            <div id="editStudentTab" class="tab-content hidden">
+              <div class="form-group">
+                <label for="editStudentSelect">Select Student:</label>
+                <select id="editStudentSelect">
+                  <option value="">-- Select Student --</option>
+                </select>
+              </div>
+              <div id="editStudentFormContainer" class="hidden">
+                <form id="editStudentForm">
+                  <div class="form-group">
+                    <label for="editStudentName">Name:</label>
+                    <input type="text" id="editStudentName" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="editStudentAge">Age:</label>
+                    <input type="number" id="editStudentAge" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="editStudentQualification">Qualification:</label>
+                    <input type="text" id="editStudentQualification" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="editStudentID">ID:</label>
+                    <input type="text" id="editStudentID" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="editStudentPassword">Password:</label>
+                    <input type="password" id="editStudentPassword" required>
+                  </div>
+                  <button type="submit">Save Changes</button>
+                </form>
+              </div>
+            </div>
+            <!-- Delete Student Tab -->
+            <div id="deleteStudentTab" class="tab-content hidden">
+              <table id="deleteStudentTable">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Student rows will appear here -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Manage Tests Section -->
+        <div id="manageTestsSection" class="hidden">
+          <h3>Manage Tests</h3>
+          <div id="testTabs">
+            <button id="tabTestManagement" class="tab-button active">Test management</button>
+            <button id="tabMarkTest" class="tab-button">Mark Test</button>
+          </div>
+          <div id="testTabContent">
+            <!-- Test management main tab -->
+            <div id="testManagementContent" class="tab-content">
+              <!-- Sub-tabs for Test management: Add, Edit, Delete -->
+              <div id="testManagementSubTabs">
+                <button id="subTabAddTest" class="tab-button active">Add</button>
+                <button id="subTabEditTest" class="tab-button">Edit</button>
+                <button id="subTabDeleteTest" class="tab-button">Delete</button>
+              </div>
+              <div id="subTabAddTestContent" class="tab-content">
+                <!-- Add Test Form -->
+                <form id="addTestForm">
+                  <div class="form-group">
+                    <label for="testName">Test Name:</label>
+                    <input type="text" id="testName" placeholder="Test Name" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="testDescription">Test Description:</label>
+                    <input type="text" id="testDescription" placeholder="Test Description">
+                  </div>
+                  <div class="form-group">
+                    <label for="testTotalMarks">Total Marks:</label>
+                    <input type="number" id="testTotalMarks" placeholder="Enter Total Marks" required>
+                  </div>
+                  <button type="submit">Add Test</button>
+                </form>
+              </div>
+              <div id="subTabEditTestContent" class="tab-content hidden">
+                <div class="form-group">
+                  <label for="editTestSelect">Select Test:</label>
+                  <select id="editTestSelect">
+                    <option value="">-- Select Test --</option>
+                  </select>
+                </div>
+                <div id="editTestFormContainer" class="hidden">
+                  <form id="editTestForm">
+                    <div class="form-group">
+                      <label for="editTestName">Test Name:</label>
+                      <input type="text" id="editTestName" required>
+                    </div>
+                    <div class="form-group">
+                      <label for="editTestDescription">Test Description:</label>
+                      <input type="text" id="editTestDescription">
+                    </div>
+                    <div class="form-group">
+                      <label for="editTestTotalMarks">Total Marks:</label>
+                      <input type="number" id="editTestTotalMarks" required>
+                    </div>
+                    <button type="submit">Save Changes</button>
+                  </form>
+                </div>
+              </div>
+              <div id="subTabDeleteTestContent" class="tab-content hidden">
+                <table id="deleteTestTable">
+                  <thead>
+                    <tr>
+                      <th>Test Name</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Delete test rows will appear here -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <!-- Mark Test main tab -->
+            <div id="markTestTab" class="tab-content hidden">
+              <table id="markTestTable">
+                <thead>
+                  <tr>
+                    <th>Test Name</th>
+                    <th>Student Name</th>
+                    <th>Description</th>
+                    <th>Total Marks</th>
+                    <th>Obtained Marks</th>
+                    <th>Answers</th>
+                    <th>Mark Test</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Mark Test rows will appear here -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+  </div>
+
+  <!-- Student Dashboard -->
+  <div id="studentDashboard">
+    <div class="dashboard-header">
+      <h2>Student Dashboard</h2>
+      <button class="logout-btn" id="studentLogout">Logout</button>
+    </div>
+    <div class="student-container">
+      <div class="student-sidebar">
+        <button id="studentTabTests" class="active">Tests</button>
+        <button id="studentTabResults">Results</button>
+      </div>
+      <div class="student-content">
+        <!-- Tests Section (only unsolved tests) -->
+        <div id="studentTestsSection">
+          <h3>Your Tests</h3>
+          <table id="studentTestsTable">
+            <thead>
+              <tr>
+                <th>Test Name</th>
+                <th>Description</th>
+                <th>Your Answer</th>
+                <th>Your Mark</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Only unsolved tests will appear here -->
+            </tbody>
+          </table>
+          <!-- Solve Test Form -->
+          <div id="solveTestContainer" class="hidden">
+            <h4>Solve Test: <span id="solveTestName"></span></h4>
+            <form id="solveTestForm">
+              <div class="form-group">
+                <label for="studentAnswerInput">Your Answer:</label>
+                <textarea id="studentAnswerInput" rows="4" required></textarea>
+              </div>
+              <button type="submit">Submit Answer</button>
+              <button type="button" id="cancelSolveTest">Cancel</button>
+            </form>
+          </div>
+        </div>
+        <!-- Results Section (only tests with teacher marks) -->
+        <div id="studentResultsSection" class="hidden">
+          <h3>Your Results</h3>
+          <table id="studentResultsTable">
+            <thead>
+              <tr>
+                <th>Test Name</th>
+                <th>Description</th>
+                <th>Your Answer</th>
+                <th>Your Mark</th>
+                <th>Total Marks</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Only tests with teacher-uploaded marks will appear here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Data storage
+    let students = [];
+    let tests = [];
+    let currentUser = null; // For teacher: { role: "teacher", username } ; for student: { role: "student", id, name }
+    let currentTestToSolve = null; // For student solving
+
+    // Common Elements
+    const loginPage = document.getElementById("loginPage");
+    const teacherDashboard = document.getElementById("teacherDashboard");
+    const studentDashboard = document.getElementById("studentDashboard");
+    const loginError = document.getElementById("loginError");
+    const loginButton = document.getElementById("loginButton");
+    const roleSelect = document.getElementById("roleSelect");
+    const usernameInput = document.getElementById("username");
+    const passwordInput = document.getElementById("password");
+
+    // Teacher Dashboard Elements
+    const manageStudentsBtn = document.getElementById("manageStudentsBtn");
+    const manageTestsBtn = document.getElementById("manageTestsBtn");
+    const teacherLogout = document.getElementById("teacherLogout");
+
+    // Manage Students Elements (unchanged)
+    const tabAddStudent = document.getElementById("tabAddStudent");
+    const tabEditStudent = document.getElementById("tabEditStudent");
+    const tabDeleteStudent = document.getElementById("tabDeleteStudent");
+    const addStudentTab = document.getElementById("addStudentTab");
+    const editStudentTab = document.getElementById("editStudentTab");
+    const deleteStudentTab = document.getElementById("deleteStudentTab");
+    const addStudentForm = document.getElementById("addStudentForm");
+    const studentNameInput = document.getElementById("studentName");
+    const studentAgeInput = document.getElementById("studentAge");
+    const studentQualificationInput = document.getElementById("studentQualification");
+    const studentIDInput = document.getElementById("studentID");
+    const studentPasswordInput = document.getElementById("studentPassword");
+    const editStudentSelect = document.getElementById("editStudentSelect");
+    const editStudentFormContainer = document.getElementById("editStudentFormContainer");
+    const editStudentForm = document.getElementById("editStudentForm");
+    const editStudentName = document.getElementById("editStudentName");
+    const editStudentAge = document.getElementById("editStudentAge");
+    const editStudentQualification = document.getElementById("editStudentQualification");
+    const editStudentID = document.getElementById("editStudentID");
+    const editStudentPassword = document.getElementById("editStudentPassword");
+    const deleteStudentTableBody = document.querySelector("#deleteStudentTable tbody");
+
+    // Manage Tests Elements
+    // Main test tabs
+    const tabTestManagement = document.getElementById("tabTestManagement");
+    const tabMarkTest = document.getElementById("tabMarkTest");
+    const testTabContent = document.getElementById("testTabContent");
+    // Test management (sub) content
+    const testManagementContent = document.getElementById("testManagementContent");
+    const subTabAddTest = document.getElementById("subTabAddTest");
+    const subTabEditTest = document.getElementById("subTabEditTest");
+    const subTabDeleteTest = document.getElementById("subTabDeleteTest");
+    const subTabAddTestContent = document.getElementById("subTabAddTestContent");
+    const subTabEditTestContent = document.getElementById("subTabEditTestContent");
+    const subTabDeleteTestContent = document.getElementById("subTabDeleteTestContent");
+    const addTestForm = document.getElementById("addTestForm");
+    const testNameInput = document.getElementById("testName");
+    const testDescriptionInput = document.getElementById("testDescription");
+    const testTotalMarksInput = document.getElementById("testTotalMarks");
+    // Edit Test Elements
+    const editTestSelect = document.getElementById("editTestSelect");
+    const editTestFormContainer = document.getElementById("editTestFormContainer");
+    const editTestForm = document.getElementById("editTestForm");
+    const editTestName = document.getElementById("editTestName");
+    const editTestDescription = document.getElementById("editTestDescription");
+    const editTestTotalMarks = document.getElementById("editTestTotalMarks");
+    // Delete Test Elements
+    const deleteTestTableBody = document.querySelector("#deleteTestTable tbody");
+    // Mark Test Table Elements
+    const markTestTabDiv = document.getElementById("markTestTab");
+    const markTestTableBody = document.querySelector("#markTestTable tbody");
+
+    // Student Dashboard Elements
+    const studentLogout = document.getElementById("studentLogout");
+    const studentTabTests = document.getElementById("studentTabTests");
+    const studentTabResults = document.getElementById("studentTabResults");
+    const studentTestsSection = document.getElementById("studentTestsSection");
+    const studentResultsSection = document.getElementById("studentResultsSection");
+    const studentTestsTableBody = document.querySelector("#studentTestsTable tbody");
+    const studentResultsTableBody = document.querySelector("#studentResultsTable tbody");
+    const solveTestContainer = document.getElementById("solveTestContainer");
+    const solveTestNameSpan = document.getElementById("solveTestName");
+    const solveTestForm = document.getElementById("solveTestForm");
+    const studentAnswerInput = document.getElementById("studentAnswerInput");
+    const cancelSolveTestBtn = document.getElementById("cancelSolveTest");
+
+    // Teacher Credentials
+    const teacherUsername = "Teacher";
+    const teacherPassword = "123";
+
+    // LOGIN FUNCTIONALITY
+    loginButton.addEventListener("click", function() {
+      loginError.textContent = "";
+      const role = roleSelect.value;
+      const usernameVal = usernameInput.value.trim();
+      const passwordVal = passwordInput.value.trim();
+      if (role === "teacher") {
+        if (usernameVal === teacherUsername && passwordVal === teacherPassword) {
+          currentUser = { role: "teacher", username: teacherUsername };
+          showTeacherDashboard();
+        } else {
+          loginError.textContent = "Invalid teacher credentials.";
+        }
+      } else if (role === "student") {
+        const student = students.find(s => s.id === usernameVal && s.password === passwordVal);
+        if (student) {
+          currentUser = { role: "student", id: student.id, name: student.name };
+          showStudentDashboard();
+        } else {
+          loginError.textContent = "Invalid student credentials.";
+        }
+      }
+    });
+
+    // VIEW SWITCHING FUNCTIONS
+    function showTeacherDashboard() {
+      loginPage.style.display = "none";
+      studentDashboard.style.display = "none";
+      teacherDashboard.style.display = "block";
+      showManageStudents();
+    }
+    function showStudentDashboard() {
+      loginPage.style.display = "none";
+      teacherDashboard.style.display = "none";
+      studentDashboard.style.display = "block";
+      studentTabTests.classList.add("active");
+      studentTabResults.classList.remove("active");
+      studentTestsSection.classList.remove("hidden");
+      studentResultsSection.classList.add("hidden");
+      updateStudentTestsDisplay();
+    }
+    function logout() {
+      currentUser = null;
+      usernameInput.value = "";
+      passwordInput.value = "";
+      loginError.textContent = "";
+      loginPage.style.display = "flex";
+      teacherDashboard.style.display = "none";
+      studentDashboard.style.display = "none";
+    }
+    teacherLogout.addEventListener("click", logout);
+    studentLogout.addEventListener("click", logout);
+
+    // TEACHER DASHBOARD – SIDEBAR BUTTONS
+    manageStudentsBtn.addEventListener("click", showManageStudents);
+    manageTestsBtn.addEventListener("click", showManageTests);
+    function showManageStudents() {
+      document.getElementById("manageStudentsSection").style.display = "block";
+      document.getElementById("manageTestsSection").style.display = "none";
+    }
+    function showManageTests() {
+      document.getElementById("manageTestsSection").style.display = "block";
+      document.getElementById("manageStudentsSection").style.display = "none";
+      updateMarkTestTable();
+    }
+
+    // MANAGE STUDENTS – TAB SWITCHING (unchanged)
+    function clearStudentTabs() {
+      tabAddStudent.classList.remove("active");
+      tabEditStudent.classList.remove("active");
+      tabDeleteStudent.classList.remove("active");
+      addStudentTab.classList.add("hidden");
+      editStudentTab.classList.add("hidden");
+      deleteStudentTab.classList.add("hidden");
+    }
+    tabAddStudent.addEventListener("click", function() {
+      clearStudentTabs();
+      tabAddStudent.classList.add("active");
+      addStudentTab.classList.remove("hidden");
+    });
+    tabEditStudent.addEventListener("click", function() {
+      clearStudentTabs();
+      tabEditStudent.classList.add("active");
+      editStudentTab.classList.remove("hidden");
+      updateEditStudentDropdown();
+    });
+    tabDeleteStudent.addEventListener("click", function() {
+      clearStudentTabs();
+      tabDeleteStudent.classList.add("active");
+      deleteStudentTab.classList.remove("hidden");
+      updateDeleteStudentTable();
+    });
+
+    // ADD STUDENT FUNCTIONALITY
+    addStudentForm.addEventListener("submit", function(e) {
+      e.preventDefault();
+      const name = studentNameInput.value.trim();
+      const age = studentAgeInput.value.trim();
+      const qualification = studentQualificationInput.value.trim();
+      const id = studentIDInput.value.trim();
+      const password = studentPasswordInput.value.trim();
+      if (!name || !age || !qualification || !id || !password) return;
+      if (students.find(s => s.id === id)) {
+        alert("Student with this ID already exists.");
+        return;
+      }
+      students.push({ id, name, age, qualification, password });
+      addStudentForm.reset();
+      updateEditStudentDropdown();
+      updateDeleteStudentTable();
+    });
+
+    // UPDATE EDIT STUDENT DROPDOWN
+    function updateEditStudentDropdown() {
+      editStudentSelect.innerHTML = '<option value="">-- Select Student --</option>';
+      students.forEach(s => {
+        const option = document.createElement("option");
+        option.value = s.id;
+        option.textContent = s.id + " - " + s.name;
+        editStudentSelect.appendChild(option);
+      });
+    }
+    editStudentSelect.addEventListener("change", function() {
+      const selectedId = this.value;
+      if (!selectedId) {
+        editStudentFormContainer.classList.add("hidden");
+        return;
+      }
+      const student = students.find(s => s.id === selectedId);
+      if (student) {
+        editStudentName.value = student.name;
+        editStudentAge.value = student.age;
+        editStudentQualification.value = student.qualification;
+        editStudentID.value = student.id;
+        editStudentPassword.value = student.password;
+        editStudentFormContainer.classList.remove("hidden");
+      }
+    });
+    editStudentForm.addEventListener("submit", function(e) {
+      e.preventDefault();
+      const originalId = editStudentSelect.value;
+      const student = students.find(s => s.id === originalId);
+      if (!student) return;
+      const newName = editStudentName.value.trim();
+      const newAge = editStudentAge.value.trim();
+      const newQualification = editStudentQualification.value.trim();
+      const newId = editStudentID.value.trim();
+      const newPassword = editStudentPassword.value.trim();
+      if (!newName || !newAge || !newQualification || !newId || !newPassword) return;
+      if (newId !== originalId && students.find(s => s.id === newId)) {
+        alert("Another student with this ID already exists.");
+        return;
+      }
+      // Update test objects if ID changes
+      if (newId !== originalId) {
+        tests.forEach(test => {
+          if(test.marks && test.marks[originalId] !== undefined) {
+            test.marks[newId] = test.marks[originalId];
+            delete test.marks[originalId];
+          }
+          if(test.studentAnswers && test.studentAnswers[originalId] !== undefined) {
+            test.studentAnswers[newId] = test.studentAnswers[originalId];
+            delete test.studentAnswers[originalId];
+          }
+        });
+      }
+      student.name = newName;
+      student.age = newAge;
+      student.qualification = newQualification;
+      student.id = newId;
+      student.password = newPassword;
+      if (currentUser && currentUser.role === "student" && currentUser.id === originalId) {
+        currentUser.id = newId;
+        currentUser.name = newName;
+      }
+      updateEditStudentDropdown();
+      updateDeleteStudentTable();
+      editStudentFormContainer.classList.add("hidden");
+      editStudentSelect.value = "";
+    });
+    function updateDeleteStudentTable() {
+      deleteStudentTableBody.innerHTML = "";
+      students.forEach((s, index) => {
+        const tr = document.createElement("tr");
+        const tdId = document.createElement("td");
+        tdId.textContent = s.id;
+        const tdName = document.createElement("td");
+        tdName.textContent = s.name;
+        const tdActions = document.createElement("td");
+        const deleteBtn = document.createElement("button");
+        deleteBtn.textContent = "Delete";
+        deleteBtn.addEventListener("click", function() {
+          if (confirm("Are you sure you want to delete this student?")) {
+            tests.forEach(test => {
+              if(test.marks && test.marks[s.id] !== undefined) {
+                delete test.marks[s.id];
+              }
+              if(test.studentAnswers && test.studentAnswers[s.id] !== undefined) {
+                delete test.studentAnswers[s.id];
+              }
+            });
+            students.splice(index, 1);
+            updateDeleteStudentTable();
+            updateEditStudentDropdown();
+          }
+        });
+        tdActions.appendChild(deleteBtn);
+        tr.appendChild(tdId);
+        tr.appendChild(tdName);
+        tr.appendChild(tdActions);
+        deleteStudentTableBody.appendChild(tr);
+      });
+    }
+
+    // MANAGE TESTS – MAIN TAB SWITCHING
+    function clearTestMainTabs() {
+      tabTestManagement.classList.remove("active");
+      tabMarkTest.classList.remove("active");
+      testManagementContent.classList.add("hidden");
+      markTestTabDiv.classList.add("hidden");
+    }
+    tabTestManagement.addEventListener("click", function() {
+      clearTestMainTabs();
+      tabTestManagement.classList.add("active");
+      testManagementContent.classList.remove("hidden");
+    });
+    tabMarkTest.addEventListener("click", function() {
+      clearTestMainTabs();
+      tabMarkTest.classList.add("active");
+      markTestTabDiv.classList.remove("hidden");
+      updateMarkTestTable();
+    });
+
+    // MANAGE TESTS – SUB-TAB SWITCHING (within Test management)
+    function clearTestSubTabs() {
+      subTabAddTest.classList.remove("active");
+      subTabEditTest.classList.remove("active");
+      subTabDeleteTest.classList.remove("active");
+      subTabAddTestContent.classList.add("hidden");
+      subTabEditTestContent.classList.add("hidden");
+      subTabDeleteTestContent.classList.add("hidden");
+    }
+    subTabAddTest.addEventListener("click", function() {
+      clearTestSubTabs();
+      subTabAddTest.classList.add("active");
+      subTabAddTestContent.classList.remove("hidden");
+    });
+    subTabEditTest.addEventListener("click", function() {
+      clearTestSubTabs();
+      subTabEditTest.classList.add("active");
+      subTabEditTestContent.classList.remove("hidden");
+      updateEditTestDropdown();
+    });
+    subTabDeleteTest.addEventListener("click", function() {
+      clearTestSubTabs();
+      subTabDeleteTest.classList.add("active");
+      subTabDeleteTestContent.classList.remove("hidden");
+      updateDeleteTestTable();
+    });
+
+    // ADD TEST FUNCTIONALITY
+    addTestForm.addEventListener("submit", function(e) {
+      e.preventDefault();
+      const tName = testNameInput.value.trim();
+      const tDescription = testDescriptionInput.value.trim();
+      const totalMarks = testTotalMarksInput.value.trim();
+      if (!tName || !totalMarks) return;
+      const testId = Date.now();
+      tests.push({ id: testId, name: tName, description: tDescription, totalMarks: totalMarks, marks: {}, studentAnswers: {} });
+      addTestForm.reset();
+      updateMarkTestTable();
+      updateStudentTestsDisplay();
+      updateEditTestDropdown();
+      updateDeleteTestTable();
+    });
+
+    // EDIT TEST FUNCTIONALITY
+    function updateEditTestDropdown() {
+      editTestSelect.innerHTML = '<option value="">-- Select Test --</option>';
+      tests.forEach(test => {
+        const option = document.createElement("option");
+        option.value = test.id;
+        option.textContent = test.name;
+        editTestSelect.appendChild(option);
+      });
+    }
+    editTestSelect.addEventListener("change", function() {
+      const selectedId = this.value;
+      if (!selectedId) {
+        editTestFormContainer.classList.add("hidden");
+        return;
+      }
+      const test = tests.find(t => t.id == selectedId);
+      if (test) {
+        editTestName.value = test.name;
+        editTestDescription.value = test.description;
+        editTestTotalMarks.value = test.totalMarks;
+        editTestFormContainer.classList.remove("hidden");
+      }
+    });
+    editTestForm.addEventListener("submit", function(e) {
+      e.preventDefault();
+      const selectedId = editTestSelect.value;
+      const test = tests.find(t => t.id == selectedId);
+      if (!test) return;
+      const newName = editTestName.value.trim();
+      const newDescription = editTestDescription.value.trim();
+      const newTotalMarks = editTestTotalMarks.value.trim();
+      if (!newName || !newTotalMarks) return;
+      test.name = newName;
+      test.description = newDescription;
+      test.totalMarks = newTotalMarks;
+      updateMarkTestTable();
+      updateStudentTestsDisplay();
+      updateEditTestDropdown();
+      editTestFormContainer.classList.add("hidden");
+      editTestSelect.value = "";
+    });
+
+    // DELETE TEST FUNCTIONALITY
+    function updateDeleteTestTable() {
+      deleteTestTableBody.innerHTML = "";
+      tests.forEach((test, index) => {
+        const tr = document.createElement("tr");
+        const tdName = document.createElement("td");
+        tdName.textContent = test.name;
+        const tdActions = document.createElement("td");
+        const deleteBtn = document.createElement("button");
+        deleteBtn.textContent = "Delete";
+        deleteBtn.addEventListener("click", function() {
+          if (confirm("Are you sure you want to delete this test?")) {
+            tests.splice(index, 1);
+            updateDeleteTestTable();
+            updateMarkTestTable();
+            updateStudentTestsDisplay();
+            updateEditTestDropdown();
+          }
+        });
+        tdActions.appendChild(deleteBtn);
+        tr.appendChild(tdName);
+        tr.appendChild(tdActions);
+        deleteTestTableBody.appendChild(tr);
+      });
+    }
+
+    // MARK TEST FUNCTIONALITY – Update Mark Test Table
+    function updateMarkTestTable() {
+      markTestTableBody.innerHTML = "";
+      tests.forEach(test => {
+        for (let studentId in test.studentAnswers) {
+          if (test.studentAnswers.hasOwnProperty(studentId)) {
+            const studentObj = students.find(s => s.id === studentId);
+            const studentName = studentObj ? studentObj.name : studentId;
+            const tr = document.createElement("tr");
+            // Test Name
+            const tdTestName = document.createElement("td");
+            tdTestName.textContent = test.name;
+            tr.appendChild(tdTestName);
+            // Student Name
+            const tdStudentName = document.createElement("td");
+            tdStudentName.textContent = studentName;
+            tr.appendChild(tdStudentName);
+            // Description
+            const tdDescription = document.createElement("td");
+            tdDescription.textContent = test.description;
+            tr.appendChild(tdDescription);
+            // Total Marks
+            const tdTotalMarks = document.createElement("td");
+            tdTotalMarks.textContent = test.totalMarks;
+            tr.appendChild(tdTotalMarks);
+            // Obtained Marks (input)
+            const tdObtainedMarks = document.createElement("td");
+            const inputMarks = document.createElement("input");
+            inputMarks.type = "number";
+            inputMarks.value = test.marks[studentId] !== undefined ? test.marks[studentId] : "";
+            inputMarks.style.width = "60px";
+            tdObtainedMarks.appendChild(inputMarks);
+            tr.appendChild(tdObtainedMarks);
+            // Answers
+            const tdAnswers = document.createElement("td");
+            tdAnswers.textContent = test.studentAnswers[studentId];
+            tr.appendChild(tdAnswers);
+            // Mark Test button
+            const tdAction = document.createElement("td");
+            const markButton = document.createElement("button");
+            markButton.textContent = "Mark Test";
+            markButton.addEventListener("click", function() {
+              const markValue = inputMarks.value;
+              if (markValue === "") {
+                alert("Please enter a mark.");
+                return;
+              }
+              test.marks[studentId] = markValue;
+              updateMarkTestTable();
+              updateStudentTestsDisplay();
+            });
+            tdAction.appendChild(markButton);
+            tr.appendChild(tdAction);
+            markTestTableBody.appendChild(tr);
+          }
+        }
+      });
+    }
+
+    // STUDENT DASHBOARD – SIDEBAR SWITCHING
+    studentTabTests.addEventListener("click", function() {
+      studentTabTests.classList.add("active");
+      studentTabResults.classList.remove("active");
+      studentTestsSection.classList.remove("hidden");
+      studentResultsSection.classList.add("hidden");
+      updateStudentTestsDisplay();
+    });
+    studentTabResults.addEventListener("click", function() {
+      studentTabResults.classList.add("active");
+      studentTabTests.classList.remove("active");
+      studentResultsSection.classList.remove("hidden");
+      studentTestsSection.classList.add("hidden");
+      updateStudentTestsDisplay();
+    });
+
+    // STUDENT DASHBOARD – POPULATE TESTS AND RESULTS
+    // Show only unsolved tests in the Tests section
+    function populateStudentTestsSection() {
+      studentTestsTableBody.innerHTML = "";
+      tests.forEach(test => {
+        // Only show test if no answer has been submitted by current student
+        if (!test.studentAnswers || test.studentAnswers[currentUser.id] === undefined) {
+          const tr = document.createElement("tr");
+          const tdName = document.createElement("td");
+          tdName.textContent = test.name;
+          const tdDescription = document.createElement("td");
+          tdDescription.textContent = test.description;
+          const tdAnswer = document.createElement("td");
+          // Provide a Solve button
+          const solveBtn = document.createElement("button");
+          solveBtn.textContent = "Solve";
+          
+          solveBtn.addEventListener("click", function() {
+            currentTestToSolve = test;
+            solveTestNameSpan.textContent = test.name;
+            studentAnswerInput.value = "";
+            solveTestContainer.classList.remove("hidden");
+          });
+          tdAnswer.appendChild(solveBtn);
+          const tdMark = document.createElement("td");
+          tdMark.textContent = "Not marked";
+          tr.appendChild(tdName);
+          tr.appendChild(tdDescription);
+          tr.appendChild(tdAnswer);
+          tr.appendChild(tdMark);
+          studentTestsTableBody.appendChild(tr);
+        }
+      });
+    }
+    // Show only tests that have teacher-uploaded marks in the Results section
+    function populateStudentResultsSection() {
+      studentResultsTableBody.innerHTML = "";
+      tests.forEach(test => {
+        if (test.studentAnswers && test.studentAnswers[currentUser.id] !== undefined && 
+            test.marks && test.marks[currentUser.id] !== undefined) {
+          const tr = document.createElement("tr");
+          const tdName = document.createElement("td");
+          tdName.textContent = test.name;
+          const tdDescription = document.createElement("td");
+          tdDescription.textContent = test.description;
+          const tdAnswer = document.createElement("td");
+          tdAnswer.textContent = test.studentAnswers[currentUser.id];
+          const tdMark = document.createElement("td");
+          tdMark.textContent = test.marks[currentUser.id];
+          const tdTotal = document.createElement("td");
+          tdTotal.textContent = test.totalMarks || "";
+          tr.appendChild(tdName);
+          tr.appendChild(tdDescription);
+          tr.appendChild(tdAnswer);
+          tr.appendChild(tdMark);
+          tr.appendChild(tdTotal);
+          studentResultsTableBody.appendChild(tr);
+        }
+      });
+    }
+    function updateStudentTestsDisplay() {
+      if (currentUser && currentUser.role === "student") {
+        if (studentTabTests.classList.contains("active")) {
+          populateStudentTestsSection();
+        }
+        if (studentTabResults.classList.contains("active")) {
+          populateStudentResultsSection();
+        }
+      }
+    }
+
+    // STUDENT SOLVE TEST FUNCTIONALITY
+    solveTestForm.addEventListener("submit", function(e) {
+      e.preventDefault();
+      const answer = studentAnswerInput.value.trim();
+      if (currentTestToSolve && answer) {
+        currentTestToSolve.studentAnswers[currentUser.id] = answer;
+        updateStudentTestsDisplay();
+        solveTestContainer.classList.add("hidden");
+        currentTestToSolve = null;
+      }
+    });
+    cancelSolveTestBtn.addEventListener("click", function() {
+      solveTestContainer.classList.add("hidden");
+      currentTestToSolve = null;
+    });
+  </script>
+</body>
+</html>

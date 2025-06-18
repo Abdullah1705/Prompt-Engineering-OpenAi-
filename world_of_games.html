@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>The World of Games</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <!-- Google Font: Moon Dance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Moon+Dance&display=swap" rel="stylesheet">
+    <style>
+        /* Page background: gradient from light grey to dark grey */
+        body {
+            background: linear-gradient(135deg, #f7f7f7, #3b3b3b);
+            height: 100vh;
+            background-attachment: fixed;
+        }
+
+        header {
+            text-align: center;
+            font-family: 'Moon Dance', cursive;
+            font-size: 3rem;
+            margin: 20px 0;
+        }
+
+        /* Filter row: label and input in one row with margins */
+        .filter-row {
+            margin-bottom: 15px;
+        }
+
+        .filter-row .filter-item {
+            margin-right: 20px;
+        }
+
+        /* Remove background from the switch container */
+        .switch-container {
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+
+        /* Style the switch control with a grey color */
+        .form-check-input {
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+
+        .form-check-input:checked {
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+
+        /* Apply button: dark grey with a slightly darker hover (text stays white) */
+        .btn-darkgrey {
+            background-color: #555;
+            border-color: #555;
+            color: #fff;
+        }
+
+        .btn-darkgrey:hover {
+            background-color: #444;
+            border-color: #444;
+            color: #fff;
+        }
+
+        /* Game cards grid: display 5 cards per row with a gap */
+        .game-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+        }
+
+        .card-img-top {
+            height: 150px;
+            object-fit: cover;
+        }
+
+        .card {
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: scale(1.02);
+        }
+
+        /* Glass morphism styling for the commented games container */
+        #commented-games {
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 15px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        #commented-games h5 {
+            margin-bottom: 15px;
+        }
+
+        .comment-section {
+            border-top: 1px solid #ddd;
+            margin-top: 10px;
+            padding-top: 10px;
+        }
+
+        .comment-section ul {
+            list-style-type: none;
+            padding-left: 0;
+            margin-bottom: 0;
+        }
+
+        .comment-section li {
+            background-color: #f8f9fa;
+            padding: 5px;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+
+<body>
+    <header>The World of Games</header>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Left Column: Filters and Game Cards -->
+            <div class="col-md-9">
+                <!-- Filter Row -->
+                <div class="row align-items-center filter-row">
+                    <div class="col-auto filter-item d-flex align-items-center">
+                        <label for="genreFilter" class="me-2 mb-0">Genre:</label>
+                        <select id="genreFilter" class="form-select form-select-sm">
+                            <option value="All">All</option>
+                        </select>
+                    </div>
+                    <div class="col-auto filter-item d-flex align-items-center">
+                        <label for="platformFilter" class="me-2 mb-0">Platform:</label>
+                        <select id="platformFilter" class="form-select form-select-sm">
+                            <option value="All">All</option>
+                        </select>
+                    </div>
+                    <div class="col-auto filter-item d-flex align-items-center switch-container">
+                        <label for="sortSwitch" class="me-2 mb-0">Sort A-Z:</label>
+                        <div class="form-check form-switch mb-0">
+                            <input type="checkbox" id="sortSwitch" class="form-check-input">
+                        </div>
+                    </div>
+                    <div class="col-auto filter-item d-flex align-items-center">
+                        <label for="limitInput" class="me-2 mb-0">Limit:</label>
+                        <input type="number" id="limitInput" class="form-control form-control-sm" placeholder="25"
+                            style="width:80px;">
+                    </div>
+                    <div class="col-auto filter-item">
+                        <button id="applyFiltersButton" class="btn btn-darkgrey btn-sm">Apply</button>
+                    </div>
+                </div>
+                <!-- Game Cards Grid -->
+                <div id="game-cards" class="game-cards-grid">
+                    <div class="text-center w-100 my-4" id="loadingIndicator">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p>Loading games...</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Right Column: Commented Games Sidebar -->
+            <div class="col-md-3">
+                <div id="commented-games">
+                    <h5>Commented Games</h5>
+                    <ul id="commented-games-list" class="list-group">
+                        <!-- Commented game titles will appear here -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Bootstrap Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let savedComments = JSON.parse(localStorage.getItem("commentedGames")) || {};
+        
+        // DOM Elements
+        const genreFilter = document.getElementById("genreFilter");
+        const platformFilter = document.getElementById("platformFilter");
+        const sortSwitch = document.getElementById("sortSwitch");
+        const limitInput = document.getElementById("limitInput");
+        const applyFiltersButton = document.getElementById("applyFiltersButton");
+        const gameCardsContainer = document.getElementById("game-cards");
+        const loadingIndicator = document.getElementById("loadingIndicator");
+        const commentedGamesList = document.getElementById("commented-games-list");
+        
+        updateCommentedGamesSidebar();
+
+        // Use AllOrigins to bypass CORS issues.
+        const proxyUrl = "https://api.allorigins.win/get?url=";
+        const targetUrl = "https://www.freetogame.com/api/games";
+        let gamesData = [];
+        const commentedGames = new Set();
+
+        // Fetch games using the AllOrigins proxy
+        fetch(proxyUrl + encodeURIComponent(targetUrl))
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Network response not ok");
+                }
+                return response.json();
+            })
+            .then(data => {
+                // AllOrigins returns an object with a 'contents' property (a JSON string)
+                gamesData = JSON.parse(data.contents);
+                if (loadingIndicator) loadingIndicator.remove();
+                populateFilters();
+                // Set default limit to 25 if not provided
+                if (!limitInput.value) {
+                    limitInput.value = 25;
+                }
+                updateDisplayedGames();
+            })
+            .catch(error => {
+                console.error("Error fetching games:", error);
+                if (loadingIndicator) {
+                    loadingIndicator.innerHTML = "<p>Error loading games. Please try again later.</p>";
+                }
+            });
+
+        // Populate the Genre and Platform filters based on fetched data
+        function populateFilters() {
+            const genres = new Set();
+            const platforms = new Set();
+            gamesData.forEach(game => {
+                if (game.genre) genres.add(game.genre);
+                if (game.platform) platforms.add(game.platform);
+            });
+            genres.forEach(genre => {
+                const option = document.createElement("option");
+                option.value = genre;
+                option.textContent = genre;
+                genreFilter.appendChild(option);
+            });
+            platforms.forEach(platform => {
+                const option = document.createElement("option");
+                option.value = platform;
+                option.textContent = platform;
+                platformFilter.appendChild(option);
+            });
+        }
+
+        // Update displayed games based on selected filters, sort option, and limit
+        function updateDisplayedGames() {
+            let filteredGames = [...gamesData];
+            const selectedGenre = genreFilter.value;
+            if (selectedGenre !== "All") {
+                filteredGames = filteredGames.filter(game => game.genre === selectedGenre);
+            }
+            const selectedPlatform = platformFilter.value;
+            if (selectedPlatform !== "All") {
+                filteredGames = filteredGames.filter(game => game.platform === selectedPlatform);
+            }
+            if (sortSwitch.checked) {
+                filteredGames.sort((a, b) => a.title.localeCompare(b.title));
+            }
+            let limit = parseInt(limitInput.value);
+            if (isNaN(limit) || limit <= 0) {
+                limit = 25;
+            }
+            filteredGames = filteredGames.slice(0, limit);
+            renderGameCards(filteredGames);
+        }
+
+        // Render game cards in a grid
+        function renderGameCards(games) {
+            gameCardsContainer.innerHTML = "";
+            if (games.length === 0) {
+                gameCardsContainer.innerHTML = "<p class='text-center'>No games match your criteria.</p>";
+                return;
+            }
+            games.forEach(game => {
+                const card = document.createElement("div");
+                card.className = "card";
+
+                // Thumbnail
+                const img = document.createElement("img");
+                img.src = game.thumbnail;
+                img.className = "card-img-top";
+                img.alt = game.title;
+                card.appendChild(img);
+
+                // Card Body: Title, Short Description, and Details
+                const cardBody = document.createElement("div");
+                cardBody.className = "card-body";
+                const title = document.createElement("h5");
+                title.className = "card-title";
+                title.textContent = game.title;
+                cardBody.appendChild(title);
+                const description = document.createElement("p");
+                description.className = "card-text";
+                let shortDesc = game.short_description;
+                if (shortDesc.length > 100) {
+                    shortDesc = shortDesc.substring(0, 100) + "…";
+                }
+                description.textContent = shortDesc;
+                cardBody.appendChild(description);
+                const details = document.createElement("p");
+                details.innerHTML = `<strong>Genre:</strong> ${game.genre}<br>
+                             <strong>Platform:</strong> ${game.platform}<br>
+                             <strong>Release:</strong> ${game.release_date}`;
+                cardBody.appendChild(details);
+                card.appendChild(cardBody);
+
+                // Card Footer: Play Now button
+                const cardFooter = document.createElement("div");
+                cardFooter.className = "card-footer text-center";
+                const playLink = document.createElement("a");
+                playLink.href = game.game_url;
+                playLink.target = "_blank";
+                playLink.className = "btn btn-primary btn-sm";
+                playLink.textContent = "Play Now";
+                cardFooter.appendChild(playLink);
+                card.appendChild(cardFooter);
+
+                // Comment Section for each game
+                const commentSection = document.createElement("div");
+                commentSection.className = "comment-section px-3 pb-3";
+                const commentForm = document.createElement("form");
+                commentForm.className = "mb-2";
+                commentForm.innerHTML = `
+          <div class="mb-1">
+            <input type="text" class="form-control form-control-sm" placeholder="Enter comment" required>
+          </div>
+          <button type="submit" class="btn btn-sm btn-secondary">Submit</button>
+        `;
+                const commentsList = document.createElement("ul");
+                commentSection.appendChild(commentForm);
+                commentSection.appendChild(commentsList);
+                card.appendChild(commentSection);
+
+                // Handle comment submission
+                commentForm.addEventListener("submit", function (e) {
+
+                    e.preventDefault();
+                    const input = commentForm.querySelector("input");
+                    const comment = input.value.trim();
+                    if (comment !== "") {
+                        const li = document.createElement("li");
+                        li.textContent = comment;
+                        commentsList.appendChild(li);
+                        input.value = "";
+
+                        if (!savedComments[game.id]) {
+                            savedComments[game.id] = {
+                                title: game.title,
+                                thumbnail: game.thumbnail,
+                                release_date: game.release_date,
+                                comments: []
+                            };
+                        }
+                        savedComments[game.id].comments.push(comment);
+                        localStorage.setItem("commentedGames", JSON.stringify(savedComments));
+
+                        updateCommentedGamesSidebar();
+                    }
+                });
+
+                gameCardsContainer.appendChild(card);
+            });
+        }
+
+        // Update the commented games sidebar
+        function updateCommentedGamesSidebar() {
+            commentedGamesList.innerHTML = "";
+            for (const gameId in savedComments) {
+                const gameData = savedComments[gameId];
+                const li = document.createElement("li");
+                li.className = "list-group-item";
+                li.innerHTML = `<strong>${gameData.title}</strong><br>
+                        <em>Released: ${gameData.release_date}</em><br>
+                        <span>${gameData.comments[gameData.comments.length - 1]}</span>`;
+                commentedGamesList.appendChild(li);
+            }
+        }
+
+        // Apply filters when the "Apply" button is clicked
+        applyFiltersButton.addEventListener("click", updateDisplayedGames);
+    </script>
+</body>
+
+</html>

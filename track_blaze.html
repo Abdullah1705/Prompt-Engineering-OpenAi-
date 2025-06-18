@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Track &amp; Blaze</title>
+    <!-- Moon Dance font -->
+    <link href="https://fonts.googleapis.com/css2?family=Moon+Dance&display=swap" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            height: 100%;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Floating heading */
+        h1 {
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Moon Dance', cursive;
+            font-size: 60px;
+            color: #2c3e50;
+            z-index: 1000;
+            white-space: nowrap;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 260px;
+            height: 100vh;
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding-top: 80px;
+            /* leave room for heading */
+            display: flex;
+            flex-direction: column;
+        }
+
+        .nav button {
+            background: none;
+            border: none;
+            color: inherit;
+            padding: 0.75em 1em;
+            text-align: left;
+            cursor: pointer;
+            font-size: 1em;
+            display: flex;
+            align-items: center;
+        }
+
+        .nav button i {
+            width: 20px;
+            margin-right: 8px;
+            text-align: center;
+        }
+
+        .nav button.active,
+        .nav button:hover {
+            background: #34495e;
+        }
+
+        /* Main content */
+        .main {
+            margin-left: 260px;
+            padding: 1em;
+            padding-top: 100px;
+            /* room for heading */
+            height: 100vh;
+            overflow-y: auto;
+            background: #ecf0f1;
+        }
+
+        /* Top bar */
+        .top-bar {
+            position: sticky;
+            top: 0;
+            background: #ecf0f1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5em 0;
+            z-index: 500;
+        }
+
+        .top-bar input[type="date"] {
+            padding: 0.4em;
+            border: 1px solid #bdc3c7;
+            border-radius: 3px;
+        }
+
+        .top-bar .add-btn {
+            background: #16537e;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            color: white;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        /* Questions */
+        .questions {
+            list-style: none;
+            margin-top: 1em;
+        }
+
+        .question-item {
+            padding: 0.6em;
+            margin-bottom: 0.25em;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #bdc3c7;
+            gap: 50px;
+        }
+
+        .question-text {
+            flex: 1;
+            font-size: 0.95em;
+        }
+
+        .question-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.4em;
+        }
+
+        .question-actions button {
+            background: transparent;
+            border: none;
+            padding: 0;
+            width: auto;
+            height: auto;
+            cursor: pointer;
+            font-size: 1em;
+            color: #16537e;
+        }
+
+        .question-actions button.disabled {
+            opacity: 0.5;
+            cursor: default;
+        }
+
+        /* Heatmap */
+        .heatmap {
+            margin-top: 2em;
+            text-align: center;
+        }
+
+        .heatmap h3 {
+            color: #2c3e50;
+            margin-bottom: 0.5em;
+            font-size: 1.1em;
+            text-align: center;
+        }
+
+        .heatmap-grid-year {
+            display: inline-grid;
+            grid-template-rows: repeat(7, 14px);
+            grid-template-columns: repeat(53, 14px);
+            grid-gap: 3px;
+            margin: 0 auto;
+        }
+
+        .heatcell {
+            width: 100%;
+            height: 100%;
+            border-radius: 2px;
+            background: #eee;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 1.5em;
+            border-radius: 5px;
+            width: 320px;
+            position: relative;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 0.5em;
+            font-size: 1.2em;
+            color: #2c3e50;
+        }
+
+        .modal-content input[type="text"] {
+            width: 100%;
+            padding: 0.5em;
+            border: 1px solid #bdc3c7;
+            border-radius: 3px;
+            font-size: 1em;
+        }
+
+        .modal-actions {
+            margin-top: 1em;
+            text-align: right;
+        }
+
+        .modal-actions button {
+            padding: 0.5em 1em;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-left: 0.5em;
+        }
+
+        .btn-cancel {
+            background: #bdc3c7;
+            color: white;
+        }
+
+        .btn-ok {
+            background: #16537e;
+            color: white;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: none;
+            border: none;
+            font-size: 1.2em;
+            cursor: pointer;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Heading -->
+    <h1>Track &amp; Blaze</h1>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="nav">
+            <button data-section="Habits" class="active">
+                <i class="fa-solid fa-seedling"></i>Habits
+            </button>
+            <button data-section="Health">
+                <i class="fa-solid fa-heart-pulse"></i>Health
+            </button>
+            <button data-section="Work">
+                <i class="fa-solid fa-briefcase"></i>Work Tasks
+            </button>
+        </div>
+    </div>
+
+    <!-- Main -->
+    <div class="main"></div>
+
+    <!-- Modal -->
+    <div id="modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close">&times;</button>
+            <div id="modal-body"></div>
+            <div class="modal-actions">
+                <button class="btn-cancel">Cancel</button>
+                <button class="btn-ok">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            /* Section color schemes */
+            const schemes = {
+                Habits: { hue: 120 },
+                Health: { hue: 0 },
+                Work: { hue: 240 }
+            };
+            const presets = {
+                Habits: ['Wake up early', 'Read for 30 minutes', 'Practice meditation'],
+                Health: ['Drink 2L water', '30 minutes exercise', 'Eat vegetables'],
+                Work: ['Check emails', "Plan today's tasks", 'Daily standup meeting']
+            };
+
+            /* Storage helpers */
+            function getQuestions(sec) {
+                const key = 'questions_' + sec;
+                let raw = localStorage.getItem(key);
+                if (!raw) {
+                    const init = presets[sec].map((t, i) => ({ id: Date.now() + i, text: t }));
+                    localStorage.setItem(key, JSON.stringify(init));
+                    return init;
+                }
+                try { const a = JSON.parse(raw); return Array.isArray(a) ? a : []; }
+                catch { return []; }
+            }
+            function saveQuestions(sec, qs) {
+                localStorage.setItem('questions_' + sec, JSON.stringify(qs));
+            }
+            function getCompletions() {
+                let raw = localStorage.getItem('completions');
+                if (!raw) return [];
+                try { const a = JSON.parse(raw); return Array.isArray(a) ? a : []; }
+                catch { return []; }
+            }
+            function saveCompletions(a) {
+                localStorage.setItem('completions', JSON.stringify(a));
+            }
+
+            /* UI refs */
+            const navButtons = document.querySelectorAll('.nav button');
+            const main = document.querySelector('.main');
+            const modal = document.getElementById('modal');
+            const modalBody = modal.querySelector('#modal-body');
+            const btnCancel = modal.querySelector('.btn-cancel');
+            const btnOK = modal.querySelector('.btn-ok');
+            const btnClose = modal.querySelector('.modal-close');
+
+            /* State */
+            let currentSection = 'Habits';
+            let currentDate = new Date().toISOString().slice(0, 10);
+            let modalType = null;
+            let modalPayload = {};
+
+            /* Render */
+            function render() {
+                main.innerHTML = '';
+                const { hue } = schemes[currentSection];
+                const qs = getQuestions(currentSection);
+                const comps = getCompletions();
+
+                // Top bar
+                const top = document.createElement('div');
+                top.className = 'top-bar';
+                top.innerHTML = `
+        <input type="date" id="date-picker" value="${currentDate}">
+        <button class="add-btn"><i class="fa fa-plus"></i></button>
+      `;
+                main.appendChild(top);
+                top.querySelector('#date-picker').onchange = e => {
+                    currentDate = e.target.value; render();
+                };
+                top.querySelector('.add-btn').onclick = () => openModal('add');
+
+                // Questions
+                const ul = document.createElement('ul');
+                ul.className = 'questions';
+                qs.forEach(q => {
+                    const done = comps.some(c =>
+                        c.section === currentSection && c.qid === q.id && c.date === currentDate
+                    );
+                    const li = document.createElement('li');
+                    li.className = 'question-item';
+                    // light background
+                    li.style.background = `hsl(${hue},50%,94%)`;
+                    li.innerHTML = `
+          <div class="question-text">${q.text}</div>
+          <div class="question-actions">
+            <button class="complete ${done ? 'disabled' : ''}"><i class="fa fa-check"></i></button>
+            <button class="edit"><i class="fa fa-pen"></i></button>
+            <button class="delete"><i class="fa fa-trash"></i></button>
+          </div>`;
+                    // complete
+                    li.querySelector('.complete').onclick = () => {
+                        if (done) return;
+                        comps.push({ section: currentSection, qid: q.id, date: currentDate });
+                        saveCompletions(comps); render();
+                    };
+                    // edit
+                    li.querySelector('.edit').onclick = () => openModal('edit', { qid: q.id, text: q.text });
+                    // delete
+                    li.querySelector('.delete').onclick = () => {
+                        if (!confirm('Delete this question?')) return;
+                        saveQuestions(currentSection, qs.filter(x => x.id !== q.id));
+                        saveCompletions(comps.filter(c => !(c.section === currentSection && c.qid === q.id)));
+                        render();
+                    };
+                    ul.appendChild(li);
+                });
+                main.appendChild(ul);
+
+                // Heatmap
+                const heatDiv = document.createElement('div');
+                heatDiv.className = 'heatmap';
+                heatDiv.innerHTML = `<h3>Past Year Completion</h3>`;
+                const grid = document.createElement('div');
+                grid.className = 'heatmap-grid-year';
+
+                const today = new Date(), msDay = 86400000;
+                const start = new Date(today.getTime() - 364 * msDay);
+                const counts = {};
+                comps.filter(c => c.section === currentSection)
+                    .forEach(c => counts[c.date] = (counts[c.date] || 0) + 1);
+                let maxC = 1;
+
+                const allCounts = Object.values(counts);
+                const rawMax = allCounts.length ? Math.max(...allCounts) : 0;
+                const denom = rawMax + 1;
+                for (let d = 0; d < 365; d++) {
+                    const dt = new Date(start.getTime() + d * msDay);
+                    const k = dt.toISOString().slice(0, 10);
+                    const c = counts[k] || 0;
+                    const intensity = c / denom;
+                    const light = 90 - intensity * 60;
+
+                    const cell = document.createElement('div');
+                    cell.className = 'heatcell';
+                    cell.style.background = `hsl(${hue},50%,${light}%)`;
+                    cell.title = `${k}: ${c} completions`;
+                    cell.style.gridRowStart = dt.getDay() + 1;
+                    cell.style.gridColumnStart = Math.floor(d / 7) + 1;
+
+                    grid.appendChild(cell);
+                }
+
+                heatDiv.appendChild(grid);
+                main.appendChild(heatDiv);
+            }
+
+            /* Nav */
+            navButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    navButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentSection = btn.dataset.section;
+                    render();
+                });
+            });
+
+            /* Modal */
+            function openModal(type, payload = {}) {
+                modalType = type; modalPayload = payload; modalBody.innerHTML = '';
+                if (type === 'add') {
+                    modalBody.innerHTML = `
+          <h2>Add a new question</h2>
+          <input type="text" id="modal-text" placeholder="Enter question…">`;
+                } else if (type === 'edit') {
+                    modalBody.innerHTML = `
+          <h2>Edit question</h2>
+          <input type="text" id="modal-text" value="${payload.text}">`;
+                }
+                btnOK.disabled = false; modal.style.display = 'flex';
+            }
+            function closeModal() { modal.style.display = 'none'; }
+            btnCancel.onclick = btnClose.onclick = closeModal;
+            btnOK.onclick = () => {
+                const qs = getQuestions(currentSection), comps = getCompletions();
+                const txt = modalBody.querySelector('#modal-text').value.trim();
+                if (!txt) { alert('Enter text'); return; }
+                if (modalType === 'add') {
+                    qs.push({ id: Date.now(), text: txt });
+                } else {
+                    const q = qs.find(x => x.id === modalPayload.qid);
+                    if (q) q.text = txt;
+                }
+                saveQuestions(currentSection, qs);
+                closeModal(); render();
+            };
+
+            /* Init */
+            render();
+        })();
+    </script>
+</body>
+
+</html>

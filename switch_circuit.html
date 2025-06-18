@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Animated Electric Circuit Diagram</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f0f0f8;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+    svg {
+      background: #fff;
+      border: 1px solid #ccc;
+      display: block;
+      margin: 20px auto;
+    }
+    /* Circuit wires (the connections) */
+    .circuit {
+      stroke: black;
+      stroke-width: 2;
+      fill: none;
+    }
+    .circuit.active {
+      stroke: blue;
+      stroke-dasharray: 5,5;
+      animation: dash 1s linear infinite;
+    }
+    @keyframes dash {
+      from { stroke-dashoffset: 0; }
+      to { stroke-dashoffset: -20; }
+    }
+    /* Components (voltage source, diode, capacitor) remain unchanged */
+    .component {
+      stroke: black;
+      stroke-width: 2;
+      fill: none;
+    }
+    /* Switch styling */
+    .switch-dot {
+      fill: black;
+    }
+    .switch-line {
+      stroke: black;
+      stroke-width: 2;
+    }
+    .switch-line.active {
+      stroke: blue;
+      stroke-dasharray: 5,5;
+    }
+  </style>
+</head>
+<body>
+  <svg id="circuit" width="600" height="400">
+    <!-- Battery (Voltage Source) wires (Column 1) – non-persist -->
+    <!-- Vertical wires: top connects from top to the positive plate; bottom from negative plate to bottom -->
+    <line class="circuit vertical" id="batteryWireTop" x1="100" y1="100" x2="100" y2="185" />
+    <line class="circuit vertical" id="batteryWireBottom" x1="100" y1="215" x2="100" y2="300" />
+    <!-- Horizontal wires on battery side -->
+    <line class="circuit horizontal" id="topWireLeft" x1="100" y1="100" x2="130" y2="100" />
+    <line class="circuit horizontal" id="bottomWireLeft" x1="100" y1="300" x2="300" y2="300" />
+
+    <!-- Diode wires (Column 2) – persist (will remain blue after opening until charges vanish) -->
+    <line class="circuit vertical persist" id="diodeWireTop" x1="300" y1="100" x2="300" y2="170" />
+    <line class="circuit vertical persist" id="diodeWireBottom" x1="300" y1="230" x2="300" y2="300" />
+
+    <!-- Capacitor wires (Column 3) – persist -->
+    <line class="circuit vertical persist" id="capacitorWireTop" x1="500" y1="100" x2="500" y2="185" />
+    <line class="circuit vertical persist" id="capacitorWireBottom" x1="500" y1="215" x2="500" y2="300" />
+
+    <!-- Horizontal wires on the diode/capacitor side – persist -->
+    <line class="circuit horizontal persist" id="topWireRight" x1="190" y1="100" x2="500" y2="100" />
+    <line class="circuit horizontal persist" id="bottomWireRight" x1="300" y1="300" x2="500" y2="300" />
+
+    <!-- Components (drawn as fixed black elements) -->
+    <!-- Battery (Voltage Source) plates; they are connected to the circuit wires -->
+    <line class="component" id="batteryPlateLong" x1="80" y1="185" x2="120" y2="185" />
+    <line class="component" id="batteryPlateShort" x1="90" y1="215" x2="110" y2="215" />
+
+    <!-- Diode (drawn in the gap of the diode wires) -->
+    <polygon class="component" id="diodeShape" points="290,170 310,170 300,230" />
+    <line class="component" id="diodeCathode" x1="293" y1="230" x2="307" y2="230" />
+
+    <!-- Capacitor (drawn in the gap of the capacitor wires) -->
+    <line class="component" id="capacitorPlateTop" x1="480" y1="185" x2="520" y2="185" />
+    <line class="component" id="capacitorPlateBottom" x1="480" y1="215" x2="520" y2="215" />
+
+    <!-- Switch on the top horizontal wire between battery and diode/capacitor -->
+    <g id="switch" cursor="pointer">
+      <!-- Left fixed contact -->
+      <circle class="switch-dot" cx="130" cy="100" r="4" />
+      <!-- Right movable contact -->
+      <circle class="switch-dot" cx="190" cy="100" r="4" />
+      <!-- Closed state connection: becomes blue dashed when active (initially hidden) -->
+      <line id="switchClosedLine" class="switch-line" x1="130" y1="100" x2="190" y2="100" style="display: none;" />
+      <!-- Open state: tilted line from right contact -->
+      <line id="switchOpenLine" class="switch-line" x1="190" y1="100" x2="230" y2="70" />
+    </g>
+  </svg>
+
+  <script>
+    const svg = document.getElementById('circuit');
+    const switchGroup = document.getElementById('switch');
+    const switchOpenLine = document.getElementById('switchOpenLine');
+    const switchClosedLine = document.getElementById('switchClosedLine');
+
+    // Select circuit wires: immediate wires (non-persist) and persist wires (diode/capacitor and their horizontals)
+    const immediateWires = document.querySelectorAll('.circuit:not(.persist)');
+    const persistWires = document.querySelectorAll('.circuit.persist');
+    const allCircuitWires = document.querySelectorAll('.circuit');
+
+    let isClosed = false;
+    let isAnimating = false; // prevents rapid toggling
+    const numCharges = 5;
+    const chargeDelay = 500; // milliseconds delay between each charge appearance/disappearance
+    let capacitorChargePairs = [];
+    let chargeTimers = [];
+    let removalTimers = [];
+
+    // Add capacitor charges one pair at a time when closing the switch.
+    // Top charges are positive (red) and bottom charges are negative (blue).
+    function addCapacitorCharges() {
+      capacitorChargePairs = []; // reset
+      for (let i = 0; i < numCharges; i++) {
+        const timer = setTimeout(() => {
+          const ns = "http://www.w3.org/2000/svg";
+          // Calculate an x-position evenly spaced along the capacitor plate (from 480 to 520)
+          const xPos = 480 + (i + 0.5) * ((520 - 480) / numCharges);
+          // Create top charge (positive) in red
+          let topCharge = document.createElementNS(ns, "text");
+          topCharge.setAttribute("x", xPos);
+          topCharge.setAttribute("y", 185 - 5); // just above the top plate
+          topCharge.textContent = "+";
+          topCharge.setAttribute("fill", "red");
+          topCharge.setAttribute("font-size", "16");
+          topCharge.setAttribute("text-anchor", "middle");
+          // Create bottom charge (negative) in blue
+          let bottomCharge = document.createElementNS(ns, "text");
+          bottomCharge.setAttribute("x", xPos);
+          bottomCharge.setAttribute("y", 215 + 16); // just below the bottom plate
+          bottomCharge.textContent = "−";
+          bottomCharge.setAttribute("fill", "blue");
+          bottomCharge.setAttribute("font-size", "16");
+          bottomCharge.setAttribute("text-anchor", "middle");
+          // Append the charges to the SVG
+          svg.appendChild(topCharge);
+          svg.appendChild(bottomCharge);
+          capacitorChargePairs.push({ top: topCharge, bottom: bottomCharge });
+        }, i * chargeDelay);
+        chargeTimers.push(timer);
+      }
+    }
+
+    // Remove capacitor charges one pair at a time when opening the switch.
+    // Once all charges are removed, invoke the callback.
+    function removeCapacitorCharges(callback) {
+      const total = capacitorChargePairs.length;
+      for (let i = 0; i < total; i++) {
+        const timer = setTimeout(() => {
+          if (capacitorChargePairs.length > 0) {
+            let pair = capacitorChargePairs.shift();
+            pair.top.remove();
+            pair.bottom.remove();
+          }
+          if (i === total - 1 && callback) {
+            callback();
+          }
+        }, i * chargeDelay);
+        removalTimers.push(timer);
+      }
+    }
+
+    // Toggle the switch on click.
+    switchGroup.addEventListener('click', () => {
+      if (isAnimating) return;
+      isAnimating = true;
+      if (!isClosed) {
+        // Closing the switch:
+        isClosed = true;
+        // Set all circuit wires to active (blue dashed)
+        allCircuitWires.forEach(wire => wire.classList.add("active"));
+        // Change the switch appearance: hide the open (tilted) line and show the closed connection as blue dashed.
+        switchOpenLine.style.display = "none";
+        switchClosedLine.style.display = "block";
+        switchClosedLine.classList.add("active");
+        // Begin sequentially adding capacitor charges.
+        addCapacitorCharges();
+        setTimeout(() => {
+          isAnimating = false;
+        }, numCharges * chargeDelay);
+      } else {
+        // Opening the switch:
+        isClosed = false;
+        // Immediately revert the non-persist (battery) wires to black.
+        immediateWires.forEach(wire => wire.classList.remove("active"));
+        // Update the switch: show the open (tilted) line and hide the closed connection.
+        switchClosedLine.style.display = "none";
+        switchClosedLine.classList.remove("active");
+        switchOpenLine.style.display = "block";
+        // Begin sequentially removing capacitor charges.
+        removeCapacitorCharges(() => {
+          // Once all charges are removed, revert the persist wires (diode/capacitor and their connecting horizontals) to black.
+          persistWires.forEach(wire => wire.classList.remove("active"));
+          isAnimating = false;
+        });
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Trade Wise</title>
+  <!-- Cedarville Cursive font -->
+  <link href="https://fonts.googleapis.com/css2?family=Cedarville+Cursive&display=swap" rel="stylesheet">
+  <style>
+    /* Fullscreen background */
+    body, html {
+      margin: 0; padding: 0;
+      height: 100%; width: 100%;
+      background: url("https://images.pexels.com/photos/945982/pexels-photo-945982.jpeg") no-repeat center center fixed;
+      background-size: cover;
+      font-family: Arial, sans-serif;
+      color: white;
+    }
+    /* Auth container */
+    #auth-container {
+      display: flex; justify-content: center; align-items: center;
+      height: 100vh; width: 100%;
+    }
+    form {
+      display: none; flex-direction: column;
+      width: 300px; padding: 30px;
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(10px);
+      border: 2px solid white;
+      border-radius: 24px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      color: #fff;
+    }
+    form.active { display: flex; }
+    form h2 { margin-top: 0; text-align: center; color: #fff; }
+    form label { margin-top: 10px; font-size: 0.9em; }
+    form input[type="text"], form input[type="password"] {
+      margin: 6px 0; padding: 12px 16px;
+      border: 1px solid rgba(255,255,255,0.7);
+      border-radius: 24px;
+      background: rgba(255,255,255,0.3);
+      color: #fff;
+    }
+    form input::placeholder { color: #eee; }
+    form button#signup-btn, form button#login-btn {
+      margin: 20px auto 0;
+      padding: 10px 0; width: 140px;
+      background: transparent; border: 2px solid rgba(255,255,255,0.8);
+      border-radius: 24px; color: #fff; font-weight: bold;
+      cursor: pointer; transition: background 0.3s, box-shadow 0.3s;
+    }
+    form button#signup-btn:hover, form button#login-btn:hover {
+      background: rgba(255,255,255,0.3);
+      box-shadow: 0 0 10px rgba(255,255,255,0.6);
+    }
+    form .toggle-link {
+      margin-top: 12px; text-align: center; font-size: 0.9em; color: #ddd;
+    }
+    form .toggle-link a {
+      color: #fff; text-decoration: underline; cursor: pointer;
+    }
+    .pic-upload { display: flex; justify-content: center; margin-top: 10px; }
+    .pic-label {
+      width: 100px; height: 100px; border-radius: 50%;
+      border: 2px dashed rgba(255,255,255,0.7);
+      display: flex; align-items: center; justify-content: center;
+      color: #eee; cursor: pointer;
+      background-size: cover; background-position: center;
+    }
+
+    /* Dashboard */
+    #dashboard { display: none; height: 100vh; display: flex; background: #000; color: #fff; }
+    .sidebar {
+      width: 200px; background: #000; color: white;
+      display: flex; flex-direction: column; padding-top: 20px;
+    }
+    .sidebar .logo {
+      font-family: 'Cedarville Cursive', cursive;
+      font-size: 2em; text-align: center; margin-bottom: 20px;
+    }
+    .sidebar button {
+      background: none; border: none; color: white;
+      padding: 12px 20px; text-align: left; cursor: pointer; font-size: 1em;
+    }
+    .sidebar button:hover, .sidebar button.active { background: #222; }
+    .content {
+      flex-grow: 1; padding: 20px;
+      background: #000; color: #fff;
+      display: flex; flex-direction: column;
+    }
+    .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .welcome { font-size: 1.2em; }
+    .profile { position: relative; cursor: pointer; }
+    .profile-pic {
+      width: 40px; height: 40px; border-radius: 50%;
+      object-fit: cover; border: 2px solid #fff;
+    }
+    .profile-menu {
+      position: absolute; right: 0; top: 50px;
+      background: #000; border: 1px solid #444;
+      border-radius: 8px; display: none; min-width: 120px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+    .profile-menu button {
+      width: 100%; padding: 10px; border: none; background: none;
+      color: #fff; text-align: left; cursor: pointer;
+    }
+    .profile-menu button:hover { background: #222; }
+
+    /* Filters */
+    .filters { display: flex; gap: 10px; margin-bottom: 20px; }
+    .filters input[type="text"], .filters select {
+      padding: 8px; border: 1px solid #666; border-radius: 24px;
+      flex: 1; background: #111; color: #fff;
+    }
+    .filters input::placeholder { color: #ccc; }
+    .filters button {
+      padding: 8px 12px; background: #28a745; color: white;
+      border: none; border-radius: 24px; cursor: pointer;
+    }
+    .filters button:hover { background: #218838; }
+
+    /* Cards */
+    .cards { display: grid; grid-template-columns: repeat(auto-fill,minmax(200px,1fr)); gap: 16px; }
+    .card {
+      position: relative; border: 2px solid white; border-radius: 8px;
+      background: transparent; color: #fff; cursor: pointer;
+      overflow: hidden;
+    }
+    .card-img {
+      width: 100%; height: 150px; background-size: cover; background-position: center;
+    }
+    .card-name { padding: 8px; font-weight: bold; text-align: center; }
+    .save-icon {
+      position: absolute; top: 8px; right: 8px;
+      font-size: 1.4em; color: #f00; cursor: pointer; user-select: none;
+    }
+
+    /* Modals */
+    .modal {
+      display: none; position: fixed; left: 0; top: 0;
+      width: 100%; height: 100%; overflow: auto;
+      background: rgba(0,0,0,0.5);
+      justify-content: center; align-items: center;
+      z-index: 1000;
+    }
+    #product-modal { z-index: 1100; } /* above detail */
+    .modal-content, .modal-content-large {
+      background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);
+      border: 2px solid #fff; border-radius: 8px; position: relative;
+      color: #fff;
+    }
+    .modal-content { width: 400px; padding: 20px; }
+    .modal-content-large { width: 70%; max-width: 900px; padding: 20px; }
+    .modal-content h2, .modal-content-large h2 {
+      margin-top: 0; text-align: center;
+    }
+    .modal-content label {
+      display: block; margin-top: 10px; font-weight: bold;
+    }
+    .modal-content input[type="file"], .modal-content input[type="text"],
+    .modal-content select, .modal-content textarea,
+    .modal-content input[type="number"] {
+      width: 100%; margin: 6px 0; padding: 8px;
+      border: 1px solid #666; border-radius: 24px;
+      background: #111; color: #fff;
+    }
+    .modal-content textarea { resize: vertical; height: 80px; }
+    .modal-content button, .modal-content-large button {
+      margin-top: 12px; padding: 10px;
+      border-radius: 24px; cursor: pointer;
+    }
+    .modal-content button:hover, .modal-content-large button:hover {
+      background: #218838;
+    }
+    .close {
+      position: absolute; top: 8px; right: 12px;
+      font-size: 1.2em; cursor: pointer; color: #fff;
+    }
+
+    /* Detail Modal layout */
+    #detail-modal .modal-content-large {
+      display: flex; flex-direction: column;
+    }
+    #detail-modal .detail-container {
+      display: flex; gap: 20px;
+    }
+    .detail-images {
+      flex: 1; overflow-y: auto; max-height: 70vh;
+    }
+    .detail-images img {
+      width: 100%; margin-bottom: 10px; border-radius: 4px;
+    }
+    .detail-info {
+      flex: 1; display: flex; flex-direction: column;
+    }
+    .detail-info label {
+      font-weight: bold; margin-top: 10px;
+    }
+    .detail-info h2, .detail-info p, .detail-info #detail-date {
+      margin: 4px 0;
+    }
+    .owner-info {
+      display: flex; align-items: center; gap: 10px; margin: 10px 0;
+    }
+    .owner-pic {
+      width: 50px; height: 50px; border-radius: 50%;
+      object-fit: cover; border: 2px solid #fff;
+    }
+    /* Set Bid button */
+    #detail-bid-btn {
+      margin-top: 20px; align-self: center;
+      background: transparent; border: 2px solid #fff;
+      color: #fff; border-radius: 24px; padding: 10px 20px;
+      cursor: pointer; transition: background 0.3s, box-shadow 0.3s;
+    }
+    #detail-bid-btn:hover {
+      background: rgba(255,255,255,0.2);
+      box-shadow: 0 0 10px rgba(255,255,255,0.6);
+    }
+    #detail-bid-btn:disabled {
+      background: #333; border-color: #555; cursor: default;
+    }
+
+    /* Bids as cards grid */
+    #detail-bids {
+      margin-top: 10px;
+    }
+    #detail-bids .bids-container {
+      display: grid; grid-template-columns: repeat(3,1fr); gap: 10px;
+    }
+    #detail-bids .bid-card {
+      border: 2px solid #fff;
+      background: rgba(255,255,255,0.1);
+      border-radius: 8px; padding: 8px;
+      text-align: center;
+    }
+    #detail-bids .bid-user { font-weight: bold; }
+    #detail-bids .bid-amount { margin-top: 4px; }
+    #bid-submit {
+    display: block;
+    margin: 0 auto;
+    padding: 8px 16px;
+    background: transparent;
+    border: 2px solid #ccc;
+    border-radius: 24px;
+    cursor: pointer;
+    transition: box-shadow 0.3s ease;
+}
+
+#bid-submit:hover {
+    background: rgba(255,255,255,0.2);
+      box-shadow: 0 0 10px rgba(255,255,255,0.6);
+}
+  </style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth-container">
+  <!-- Sign Up Form -->
+  <form id="signup-form">
+    <h2>Sign Up</h2>
+    <label>Profile Picture</label>
+    <div class="pic-upload">
+      <input type="file" id="signup-pic" accept="image/*" hidden required />
+      <label for="signup-pic" class="pic-label" id="pic-label">Upload</label>
+    </div>
+    <label>Name</label>
+    <input type="text" id="signup-name" placeholder="Name" required />
+    <label>User ID</label>
+    <input type="text" id="signup-id" placeholder="User ID" required />
+    <label>Password</label>
+    <input type="password" id="signup-password" placeholder="Password" required />
+    <button type="button" id="signup-btn">Sign Up</button>
+    <div class="toggle-link">Already have an account? <a id="to-login">Log in</a></div>
+  </form>
+
+  <!-- Log In Form -->
+  <form id="login-form" class="active">
+    <h2>Log In</h2>
+    <label>User ID</label>
+    <input type="text" id="login-id" placeholder="User ID" required />
+    <label>Password</label>
+    <input type="password" id="login-password" placeholder="Password" required />
+    <button type="button" id="login-btn">Log In</button>
+    <div class="toggle-link">Don't have an account? <a id="to-signup">Sign up</a></div>
+  </form>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <div class="sidebar">
+    <div class="logo">Trade Wise</div>
+    <button id="all-products-btn" class="active">All Products</button>
+    <button id="my-products-btn">My Products</button>
+    <button id="saved-btn">Saved</button>
+  </div>
+  <div class="content">
+    <div class="top-bar">
+      <div class="welcome" id="welcome-msg"></div>
+      <div class="profile" id="profile">
+        <img src="" id="profile-pic" class="profile-pic" />
+        <div class="profile-menu" id="profile-menu">
+          <button id="logout-btn">Logout</button>
+        </div>
+      </div>
+    </div>
+    <div id="content-area"></div>
+  </div>
+</div>
+
+<!-- ADD / EDIT PRODUCT MODAL -->
+<div id="product-modal" class="modal">
+  <div class="modal-content">
+    <span class="close" id="modal-close">&times;</span>
+    <h2 id="product-modal-title">Add Product</h2>
+    <label>Pictures</label>
+    <input type="file" id="product-pics" accept="image/*" multiple />
+    <label>Product Name</label>
+    <input type="text" id="product-name" placeholder="Product Name" />
+    <label>Category</label>
+    <select id="product-category">
+      <option value="">Select Category</option>
+      <option>Mobiles</option><option>Vehicles</option><option>Property</option><option>Electronics</option>
+      <option>Services</option><option>Jobs</option><option>Animals</option><option>Furniture</option>
+      <option>Fashion</option><option>Books</option>
+    </select>
+    <label>Description</label>
+    <textarea id="product-desc" placeholder="Description"></textarea>
+    <button id="add-prod-btn">Add</button>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div id="detail-modal" class="modal">
+  <div class="modal-content-large">
+    <span class="close" id="detail-close">&times;</span>
+    <div class="detail-container">
+      <div class="detail-images" id="detail-images"></div>
+      <div class="detail-info">
+        <label>Name</label>
+        <h2 id="detail-name"></h2>
+        <label>Description</label>
+        <p id="detail-desc"></p>
+        <label>Owner</label>
+        <div class="owner-info">
+          <img id="detail-owner-pic" class="owner-pic" />
+          <span id="detail-owner-name"></span>
+        </div>
+        <label>Date Uploaded</label>
+        <div id="detail-date"></div>
+        <label>Top Bids</label>
+        <div id="detail-bids"></div>
+        <div>
+          <span class="edit-icon" id="detail-edit">&#9998;</span>
+          <span class="delete-icon" id="detail-delete">&#128465;</span>
+        </div>
+        <button id="detail-bid-btn">Set Bid</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BID MODAL -->
+<div id="bid-modal" class="modal">
+  <div class="modal-content">
+    <span class="close" id="bid-close">&times;</span>
+    <h2>Place a Bid</h2>
+    <label>Amount</label>
+    <input type="number" id="bid-amount" placeholder="Enter your bid amount" />
+    <button id="bid-submit">Submit Bid</button>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // INITIALIZE STORAGE
+  if (!localStorage.getItem('tradeWiseUsers'))
+    localStorage.setItem('tradeWiseUsers', JSON.stringify([]));
+  if (!localStorage.getItem('tradeWiseProducts'))
+    localStorage.setItem('tradeWiseProducts', JSON.stringify([]));
+
+  // AUTH ELEMENTS
+  const signupForm = document.getElementById('signup-form'),
+        loginForm  = document.getElementById('login-form'),
+        authC      = document.getElementById('auth-container'),
+        dash       = document.getElementById('dashboard'),
+        signupBtn  = document.getElementById('signup-btn'),
+        loginBtn   = document.getElementById('login-btn'),
+        toLogin    = document.getElementById('to-login'),
+        toSignup   = document.getElementById('to-signup');
+  let currentUser = null;
+
+  // SIGNUP IMAGE PREVIEW
+  const picInput = document.getElementById('signup-pic'),
+        picLabel = document.getElementById('pic-label');
+  picInput.addEventListener('change', function(){
+    if (!this.files[0]) return;
+    const r = new FileReader();
+    r.onload = ()=>{ picLabel.style.backgroundImage=`url(${r.result})`; picLabel.textContent=''; };
+    r.readAsDataURL(this.files[0]);
+  });
+
+  // TOGGLE FORMS
+  function showSignup(){ signupForm.classList.add('active'); loginForm.classList.remove('active'); }
+  function showLogin() { signupForm.classList.remove('active'); loginForm.classList.add('active'); }
+  toLogin.addEventListener('click', showLogin);
+  toSignup.addEventListener('click', showSignup);
+
+  // SIGNUP
+  signupBtn.addEventListener('click', () => {
+    let name = document.getElementById('signup-name').value.trim(),
+        id   = document.getElementById('signup-id').value.trim(),
+        pw   = document.getElementById('signup-password').value;
+    if (!picInput.files[0]) { alert('Select a picture'); return; }
+    if (!name||!id||!pw) { alert('Fill all fields'); return; }
+    let users = JSON.parse(localStorage.getItem('tradeWiseUsers'));
+    if (users.some(u=>u.id===id)) { alert('ID taken'); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      users.push({id,name,password:pw,pic:reader.result});
+      localStorage.setItem('tradeWiseUsers',JSON.stringify(users));
+      alert('Signup successful! Log in.');
+      signupForm.reset(); picLabel.style.backgroundImage=''; picLabel.textContent='Upload';
+      showLogin();
+    };
+    reader.readAsDataURL(picInput.files[0]);
+  });
+
+  // LOGIN
+  loginBtn.addEventListener('click', () => {
+    let id=document.getElementById('login-id').value.trim(),
+        pw=document.getElementById('login-password').value,
+        users=JSON.parse(localStorage.getItem('tradeWiseUsers')),
+        u=users.find(x=>x.id===id&&x.password===pw);
+    if (!u){ alert('Invalid credentials'); return; }
+    currentUser=u; loginForm.reset(); showDashboard();
+  });
+
+  // SHOW DASHBOARD
+  function showDashboard(){
+    authC.style.display='none'; dash.style.display='flex';
+    document.getElementById('welcome-msg').textContent=`Welcome, ${currentUser.name}!`;
+    document.getElementById('profile-pic').src=currentUser.pic;
+    loadSection('all');
+  }
+
+  // PROFILE & LOGOUT
+  const prof = document.getElementById('profile'),
+        pmenu= document.getElementById('profile-menu');
+  prof.addEventListener('click', ()=>pmenu.style.display=pmenu.style.display==='block'?'none':'block');
+  document.getElementById('logout-btn').addEventListener('click', ()=>{
+    currentUser=null; dash.style.display='none'; authC.style.display='flex'; showLogin();
+  });
+  document.addEventListener('click', e=>{ if(!prof.contains(e.target)) pmenu.style.display='none'; });
+
+  // SIDEBAR
+  document.getElementById('all-products-btn').addEventListener('click', ()=>loadSection('all'));
+  document.getElementById('my-products-btn').addEventListener('click', ()=>loadSection('my'));
+  document.getElementById('saved-btn').addEventListener('click', ()=>loadSection('saved'));
+
+  // MODAL ELEMENTS
+  const productModal    = document.getElementById('product-modal'),
+        prodTitle       = document.getElementById('product-modal-title'),
+        closeProd       = document.getElementById('modal-close'),
+        addProdBtn      = document.getElementById('add-prod-btn'),
+        inpPics         = document.getElementById('product-pics'),
+        inpName         = document.getElementById('product-name'),
+        inpCat          = document.getElementById('product-category'),
+        inpDesc         = document.getElementById('product-desc');
+
+  const detailModal     = document.getElementById('detail-modal'),
+        closeDetail     = document.getElementById('detail-close'),
+        dimgs           = document.getElementById('detail-images'),
+        dname           = document.getElementById('detail-name'),
+        ddesc           = document.getElementById('detail-desc'),
+        downerPic       = document.getElementById('detail-owner-pic'),
+        downerName      = document.getElementById('detail-owner-name'),
+        ddate           = document.getElementById('detail-date'),
+        dbidBtn         = document.getElementById('detail-bid-btn'),
+        deditIcon       = document.getElementById('detail-edit'),
+        ddelIcon        = document.getElementById('detail-delete'),
+        dbids           = document.getElementById('detail-bids');
+
+  const bidModal        = document.getElementById('bid-modal'),
+        closeBid        = document.getElementById('bid-close'),
+        bidAmtInput     = document.getElementById('bid-amount'),
+        bidSubmit       = document.getElementById('bid-submit');
+
+  let currentSection = 'all',
+      editMode       = false,
+      editingProdId  = null,
+      currentDetailProduct = null;
+
+  // CLOSE MODALS
+  closeProd.addEventListener('click', ()=>{ productModal.style.display='none'; resetProdModal(); });
+  window.addEventListener('click', e=>{ if(e.target===productModal){ productModal.style.display='none'; resetProdModal(); } });
+  closeDetail.addEventListener('click', ()=> detailModal.style.display='none' );
+  window.addEventListener('click', e=>{ if(e.target===detailModal) detailModal.style.display='none'; });
+  closeBid.addEventListener('click', ()=> bidModal.style.display='none' );
+  window.addEventListener('click', e=>{ if(e.target===bidModal) bidModal.style.display='none'; });
+
+  // LOAD SECTION
+  function loadSection(type){
+    currentSection = type;
+    document.querySelectorAll('.sidebar button').forEach(b=>b.classList.remove('active'));
+    document.getElementById({all:'all-products-btn',my:'my-products-btn',saved:'saved-btn'}[type])
+      .classList.add('active');
+    const filters = `
+      <div class="filters">
+        <input type="text" id="filter-search" placeholder="Search..."/>
+        <select id="filter-cat">
+          <option value="">All Categories</option>
+          <option>Mobiles</option><option>Vehicles</option><option>Property</option><option>Electronics</option>
+          <option>Services</option><option>Jobs</option><option>Animals</option><option>Furniture</option>
+          <option>Fashion</option><option>Books</option>
+        </select>
+        ${type==='my'?'<button id="open-add-btn">Add Products</button>':''}
+      </div>
+      <div class="cards" id="cards-container"></div>
+    `;
+    document.getElementById('content-area').innerHTML = filters;
+    document.getElementById('filter-search').addEventListener('input', ()=>renderCards(type));
+    document.getElementById('filter-cat').addEventListener('change', ()=>renderCards(type));
+    if(type==='my'){
+      document.getElementById('open-add-btn').addEventListener('click', ()=>openProdModal());
+    }
+    renderCards(type);
+  }
+
+  // RENDER CARDS
+  function renderCards(type){
+    const all = JSON.parse(localStorage.getItem('tradeWiseProducts'));
+    const sVal = document.getElementById('filter-search').value.toLowerCase();
+    const cVal = document.getElementById('filter-cat').value;
+    const filtered = all.filter(p=>{
+      if(type==='my' && p.ownerId!==currentUser.id) return false;
+      if(type==='saved' && !p.savedBy.includes(currentUser.id)) return false;
+      if(sVal && !p.name.toLowerCase().includes(sVal)) return false;
+      if(cVal && p.category!==cVal) return false;
+      return true;
+    });
+    const cont = document.getElementById('cards-container'); cont.innerHTML='';
+    filtered.forEach(p=>{
+      const card = document.createElement('div'); card.className='card';
+      card.innerHTML=`
+        <div class="card-img" style="background-image:url(${p.pics[0]})"></div>
+        <div class="card-name">${p.name}</div>
+        <div class="save-icon">${p.savedBy.includes(currentUser.id)?'♥':'♡'}</div>
+      `;
+      // save toggle
+      card.querySelector('.save-icon').addEventListener('click', e=>{
+        e.stopPropagation();
+        let arr=JSON.parse(localStorage.getItem('tradeWiseProducts'));
+        let prod=arr.find(x=>x.id===p.id);
+        if(prod.savedBy.includes(currentUser.id))
+          prod.savedBy=prod.savedBy.filter(u=>u!==currentUser.id);
+        else
+          prod.savedBy.push(currentUser.id);
+        localStorage.setItem('tradeWiseProducts',JSON.stringify(arr));
+        renderCards(type);
+      });
+      // open detail
+      card.addEventListener('click', ()=>openDetail(p));
+      cont.appendChild(card);
+    });
+  }
+
+  // OPEN DETAIL
+  function openDetail(p){
+    currentDetailProduct = p;
+    // images
+    dimgs.innerHTML=''; p.pics.forEach(src=>{
+      let img=document.createElement('img'); img.src=src; dimgs.appendChild(img);
+    });
+    // text
+    dname.textContent = p.name;
+    ddesc.textContent = p.description;
+    let owner = JSON.parse(localStorage.getItem('tradeWiseUsers')).find(u=>u.id===p.ownerId);
+    downerPic.src = owner.pic; downerName.textContent=owner.name;
+    ddate.textContent = new Date(p.createdAt).toLocaleString();
+    // bids as cards
+    const bids = (p.bids||[]).slice().sort((a,b)=>b.amount-a.amount).slice(0,5);
+    dbids.innerHTML = '';
+    if(!bids.length){
+      dbids.textContent = 'No bids yet.';
+    } else {
+      const container = document.createElement('div');
+      container.className = 'bids-container';
+      bids.forEach(b=>{
+        let user = JSON.parse(localStorage.getItem('tradeWiseUsers')).find(u=>u.id===b.userId);
+        const card = document.createElement('div');
+        card.className = 'bid-card';
+        card.innerHTML = `
+          <div class="bid-user">${user.name}</div>
+          <div class="bid-amount">$${b.amount}</div>
+        `;
+        container.appendChild(card);
+      });
+      dbids.appendChild(container);
+    }
+    // owner vs non-owner controls
+    if(p.ownerId===currentUser.id){
+      dbidBtn.style.display='none';
+      deditIcon.style.display='inline';
+      ddelIcon.style.display='inline';
+    } else {
+      dbidBtn.style.display='block';
+      dbidBtn.disabled=false;
+      dbidBtn.textContent='Set Bid';
+      deditIcon.style.display='none';
+      ddelIcon.style.display='none';
+    }
+    detailModal.style.display='flex';
+  }
+
+  // SET BID
+  dbidBtn.addEventListener('click', ()=>{
+    bidAmtInput.value = '';
+    bidModal.style.display='flex';
+  });
+  bidSubmit.addEventListener('click', ()=>{
+    const amt = parseInt(bidAmtInput.value);
+    if(isNaN(amt)||amt<=0){ alert('Enter a positive integer'); return; }
+    let arr = JSON.parse(localStorage.getItem('tradeWiseProducts'));
+    let prod = arr.find(x=>x.id===currentDetailProduct.id);
+    if(!prod.bids) prod.bids=[];
+    prod.bids.push({userId: currentUser.id, amount: amt, time: new Date().toISOString()});
+    localStorage.setItem('tradeWiseProducts', JSON.stringify(arr));
+    bidModal.style.display='none';
+    openDetail(prod);
+  });
+
+  // DELETE PRODUCT
+  ddelIcon.addEventListener('click', ()=>{
+    if(!confirm('Delete this product?')) return;
+    let arr = JSON.parse(localStorage.getItem('tradeWiseProducts'))
+               .filter(x=>x.id!==currentDetailProduct.id);
+    localStorage.setItem('tradeWiseProducts', JSON.stringify(arr));
+    detailModal.style.display='none';
+    loadSection('my');
+  });
+
+  // EDIT PRODUCT
+  deditIcon.addEventListener('click', ()=>{
+    editMode = true;
+    editingProdId = currentDetailProduct.id;
+    prodTitle.textContent = 'Edit Product';
+    addProdBtn.textContent = 'Save';
+    inpName.value = currentDetailProduct.name;
+    inpCat.value  = currentDetailProduct.category;
+    inpDesc.value = currentDetailProduct.description;
+    inpPics.value = '';
+    productModal.style.display = 'flex';
+  });
+
+  // OPEN PRODUCT MODAL
+  function openProdModal(){
+    editMode = false; editingProdId = null;
+    prodTitle.textContent = 'Add Product';
+    addProdBtn.textContent = 'Add';
+    inpName.value=''; inpCat.value=''; inpDesc.value=''; inpPics.value='';
+    productModal.style.display = 'flex';
+  }
+
+  // RESET PRODUCT MODAL
+  function resetProdModal(){
+    editMode=false; editingProdId=null;
+    inpName.value=''; inpCat.value=''; inpDesc.value=''; inpPics.value='';
+  }
+
+  // ADD / SAVE PRODUCT
+  addProdBtn.addEventListener('click', ()=>{
+    const files = Array.from(inpPics.files),
+          name  = inpName.value.trim(),
+          cat   = inpCat.value,
+          desc  = inpDesc.value.trim();
+    if(!name||!cat||!desc){ alert('Fill name, category, description'); return; }
+    const doSave = picsArray=>{
+      let arr = JSON.parse(localStorage.getItem('tradeWiseProducts'));
+      if(editMode){
+        let prod = arr.find(x=>x.id===editingProdId);
+        prod.name=name; prod.category=cat; prod.description=desc;
+        if(picsArray) prod.pics=picsArray;
+      } else {
+        const now = new Date().toISOString();
+        arr.push({
+          id:'p'+Date.now(),
+          ownerId:currentUser.id,
+          name, category:cat, description:desc,
+          pics:picsArray, savedBy:[], bids:[], createdAt:now
+        });
+      }
+      localStorage.setItem('tradeWiseProducts', JSON.stringify(arr));
+      productModal.style.display='none';
+      resetProdModal();
+      loadSection(currentSection);
+      if(editMode){
+        let updated = JSON.parse(localStorage.getItem('tradeWiseProducts'))
+                       .find(x=>x.id===editingProdId);
+        openDetail(updated);
+      }
+    };
+    if(files.length){
+      Promise.all(files.map(f=>new Promise(res=>{
+        let r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(f);
+      }))).then(images=>doSave(images));
+    } else {
+      if(editMode) doSave(null);
+      else alert('Select at least one image');
+    }
+  });
+
+});
+</script>
+
+</body>
+</html>

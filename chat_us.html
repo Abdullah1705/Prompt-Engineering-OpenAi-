@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Chat Us App</title>
+  <style>
+    /* Global & Responsive Styles */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      /* Main screen background image */
+      background: url('https://images.pexels.com/photos/5838215/pexels-photo-5838215.jpeg') no-repeat center center fixed;
+      background-size: cover;
+    }
+    
+    /* Authentication container styling */
+    #auth-container {
+      width: 350px; 
+      margin: 0;
+      position: absolute;
+      left: 50px; 
+      top: 50%;
+      transform: translateY(-50%); 
+      margin-top: -10px;
+      background-color: rgba(255, 255, 255, 0.5);
+      backdrop-filter: blur(10px);
+      border: 1px solid black;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    /* User Info Card Styles */
+.user-info-card {
+  position: absolute;
+  top: 70px;
+  left: 20px;
+  width: 300px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  z-index: 1000;
+  padding: 15px;
+  display: none;
+}
+
+.user-info-card img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  margin: 0 auto 10px;
+}
+
+.user-info-card h3 {
+  text-align: center;
+  margin: 0 0 10px;
+}
+
+.user-info-card p {
+  margin: 5px 0;
+  font-size: 14px;
+}
+
+.user-info-card .close-btn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+}
+    
+    
+    #auth-container h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    #auth-container input[type="text"],
+    #auth-container input[type="password"],
+    #auth-container input[type="number"],
+    #auth-container select,
+    #auth-container textarea {
+      width: 80%;
+      padding: 10px;
+      margin: 10px 0;
+      margin-left: 20px;
+      border: 1px solid #ddd;
+      border-radius: 24px;
+      margin-top: -2px;
+    }
+    
+    #auth-container input[type="file"] {
+      margin: 10px 0;
+      margin-left: 70px;
+    }
+    
+    #auth-container button {
+      width: 60%;
+      padding: 10px;
+      margin-left: 65px;
+      background-color: #4285f4;
+      color: #fff;
+      border: none;
+      border-radius: 24px;
+      cursor: pointer;
+    }
+    
+    #auth-container button:hover {
+      background-color: #357ae8;
+    }
+    
+    .error-message {
+      color: red;
+      font-size: 14px;
+      text-align: center;
+      margin-top: 10px;
+    }
+    
+    .switch-link {
+      text-align: center;
+      margin-top: 15px;
+    }
+    
+    .switch-link a {
+      color: #4285f4;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    
+    /* Dashboard styles */
+    #dashboard-container {
+      display: flex;
+      height: 100vh;
+    }
+    
+    #sidebar {
+      width: 250px;
+      background-color: #2c3e50;
+      color: #ecf0f1;
+      overflow-y: auto;
+    }
+    
+    #sidebar h2 {
+      text-align: center;
+      padding: 15px 0;
+      border-bottom: 1px solid #34495e;
+      margin: 0;
+    }
+    
+    #user-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    #user-list li {
+      padding: 15px 20px;
+      border-bottom: 1px solid #34495e;
+      cursor: pointer;
+    }
+    
+    #user-list li:hover {
+      background-color: #34495e;
+    }
+    
+    /* Chat area styles */
+    #chat-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      background: rgba(255,255,255,0.8);
+    }
+    
+    /* Chat header restructured:
+       Left: partner-container (will show clickable partner image if a conversation is selected)
+       Right: header-right contains the title "Chat Us" and the user menu */
+    #chat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px;
+      background-color: #fff;
+      border-bottom: 1px solid #ddd;
+      position: relative;
+    }
+    #partner-container img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    #header-right {
+      display: flex;
+      align-items: center;
+    }
+    #header-title {
+      margin-right: 15px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    
+    /* Chat history & message styling */
+    #chat-history {
+      flex: 1;
+      padding: 20px;
+      background-color: #f9f9f9;
+      overflow-y: auto;
+    }
+    
+    .message {
+      display: inline-block;
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 8px;
+      /* Limit message bubble width to about 55 characters per line */
+      max-width: 55ch;
+      word-wrap: break-word;
+      white-space: pre-wrap;
+      position: relative;
+    }
+    
+    .message.sent {
+      background-color: #4285f4;
+      color: #fff;
+      text-align: right;
+    }
+    
+    .message.received {
+      background-color: #e0e0e0;
+      color: #333;
+      text-align: left;
+    }
+    
+    .message .timestamp {
+      font-size: 10px;
+      display: block;
+      margin-top: 5px;
+      text-align: right;
+    }
+    
+    .message.sent .timestamp {
+      color: rgba(255,255,255,0.7);
+    }
+    
+    .message.received .timestamp {
+      color: #555;
+    }
+    
+    #chat-input {
+      background-color: #fff;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      border-top: 1px solid #ddd;
+    }
+    
+    #chat-input input[type="text"] {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    /* Hide default file input and use an attach icon instead */
+    #file-input {
+      display: none;
+    }
+    .attach-icon {
+      font-size: 24px;
+      margin-left: 10px;
+      cursor: pointer;
+    }
+    
+    #chat-input button {
+      margin-left: 10px;
+      padding: 10px 15px;
+      background-color: #4285f4;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    #chat-input button:hover {
+      background-color: #357ae8;
+    }
+    
+    /* Reduce size of images in chat messages */
+    img.chat-image {
+      max-width: 200px;
+      border-radius: 4px;
+    }
+    
+    video.chat-video {
+      max-width: 200px;
+      border-radius: 4px;
+    }
+    
+    /* User menu styles */
+    #user-menu {
+      position: relative;
+      cursor: pointer;
+    }
+    
+    #user-profile-img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    
+    #dropdown-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 50px;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      border-radius: 4px;
+      z-index: 1000;
+    }
+    
+    #dropdown-menu a {
+      display: block;
+      padding: 10px 15px;
+      text-decoration: none;
+      color: #333;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    #dropdown-menu a:last-child {
+      border-bottom: none;
+    }
+    
+    #dropdown-menu a:hover {
+      background-color: #f2f2f2;
+    }
+    
+    /* Settings container (placed in the chat area instead of a popup) */
+    #settings-container {
+      display: none;
+      padding: 20px;
+      overflow-y: auto;
+      background-color: #fff;
+      height: calc(100% - 60px); /* subtract header height */
+    }
+    
+    #settings-container h2 {
+      text-align: center;
+      margin-top: 0;
+    }
+    
+    #settings-container div {
+      margin-bottom: 10px;
+    }
+    
+    #settings-container label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 5px;
+      display: block; 
+      margin: 0 auto; 
+    }
+ 
+    #settings-container input[type="text"],
+    #settings-container input[type="password"],
+    #settings-container input[type="number"],
+    #settings-container select,
+    #settings-container textarea {
+      width: 50%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 24px;
+      display: block; 
+      margin: 0 auto; 
+    }
+    
+  
+    #settings-container textarea {
+      resize: vertical; 
+      min-height: 80px; 
+    }
+    
+   
+    #settings-container select {
+      height: 34px; 
+      display: block;
+      
+    }
+    
+    #settings-container input[type="file"] {
+      margin-top: 5px;
+      display: block;
+      margin-left: 400px;
+    }
+    #settings-container label {
+      display: block;
+      margin-right: 430px;
+      margin-bottom: 5px;
+      text-align: center; 
+      font-weight: bold;
+    }
+    
+    /* Reduce the profile image size in settings */
+    #current-profile-image {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      display: block;
+      margin: 10px auto;
+      border-radius: 50%;
+    }
+    
+    .button-group {
+      text-align: right;
+    }
+    
+    .button-group button {
+      padding: 10px 15px;
+      background-color: #4285f4;
+      color: #fff;
+      border: none;
+      border-radius: 24px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    
+    .button-group button:hover {
+      background-color: #357ae8;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      #dashboard-container {
+        flex-direction: column;
+      }
+      #sidebar {
+        width: 100%;
+        height: auto;
+      }
+      #chat-area {
+        height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Authentication Container -->
+  <div id="auth-container">
+    <!-- Login Form -->
+    <div id="login-form">
+      <h2>Login</h2>
+      <input type="text" id="login-username" placeholder="Username">
+      <input type="password" id="login-password" placeholder="Password">
+      <button id="login-submit">Login</button>
+      <div id="login-error" class="error-message"></div>
+      <div class="switch-link">
+        New here? <a href="#" id="show-signup-link">Sign up</a>
+      </div>
+    </div>
+    <!-- Signup Form -->
+    <div id="signup-form" style="display:none;">
+      <h2>Signup</h2>
+      <input type="text" id="signup-username" placeholder="Username">
+      <input type="password" id="signup-password" placeholder="Password">
+      <input type="text" id="signup-name" placeholder="Full Name">
+      <input type="number" id="signup-age" placeholder="Age">
+      <select id="signup-gender">
+        <option value="">Select Gender</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+        <option value="Other">Other</option>
+      </select>
+      <input type="text" id="signup-hobbies" placeholder="Hobbies (comma separated)">
+      <textarea id="signup-description" placeholder="Description"></textarea>
+      <input type="file" id="signup-image" accept="image/*">
+      <button id="signup-submit">Signup</button>
+      <div id="signup-error" class="error-message"></div>
+      <div class="switch-link">
+        Already have an account? <a href="#" id="show-login-link">Log in</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard Container -->
+  <div id="dashboard-container" style="display:none;">
+    <!-- Sidebar -->
+    <div id="sidebar">
+      <h2>Users</h2>
+      <ul id="user-list"></ul>
+    </div>
+    <!-- Chat Area -->
+    <div id="chat-area">
+      <div id="chat-header">
+        <!-- Left side: partner's clickable image (if a conversation is selected) -->
+        <div id="partner-container"></div>
+        <!-- Right side: header title and user menu -->
+        <div id="header-right">
+          <span id="header-title">Chat Us</span>
+          <div id="user-menu">
+            <img id="user-profile-img" src="data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D'40'%20height%3D'40'%20xmlns%3D'http%3A//www.w3.org/2000/svg'%3E%3Crect%20width%3D'40'%20height%3D'40'%20fill%3D'%23ccc'/%3E%3Ctext%20x%3D'20'%20y%3D'25'%20font-size%3D'20'%20text-anchor%3D'middle'%20fill%3D'%23666'%3EU%3C/text%3E%3C/svg%3E" alt="Profile">
+            <div id="dropdown-menu">
+              <a href="#" id="settings-option">Settings</a>
+              <a href="#" id="logout-option">Logout</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Settings Container (replaces chat view when open) -->
+      <div id="settings-container">
+        <h2>Settings</h2>
+        <div>
+          <label>Username:</label>
+          <input type="text" id="settings-username" placeholder="Username" disabled>
+        </div>
+        <div>
+          <label>Password:</label>
+          <input type="password" id="settings-password" placeholder="Password">
+        </div>
+        <div>
+          <label>Full Name:</label>
+          <input type="text" id="settings-name" placeholder="Full Name">
+        </div>
+        <div>
+          <label>Age:</label>
+          <input type="number" id="settings-age" placeholder="Age">
+        </div>
+        <div>
+          <label>Gender:</label>
+          <select id="settings-gender">
+            <option value="">Select Gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label>Hobbies:</label>
+          <input type="text" id="settings-hobbies" placeholder="Hobbies (comma separated)">
+        </div>
+        <div>
+          <label>Description:</label>
+          <textarea id="settings-description" placeholder="Description"></textarea>
+        </div>
+        <div>
+          <label>Current Profile Image:</label><br>
+          <img id="current-profile-image" src="" alt="Profile Image">
+        </div>
+        <div>
+          <label>Change Profile Image:</label>
+          <input type="file" id="settings-image" accept="image/*">
+        </div>
+        <div class="button-group">
+          <button id="save-settings">Save</button>
+          <button id="cancel-settings">Cancel</button>
+        </div>
+      </div>
+      
+      <!-- Chat History and Input (shown when settings are not open) -->
+      <div id="chat-history">Select a Chat</div>
+      <div id="chat-input">
+        <input type="text" id="message-input" placeholder="Type a message...">
+        <!-- Hidden file input with attach icon label -->
+        <input type="file" id="file-input">
+        <label for="file-input" class="attach-icon">📎</label>
+        <button id="send-btn">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Info Card -->
+<div id="user-info-card" class="user-info-card">
+  <button class="close-btn">&times;</button>
+  <img id="info-card-image" src="" alt="Profile Image">
+  <h3 id="info-card-name"></h3>
+  <p><strong>Username:</strong> <span id="info-card-username"></span></p>
+  <p><strong>Age:</strong> <span id="info-card-age"></span></p>
+  <p><strong>Gender:</strong> <span id="info-card-gender"></span></p>
+  <p><strong>Hobbies:</strong> <span id="info-card-hobbies"></span></p>
+  <p><strong>Description:</strong> <span id="info-card-description"></span></p>
+</div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      let currentUser = null;
+      let currentChatUser = null;
+      
+      // Utility functions to work with localStorage
+      function getUsers() {
+        let users = localStorage.getItem('chat_users');
+        return users ? JSON.parse(users) : {};
+      }
+      
+      function saveUsers(users) {
+        localStorage.setItem('chat_users', JSON.stringify(users));
+      }
+      
+      function getConversations() {
+        let convos = localStorage.getItem('chat_conversations');
+        return convos ? JSON.parse(convos) : {};
+      }
+      
+      function saveConversations(convos) {
+        localStorage.setItem('chat_conversations', JSON.stringify(convos));
+      }
+      
+      // Get a unique conversation id by sorting the usernames
+      function getConversationId(user1, user2) {
+        return [user1, user2].sort().join('_');
+      }
+      
+      // Switch between login and signup forms
+      const loginForm = document.getElementById('login-form');
+      const signupForm = document.getElementById('signup-form');
+      
+      document.getElementById('show-signup-link').addEventListener('click', function(e) {
+        e.preventDefault();
+        loginForm.style.display = 'none';
+        signupForm.style.display = 'block';
+        clearErrors();
+      });
+      
+      document.getElementById('show-login-link').addEventListener('click', function(e) {
+        e.preventDefault();
+        signupForm.style.display = 'none';
+        loginForm.style.display = 'block';
+        clearErrors();
+      });
+      
+      function clearErrors() {
+        document.getElementById('login-error').textContent = '';
+        document.getElementById('signup-error').textContent = '';
+      }
+      
+      // --- Handle Login ---
+      document.getElementById('login-submit').addEventListener('click', function() {
+        const username = document.getElementById('login-username').value.trim();
+        const password = document.getElementById('login-password').value;
+        const loginError = document.getElementById('login-error');
+        loginError.textContent = '';
+        
+        if (!username || !password) {
+          loginError.textContent = 'Please fill in all fields.';
+          return;
+        }
+        
+        let users = getUsers();
+        if (!users[username]) {
+          loginError.textContent = 'User does not exist.';
+          return;
+        }
+        if (users[username].password !== password) {
+          loginError.textContent = 'Incorrect password.';
+          return;
+        }
+        
+        // Successful login
+        currentUser = username;
+        showDashboard();
+      });
+      
+      // --- Handle Signup ---
+      document.getElementById('signup-submit').addEventListener('click', function() {
+        const username = document.getElementById('signup-username').value.trim();
+        const password = document.getElementById('signup-password').value;
+        const name = document.getElementById('signup-name').value.trim();
+        const age = document.getElementById('signup-age').value;
+        const gender = document.getElementById('signup-gender').value;
+        const hobbies = document.getElementById('signup-hobbies').value.trim();
+        const description = document.getElementById('signup-description').value.trim();
+        const imageInput = document.getElementById('signup-image');
+        const signupError = document.getElementById('signup-error');
+        signupError.textContent = '';
+        
+        if (!username || !password || !name || !age || !gender || !description) {
+          signupError.textContent = 'Please fill in all required fields.';
+          return;
+        }
+        
+        let users = getUsers();
+        if (users[username]) {
+          signupError.textContent = 'Username already exists.';
+          return;
+        }
+        
+        function createUser(imageData) {
+          // Save the new user but do not log in automatically.
+          users[username] = { 
+            password: password,
+            name: name,
+            age: age,
+            gender: gender,
+            hobbies: hobbies,
+            description: description,
+            image: imageData || ''
+          };
+          saveUsers(users);
+          alert('Signup successful! Please log in.');
+          // Clear signup form fields
+          document.getElementById('signup-username').value = '';
+          document.getElementById('signup-password').value = '';
+          document.getElementById('signup-name').value = '';
+          document.getElementById('signup-age').value = '';
+          document.getElementById('signup-gender').value = '';
+          document.getElementById('signup-hobbies').value = '';
+          document.getElementById('signup-description').value = '';
+          document.getElementById('signup-image').value = '';
+          signupForm.style.display = 'none';
+          loginForm.style.display = 'block';
+        }
+        
+        if (imageInput.files && imageInput.files[0]) {
+          const file = imageInput.files[0];
+          const reader = new FileReader();
+          reader.onload = function(event) {
+            createUser(event.target.result);
+          };
+          reader.readAsDataURL(file);
+        } else {
+          createUser('');
+        }
+      });
+      
+      // --- Show Dashboard ---
+      function showDashboard() {
+        document.getElementById('auth-container').style.display = 'none';
+        document.getElementById('dashboard-container').style.display = 'flex';
+        // When no conversation is selected, ensure partner container is empty
+        document.getElementById('partner-container').innerHTML = '';
+        // The header title always shows "Chat Us"
+        document.getElementById('header-title').textContent = "Chat Us";
+        document.getElementById('chat-history').innerHTML = 'Select a Chat';
+        // Ensure chat history and input are visible and settings hidden
+        document.getElementById('chat-history').style.display = 'block';
+        document.getElementById('chat-input').style.display = 'flex';
+        document.getElementById('settings-container').style.display = 'none';
+        updateUserList();
+        updateUserHeader();
+      }
+      
+      // Update user profile image in header (logged in user)
+      function updateUserHeader() {
+        const users = getUsers();
+        const userData = users[currentUser];
+        const userImg = document.getElementById('user-profile-img');
+        if(userData && userData.image) {
+          userImg.src = userData.image;
+        } else {
+          // Use default placeholder (already set in src attribute)
+          userImg.src = "data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D'40'%20height%3D'40'%20xmlns%3D'http%3A//www.w3.org/2000/svg'%3E%3Crect%20width%3D'40'%20height%3D'40'%20fill%3D'%23ccc'/%3E%3Ctext%20x%3D'20'%20y%3D'25'%20font-size%3D'20'%20text-anchor%3D'middle'%20fill%3D'%23666'%3EU%3C/text%3E%3C/svg%3E";
+        }
+      }
+      
+      // Populate the sidebar with registered users (except the current user)
+      function updateUserList() {
+        const userList = document.getElementById('user-list');
+        userList.innerHTML = '';
+        let users = getUsers();
+        for (let user in users) {
+          if (user === currentUser) continue; // Skip current user
+          const li = document.createElement('li');
+          li.textContent = user;
+          li.addEventListener('click', function() {
+            currentChatUser = user;
+            loadConversation();
+          });
+          userList.appendChild(li);
+        }
+      }
+      
+      // Load the conversation with the selected user and update header partner image
+      function loadConversation() {
+        const chatHistory = document.getElementById('chat-history');
+        chatHistory.innerHTML = '';
+        if (!currentChatUser) return;
+        
+        // Update the header partner container with the clickable image of the conversation partner
+        const partnerContainer = document.getElementById('partner-container');
+        partnerContainer.innerHTML = "";
+        let users = getUsers();
+        const partnerData = users[currentChatUser];
+        const partnerImg = document.createElement('img');
+        partnerImg.src = partnerData.image || "data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D'40'%20height%3D'40'%20xmlns%3D'http%3A//www.w3.org/2000/svg'%3E%3Crect%20width%3D'40'%20height%3D'40'%20fill%3D'%23ccc'/%3E%3Ctext%20x%3D'20'%20y%3D'25'%20font-size%3D'20'%20text-anchor%3D'middle'%20fill%3D'%23666'%3E?%3C/text%3E%3C/svg%3E";
+        partnerImg.addEventListener('click', function(e) {
+  e.stopPropagation(); // Prevent event from bubbling up
+  
+  // Get user data
+  const users = getUsers();
+  const partnerData = users[currentChatUser];
+  
+  // Populate the info card
+  const userInfoCard = document.getElementById('user-info-card');
+  document.getElementById('info-card-image').src = partnerData.image || "data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D'100'%20height%3D'100'%20xmlns%3D'http://www.w3.org/2000/svg'%3E%3Crect%20width%3D'100'%20height%3D'100'%20fill%3D'%23ccc'/%3E%3Ctext%20x%3D'50'%20y%3D'60'%20font-size%3D'40'%20text-anchor%3D'middle'%20fill%3D'%23666'%3E?%3C/text%3E%3C/svg%3E";
+  document.getElementById('info-card-name').textContent = partnerData.name;
+  document.getElementById('info-card-username').textContent = currentChatUser;
+  document.getElementById('info-card-age').textContent = partnerData.age;
+  document.getElementById('info-card-gender').textContent = partnerData.gender;
+  document.getElementById('info-card-hobbies').textContent = partnerData.hobbies || 'None specified';
+  document.getElementById('info-card-description').textContent = partnerData.description || 'No description';
+  
+  // Position and show the card
+  userInfoCard.style.display = 'block';
+});
+// Close card when clicking outside
+document.addEventListener('click', function(e) {
+  const userInfoCard = document.getElementById('user-info-card');
+  if (!userInfoCard.contains(e.target)) {
+    userInfoCard.style.display = 'none';
+  }
+});
+
+// Close button handler
+document.querySelector('.close-btn').addEventListener('click', function() {
+  document.getElementById('user-info-card').style.display = 'none';
+});
+        partnerContainer.appendChild(partnerImg);
+        
+        // Update header title if needed (we keep "Chat Us" on the right side)
+        document.getElementById('header-title').textContent = "Chat Us";
+        
+        let convos = getConversations();
+        const convoId = getConversationId(currentUser, currentChatUser);
+        const messages = convos[convoId] || [];
+        
+        messages.forEach(msg => {
+          // Create a wrapper to align the message bubble
+          const wrapper = document.createElement('div');
+          wrapper.style.textAlign = (msg.sender === currentUser) ? 'right' : 'left';
+          
+          const msgDiv = document.createElement('div');
+          msgDiv.classList.add('message');
+          if(msg.sender === currentUser) {
+            msgDiv.classList.add('sent');
+          } else {
+            msgDiv.classList.add('received');
+          }
+          
+          // Render based on message type
+          if (msg.type === 'text') {
+            msgDiv.textContent = msg.content;
+          } else if (msg.type === 'file') {
+            if (msg.fileType.startsWith('image/')) {
+              const img = document.createElement('img');
+              img.src = msg.content;
+              img.alt = msg.fileName;
+              img.classList.add('chat-image');
+              msgDiv.appendChild(img);
+            } else if (msg.fileType.startsWith('video/')) {
+              const video = document.createElement('video');
+              video.src = msg.content;
+              video.controls = true;
+              video.classList.add('chat-video');
+              msgDiv.appendChild(video);
+            } else {
+              const link = document.createElement('a');
+              link.href = msg.content;
+              link.textContent = msg.fileName;
+              link.download = msg.fileName;
+              msgDiv.appendChild(link);
+            }
+          }
+          
+          const timeSpan = document.createElement('span');
+          timeSpan.classList.add('timestamp');
+          const date = new Date(msg.timestamp);
+          timeSpan.textContent = date.toLocaleTimeString();
+          msgDiv.appendChild(timeSpan);
+          
+          wrapper.appendChild(msgDiv);
+          chatHistory.appendChild(wrapper);
+        });
+        
+        // Scroll to the bottom of the chat history
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+      }
+      
+      // --- Sending Text Messages ---
+      document.getElementById('send-btn').addEventListener('click', function() {
+        sendMessage();
+      });
+      
+      // Allow sending a message with the Enter key
+      document.getElementById('message-input').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+      
+      function sendMessage() {
+        const messageInput = document.getElementById('message-input');
+        const text = messageInput.value.trim();
+        if (!text || !currentChatUser) return;
+        
+        let convos = getConversations();
+        const convoId = getConversationId(currentUser, currentChatUser);
+        if (!convos[convoId]) {
+          convos[convoId] = [];
+        }
+        
+        const msg = {
+          sender: currentUser,
+          type: 'text',
+          content: text,
+          timestamp: Date.now()
+        };
+        
+        convos[convoId].push(msg);
+        saveConversations(convos);
+        messageInput.value = '';
+        loadConversation();
+      }
+      
+      // --- Sending File Messages (via attach icon) ---
+      document.getElementById('file-input').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file || !currentChatUser) return;
+        
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          let convos = getConversations();
+          const convoId = getConversationId(currentUser, currentChatUser);
+          if (!convos[convoId]) {
+            convos[convoId] = [];
+          }
+          
+          const msg = {
+            sender: currentUser,
+            type: 'file',
+            content: event.target.result, // Data URL of the file
+            fileName: file.name,
+            fileType: file.type,
+            timestamp: Date.now()
+          };
+          
+          convos[convoId].push(msg);
+          saveConversations(convos);
+          loadConversation();
+        };
+        reader.readAsDataURL(file);
+        // Reset the file input so the same file can be uploaded again if needed
+        e.target.value = "";
+      });
+      
+      // --- User Menu Dropdown ---
+      const userMenu = document.getElementById('user-menu');
+      const dropdownMenu = document.getElementById('dropdown-menu');
+      
+      userMenu.addEventListener('click', function(e) {
+        e.stopPropagation(); // Prevent event from bubbling up
+        dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+      });
+      
+      // Hide dropdown when clicking outside
+      document.addEventListener('click', function(e) {
+        if (dropdownMenu.style.display === 'block') {
+          dropdownMenu.style.display = 'none';
+        }
+      });
+      
+      // --- Logout Option ---
+      document.getElementById('logout-option').addEventListener('click', function(e) {
+        e.preventDefault();
+        logout();
+      });
+      
+      function logout() {
+        currentUser = null;
+        currentChatUser = null;
+        document.getElementById('auth-container').style.display = 'block';
+        document.getElementById('dashboard-container').style.display = 'none';
+        // Clear input fields
+        document.getElementById('login-username').value = '';
+        document.getElementById('login-password').value = '';
+      }
+      
+      // --- Settings Option ---
+      document.getElementById('settings-option').addEventListener('click', function(e) {
+        e.preventDefault();
+        openSettings();
+      });
+      
+      function openSettings() {
+        // Populate settings fields with current user's data
+        const users = getUsers();
+        const userData = users[currentUser];
+        document.getElementById('settings-username').value = currentUser;
+        document.getElementById('settings-password').value = userData.password;
+        document.getElementById('settings-name').value = userData.name;
+        document.getElementById('settings-age').value = userData.age;
+        document.getElementById('settings-gender').value = userData.gender;
+        document.getElementById('settings-hobbies').value = userData.hobbies;
+        document.getElementById('settings-description').value = userData.description;
+        document.getElementById('current-profile-image').src = userData.image || "data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D'100'%20height%3D'100'%20xmlns%3D'http://www.w3.org/2000/svg'%3E%3Crect%20width%3D'100'%20height%3D'100'%20fill%3D'%23ccc'/%3E%3Ctext%20x%3D'50'%20y%3D'60'%20font-size%3D'40'%20text-anchor%3D'middle'%20fill%3D'%23666'%3EU%3C/text%3E%3C/svg%3E";
+        // Hide chat history and chat input; show settings container
+        document.getElementById('chat-history').style.display = 'none';
+        document.getElementById('chat-input').style.display = 'none';
+        document.getElementById('settings-container').style.display = 'block';
+        dropdownMenu.style.display = 'none';
+      }
+      
+      // --- Settings Save/Cancel ---
+      document.getElementById('save-settings').addEventListener('click', function() {
+        // Update user data
+        let users = getUsers();
+        let userData = users[currentUser];
+        userData.password = document.getElementById('settings-password').value;
+        userData.name = document.getElementById('settings-name').value;
+        userData.age = document.getElementById('settings-age').value;
+        userData.gender = document.getElementById('settings-gender').value;
+        userData.hobbies = document.getElementById('settings-hobbies').value;
+        userData.description = document.getElementById('settings-description').value;
+        
+        // Check if a new image file is selected
+        const imageInput = document.getElementById('settings-image');
+        if(imageInput.files && imageInput.files[0]) {
+          const file = imageInput.files[0];
+          const reader = new FileReader();
+          reader.onload = function(event) {
+            userData.image = event.target.result;
+            saveUsers(users);
+            updateUserHeader();
+            closeSettings();
+          };
+          reader.readAsDataURL(file);
+        } else {
+          saveUsers(users);
+          updateUserHeader();
+          closeSettings();
+        }
+      });
+      
+      document.getElementById('cancel-settings').addEventListener('click', function() {
+        closeSettings();
+      });
+      
+      function closeSettings() {
+        document.getElementById('settings-container').style.display = 'none';
+        // Show chat history and chat input again
+        document.getElementById('chat-history').style.display = 'block';
+        document.getElementById('chat-input').style.display = 'flex';
+      }
+      
+    });
+
+  </script>
+
+
+
+</body>
+</html>

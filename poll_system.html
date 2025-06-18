@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Survey Dashboard</title>
+  <style>
+    /* Global Styles */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f0f2f5;
+      color: #333;
+    }
+    header {
+      background-color: #28a745;
+      color: #fff;
+      padding: 20px;
+      text-align: center;
+      font-size: 28px;
+      font-weight: bold;
+    }
+    .container {
+      padding: 20px;
+    }
+    /* Charts Row */
+    .charts-row {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 30px;
+    }
+    .chart-container {
+      background-color: #fff;
+      width: 380px;
+      height: 380px;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+    }
+    .chart-header {
+      display: flex;
+      justify-content: center; /* center title and icon */
+      align-items: center;
+      gap: 5px;
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .chart-header .edit-icon {
+      cursor: pointer;
+      font-size: 18px;
+      color: #888;
+      transition: color 0.2s;
+    }
+    .chart-header .edit-icon:hover {
+      color: #555;
+    }
+    .chart-container canvas {
+      flex: 1;
+    }
+    .chart-label {
+      text-align: center;
+      font-size: 14px;
+      color: #333;
+      margin-top: 5px;
+    }
+    /* Questions Container */
+    .questions-container {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 600px;
+      margin: 0 auto 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .questions-container h2 {
+      font-size: 20px;
+      margin-top: 0;
+      text-align: center;
+    }
+    ul#questionsList {
+      list-style: none;
+      padding: 0;
+      margin: 20px 0;
+    }
+    .question-item {
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .question-header {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-bottom: 8px;
+    }
+    .question-text {
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .question-header .edit-icon {
+      cursor: pointer;
+      font-size: 18px;
+      color: #888;
+      transition: color 0.2s;
+    }
+    .question-header .edit-icon:hover {
+      color: #555;
+    }
+    .answers {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+    .answers label {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .answers input[type="radio"] {
+      margin-right: 5px;
+    }
+    /* Submit Button (inside the questions container) */
+    #submitBtn {
+      display: block;
+      background-color: #28a745;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 20px auto 0;
+    }
+    #submitBtn:hover {
+      background-color: #218838;
+    }
+    /* Responsive adjustments */
+    @media (max-width: 600px) {
+      .charts-row {
+        flex-direction: column;
+        align-items: center;
+      }
+      .questions-container {
+        width: 90%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Page Header -->
+  <header>
+    Survey Dashboard
+  </header>
+  
+  <div class="container">
+    <!-- Charts Row -->
+    <div class="charts-row">
+      <!-- Bar Chart Container -->
+      <div class="chart-container">
+        <div class="chart-header">
+          <span class="chart-title" id="barChartTitle">Bar Chart</span>
+          <span class="edit-icon" title="Edit chart title" id="editBarChartTitle">&#9998;</span>
+        </div>
+        <canvas id="barChart"></canvas>
+        <div class="chart-label">Cumulative Rating</div>
+      </div>
+      <!-- Pie Chart Container -->
+      <div class="chart-container">
+        <div class="chart-header">
+          <span class="chart-title" id="pieChartTitle">Pie Chart</span>
+          <span class="edit-icon" title="Edit chart title" id="editPieChartTitle">&#9998;</span>
+        </div>
+        <canvas id="pieChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Questions Container (with Submit Button inside) -->
+    <div class="questions-container">
+      <h2>Answer the Questions (1-5)</h2>
+      <ul id="questionsList">
+        <!-- Questions will be rendered here by JavaScript -->
+      </ul>
+      <button id="submitBtn">Submit Answers</button>
+    </div>
+  </div>
+
+  <!-- Chart.js Library -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- ChartDataLabels Plugin for the bar chart -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+  <script>
+    // Global color configuration for pie chart segments
+    const pieColors = ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"];
+
+    // Data for the survey questions (used for display and editing)
+    const questions = [
+      { id: 1, text: "Question 1", rating: null },
+      { id: 2, text: "Question 2", rating: null },
+      { id: 3, text: "Question 3", rating: null },
+      { id: 4, text: "Question 4", rating: null }
+    ];
+    
+    // Aggregated ratings to accumulate submitted answers across multiple submissions
+    const aggregatedRatings = Array(questions.length).fill(0);
+
+    // Function to render the survey questions as a list with radio buttons
+    function renderQuestions() {
+      const list = document.getElementById("questionsList");
+      list.innerHTML = "";
+      questions.forEach(q => {
+        const li = document.createElement("li");
+        li.className = "question-item";
+        
+        // Header with question text and edit icon
+        const headerDiv = document.createElement("div");
+        headerDiv.className = "question-header";
+
+        const textSpan = document.createElement("span");
+        textSpan.className = "question-text";
+        textSpan.textContent = q.text;
+
+        // Edit icon in grey color
+        const editIcon = document.createElement("span");
+        editIcon.className = "edit-icon";
+        editIcon.innerHTML = "&#9998;";
+        editIcon.title = "Edit question";
+        editIcon.addEventListener("click", () => {
+          const newText = prompt("Edit the question:", q.text);
+          if (newText !== null && newText.trim() !== "") {
+            q.text = newText.trim();
+            updateCharts(); // Update chart labels when question text changes
+            renderQuestions();
+          }
+        });
+
+        headerDiv.appendChild(textSpan);
+        headerDiv.appendChild(editIcon);
+        li.appendChild(headerDiv);
+
+        // Create radio buttons for answers 1 to 5
+        const answersDiv = document.createElement("div");
+        answersDiv.className = "answers";
+        for (let i = 1; i <= 5; i++) {
+          const label = document.createElement("label");
+          const radio = document.createElement("input");
+          radio.type = "radio";
+          radio.name = "rating-" + q.id;
+          radio.value = i;
+          if (q.rating === i) {
+            radio.checked = true;
+          }
+          // Set the rating on change
+          radio.addEventListener("change", function() {
+            q.rating = parseInt(this.value);
+          });
+          label.appendChild(radio);
+          label.appendChild(document.createTextNode(i));
+          answersDiv.appendChild(label);
+        }
+        li.appendChild(answersDiv);
+
+        list.appendChild(li);
+      });
+    }
+
+    // Custom plugin to draw percentage labels on pie chart slices
+    const pieLabelPlugin = {
+      id: 'pieLabelPlugin',
+      afterDraw: function(chart) {
+        if (chart.config.type !== 'pie') return;
+        const ctx = chart.ctx;
+        const meta = chart.getDatasetMeta(0);
+        // Calculate the total using the aggregated ratings
+        const total = aggregatedRatings.reduce((sum, val) => sum + val, 0);
+        meta.data.forEach((arc, index) => {
+          const pos = arc.tooltipPosition();
+          let percentage = 0;
+          if (total > 0) {
+            percentage = ((aggregatedRatings[index] / total) * 100).toFixed(1);
+          }
+          const label = percentage + '%';
+          ctx.save();
+          ctx.font = 'bold 14px Arial';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          // Draw black outline
+          ctx.lineWidth = 3;
+          ctx.strokeStyle = 'black';
+          ctx.strokeText(label, pos.x, pos.y);
+          // Draw white text on top
+          ctx.fillStyle = 'white';
+          ctx.fillText(label, pos.x, pos.y);
+          ctx.restore();
+        });
+      }
+    };
+
+    // Initialize Charts
+    let barChart, pieChart;
+    function initCharts() {
+      // Initialize Bar Chart
+      const barCtx = document.getElementById("barChart").getContext("2d");
+      barChart = new Chart(barCtx, {
+        type: "bar",
+        data: {
+          labels: questions.map(q => q.text),
+          datasets: [{
+            label: "Cumulative Rating",
+            data: aggregatedRatings.slice(),
+            backgroundColor: "rgba(0, 123, 255, 0.6)",
+            borderColor: "rgba(0, 123, 255, 1)",
+            borderWidth: 1
+          }]
+        },
+        options: {
+          maintainAspectRatio: false,
+          plugins: {
+            datalabels: {
+              color: 'darkgrey',
+              anchor: 'center',
+              align: 'center',
+              formatter: function(value) {
+                return value;
+              },
+              font: {
+                weight: 'bold'
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                stepSize: 1
+              }
+            }
+          }
+        },
+        plugins: [ChartDataLabels]
+      });
+
+      // Initialize Pie Chart
+      const pieCtx = document.getElementById("pieChart").getContext("2d");
+      pieChart = new Chart(pieCtx, {
+        type: "pie",
+        data: {
+          labels: questions.map(q => q.text),
+          datasets: [{
+            data: aggregatedRatings.slice(),
+            backgroundColor: pieColors.slice(0, questions.length)
+          }]
+        },
+        options: {
+          maintainAspectRatio: false,
+          responsive: true,
+          plugins: {
+            datalabels: {
+              display: false
+            }
+          }
+        },
+        plugins: [pieLabelPlugin]
+      });
+    }
+
+    // Update charts based on aggregated survey responses
+    function updateCharts() {
+      // Update Bar Chart: use aggregated ratings per question
+      barChart.data.labels = questions.map(q => q.text);
+      barChart.data.datasets[0].data = aggregatedRatings.slice();
+      barChart.update();
+
+      // Update Pie Chart: use aggregated ratings, custom plugin computes percentages
+      pieChart.data.labels = questions.map(q => q.text);
+      pieChart.data.datasets[0].data = aggregatedRatings.slice();
+      pieChart.data.datasets[0].backgroundColor = pieColors.slice(0, questions.length);
+      pieChart.update();
+    }
+
+    // Event listeners for chart title edit icons
+    document.getElementById("editBarChartTitle").addEventListener("click", function() {
+      const currentTitle = document.getElementById("barChartTitle").textContent;
+      const newTitle = prompt("Edit chart title:", currentTitle);
+      if (newTitle !== null && newTitle.trim() !== "") {
+        document.getElementById("barChartTitle").textContent = newTitle.trim();
+      }
+    });
+
+    document.getElementById("editPieChartTitle").addEventListener("click", function() {
+      const currentTitle = document.getElementById("pieChartTitle").textContent;
+      const newTitle = prompt("Edit chart title:", currentTitle);
+      if (newTitle !== null && newTitle.trim() !== "") {
+        document.getElementById("pieChartTitle").textContent = newTitle.trim();
+      }
+    });
+
+    // Event listener for the Submit Answers button
+    document.getElementById("submitBtn").addEventListener("click", function() {
+      // For each question, add the current answer (if any) to the aggregated ratings.
+      questions.forEach((q, index) => {
+        aggregatedRatings[index] += (q.rating || 0);
+        // Reset the current selection for next submission.
+        q.rating = null;
+      });
+      renderQuestions(); // Re-render to clear radio button selections.
+      updateCharts();    // Update charts with the new aggregated data.
+    });
+
+    // Initialize the dashboard
+    renderQuestions();
+    initCharts();
+  </script>
+</body>
+</html>

@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Drafter App</title>
+  <style>
+    :root {
+      --bg: #f4f4f4;
+      --fg: #333;
+      --panel-bg: #fff;
+      --input-bg: #fff;
+      --input-border: #ccc;
+      --btn-bg: #007bff;
+      --btn-hover: #0069d9;
+      --danger-bg: #dc3545;
+      --danger-hover: #c82333;
+      --dropdown-hover: rgba(0,0,0,0.1);
+    }
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: Arial, sans-serif;
+      margin: 0; padding: 0;
+    }
+    /* Dark mode vars */
+    body.dark-mode {
+      --bg: #000;
+      --fg: #fff;
+      --panel-bg: #000;
+      --input-bg: #1e1e1e;
+      --input-border: #555;
+      --btn-bg: #28a745;
+      --btn-hover: #218838;
+      --danger-bg: #b02a37;
+      --danger-hover: #940f1d;
+      --dropdown-hover: rgba(255,255,255,0.1);
+    }
+    /* Background for login/signup */
+    body.bg-image {
+      background: url('https://images.pexels.com/photos/7490881/pexels-photo-7490881.jpeg')
+        center/cover no-repeat;
+    }
+    * { box-sizing: border-box; }
+    .hidden { display: none; }
+
+    /* login/signup containers */
+    .container {
+      max-width: 400px; padding: 20px;
+      background: rgba(255,255,255,0.2); backdrop-filter: blur(10px);
+      border: 1px solid #000; border-radius: 8px;
+      margin: 20px auto;
+      color: #000; /* text always black */
+    }
+    #login-view.container { margin: 20vh auto; }
+    #signup-view.container { margin: 20px auto; }
+
+    h2, h3 { text-align: center; margin-bottom: 20px; }
+    label { display: block; margin-bottom: 5px; font-weight: bold; }
+    input, textarea {
+      width: 100%; padding: 8px; margin-bottom: 15px;
+      border: 1px solid var(--input-border); border-radius: 4px;
+      background: var(--input-bg); color: var(--fg);
+    }
+    #login-view button, #signup-view button {
+      display: block; margin: 0 auto; width: auto;
+    }
+
+    button {
+      padding: 10px 20px;
+      background: var(--btn-bg);
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+    button:hover { background: var(--btn-hover); }
+
+    .danger {
+      background: var(--danger-bg);
+    }
+    .danger:hover {
+      background: var(--danger-hover);
+    }
+
+    .switch { text-align: center; margin-top: 10px; }
+    .switch a { color: #007bff; cursor: pointer; text-decoration: none; }
+    .switch a:hover { text-decoration: underline; }
+
+    .img-upload-circle {
+      width: 100px; height: 100px;
+      border: 2px dashed var(--input-border);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 15px; position: relative; cursor: pointer;
+      color: var(--fg); font-size: 14px; background: var(--panel-bg);
+    }
+    .img-upload-circle input { display: none; }
+    .img-upload-circle img {
+      width: 100%; height: 100%;
+      border-radius: 50%; object-fit: cover;
+      position: absolute; top: 0; left: 0;
+    }
+
+    /* Dashboard */
+    #dashboard {
+      display: none;
+      background: var(--panel-bg);
+      color: var(--fg);
+      min-height: 100vh;
+    }
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--panel-bg); color: var(--fg);
+      padding: 10px 20px;
+    }
+    .logo { font-size: 20px; font-weight: bold; }
+    .tabs { display: flex; gap: 20px; }
+    .tab { cursor: pointer; padding: 5px 10px; color: var(--fg); }
+    .tab.active { border-bottom: 2px solid var(--fg); }
+    .profile { position: relative; cursor: pointer; }
+    .profile img { width: 32px; height: 32px; border-radius: 50%; }
+
+    .dropdown {
+      position: absolute; right: 0; top: 40px;
+      background: transparent; color: var(--fg);
+      border: 1px solid var(--input-border);
+      border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      display: none; width: 150px;
+    }
+    .dropdown p {
+      padding: 10px; border-bottom: 1px solid var(--input-border);
+      text-align: center;
+    }
+    .dropdown button {
+      width: 100%; margin: 0; padding: 10px 0;
+      background: transparent; color: var(--fg);
+      border: none; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .dropdown button:not(:last-child) {
+      border-bottom: 1px solid var(--input-border);
+    }
+    .dropdown button:hover {
+      background: var(--dropdown-hover);
+    }
+
+    .content { padding: 20px; }
+    .add-btn { background: var(--btn-bg); margin-bottom: 20px; }
+    .add-btn:hover { background: var(--btn-hover); }
+
+    .cards {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 20px;
+    }
+    .cards .no-projects {
+      grid-column: 1/-1; text-align: center; color: var(--fg);
+    }
+    .card {
+      background: var(--panel-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 4px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+      cursor: pointer;
+      text-align: center;
+      position: relative;
+      transition: transform 0.2s, filter 0.2s;
+    }
+    .card:hover {
+      transform: scale(1.05);
+      filter: brightness(0.9);
+    }
+    .card img {
+      width: 100%; height: 100px; object-fit: cover;
+    }
+    .card p { padding: 10px; font-weight: bold; }
+    .card.selected { border: 2px solid var(--btn-bg); }
+
+    /* Modals */
+    .modal-overlay {
+      position: fixed; top:0; left:0; width:100%; height:100%;
+      background: rgba(0,0,0,0.5);
+      display: none; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .modal {
+  background: var(--panel-bg);
+  padding: 20px;
+  border-radius: 8px;
+  width: 100%; 
+  max-width: 600px;
+  min-height: 550px;
+  max-height: 95%;
+  overflow-y: auto;
+  border: 1px solid #000; 
+}
+
+
+body.dark-mode .modal {
+  border-color: #fff; 
+}
+    .modal-actions {
+      display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;
+    }
+    .code-field {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .attach-icon {
+      cursor: pointer; font-size: 18px; user-select: none;
+    }
+    input.code-file { display: none; }
+/* Light mode hover */
+.tab:hover {
+  color: #333; /* Dark gray for light mode */
+}
+
+/* Dark mode hover */
+body.dark-mode .tab:hover {
+  color: #ccc; /* Light gray for dark mode */
+}
+
+  </style>
+</head>
+<body class="bg-image">
+  <!-- Login View -->
+  <div id="login-view" class="container">
+    <h2>Login</h2>
+    <form id="login-form">
+      <label for="login-id">ID</label>
+      <input type="text" id="login-id" required>
+      <label for="login-password">Password</label>
+      <input type="password" id="login-password" required>
+      <button type="submit">Login</button>
+    </form>
+    <div class="switch">
+      Don't have an account? <a id="to-signup">Sign Up</a>
+    </div>
+  </div>
+
+  <!-- Signup View -->
+  <div id="signup-view" class="container hidden">
+    <h2>Sign Up</h2>
+    <form id="signup-form">
+      <label>Profile Picture</label>
+      <div class="img-upload-circle" id="signup-pic-circle">
+        Add Image
+        <input type="file" id="signup-pic" accept="image/*" required>
+      </div>
+      <label for="signup-name">Name</label>
+      <input type="text" id="signup-name" required>
+      <label for="signup-id">ID</label>
+      <input type="text" id="signup-id" required>
+      <label for="signup-password">Password</label>
+      <input type="password" id="signup-password" required>
+      <button type="submit">Sign Up</button>
+    </form>
+    <div class="switch">
+      Already have an account? <a id="to-login">Login</a>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard">
+    <nav>
+      <div class="logo">Drafter</div>
+      <div class="tabs">
+        <div id="tab-mine" class="tab active">Mine</div>
+        <div id="tab-shared" class="tab">Shared</div>
+      </div>
+      <div class="profile" id="profile-btn">
+        <img id="profile-pic" src="" alt="Profile">
+        <div class="dropdown" id="profile-dropdown">
+          <p id="profile-name"></p>
+          <button id="dark-mode-btn">Toggle Dark Mode</button>
+          <button id="logout-btn">Logout</button>
+        </div>
+      </div>
+    </nav>
+    <div class="content">
+      <div id="mine-section">
+        <button class="add-btn" id="add-project-btn">+ Add Project</button>
+        <div class="cards" id="project-cards"></div>
+      </div>
+      <div id="shared-section" class="hidden">
+        <div class="cards" id="shared-cards"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Project Modal -->
+  <div class="modal-overlay" id="add-modal">
+    <div class="modal">
+      <h3>Add New Project</h3>
+      <form id="project-form">
+        <label for="proj-pic">Picture</label>
+        <input type="file" id="proj-pic" accept="image/*" required>
+        <label for="proj-name">Name</label>
+        <input type="text" id="proj-name" required>
+        <label for="proj-desc">Description</label>
+        <textarea id="proj-desc" rows="3" required></textarea>
+        <div class="code-field">
+          <label for="proj-code">Code</label>
+          <span class="attach-icon" id="attach-icon">📎</span>
+        </div>
+        <input type="file" id="code-file-input" class="code-file" accept=".js,.txt,.html,.css" />
+        <textarea id="proj-code" rows="5" required></textarea>
+        <div class="modal-actions">
+          <button type="submit">Add Project</button>
+          <button type="button" class="danger" id="close-add">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- My Project Modal -->
+  <div class="modal-overlay" id="edit-modal">
+    <div class="modal">
+      <h3>My Project</h3>
+      <form id="edit-form">
+        <label for="edit-pic">Picture</label>
+        <input type="file" id="edit-pic" accept="image/*">
+        <label for="edit-name">Name</label>
+        <input type="text" id="edit-name" required>
+        <label for="edit-desc">Description</label>
+        <textarea id="edit-desc" rows="3" required></textarea>
+        <div class="code-field">
+          <label for="edit-code">Code</label>
+          <span class="attach-icon" id="edit-attach">📎</span>
+        </div>
+        <input type="file" id="edit-code-file" class="code-file" accept=".js,.txt,.html,.css" />
+        <textarea id="edit-code" rows="5" required></textarea>
+        <div class="modal-actions">
+          <button type="button" id="share-btn">Share</button>
+          <button type="button" class="danger" id="delete-btn">Delete</button>
+          <button type="submit">Save</button>
+          <button type="button" class="danger" id="close-edit">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Share Selection Modal -->
+  <div class="modal-overlay" id="share-modal">
+    <div class="modal">
+      <h3>Share Project</h3>
+      <div class="cards" id="share-user-cards"></div>
+      <div class="modal-actions">
+        <button id="confirm-share">Share</button>
+        <button type="button" class="danger" id="cancel-share">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shared Project Modal -->
+  <div class="modal-overlay" id="view-modal">
+    <div class="modal">
+      <h3>Shared Project</h3>
+      <form id="view-form">
+        <label>Picture</label>
+        <img id="shared-pic-img" style="width:100%; height:200px; object-fit:cover; border-radius:4px; margin-bottom:15px;">
+        <label for="shared-name">Name</label>
+        <input type="text" id="shared-name" disabled>
+        <label for="shared-desc">Description</label>
+        <textarea id="shared-desc" rows="3" disabled></textarea>
+        <label for="shared-code">Code</label>
+        <textarea id="shared-code" rows="5" disabled></textarea>
+        <div class="modal-actions">
+          <button type="button" id="save-shared">Save</button>
+          <button type="button" class="danger" id="close-view">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Storage
+    const users = JSON.parse(localStorage.getItem('users')||'{}');
+    const projects = JSON.parse(localStorage.getItem('projects')||'{}');
+    const shared  = JSON.parse(localStorage.getItem('shared')||'{}');
+    let currentUserId, editingIndex, selectedShareUser, viewProjectData;
+
+    // Elements
+    const loginView = document.getElementById('login-view'),
+          signupView= document.getElementById('signup-view'),
+          dashboard = document.getElementById('dashboard'),
+          dropdown  = document.getElementById('profile-dropdown');
+
+    // Switch
+    document.getElementById('to-signup').onclick=()=>{
+      loginView.classList.add('hidden'); signupView.classList.remove('hidden');
+    };
+    document.getElementById('to-login').onclick=()=>{
+      signupView.classList.add('hidden'); loginView.classList.remove('hidden');
+    };
+
+    // Dark mode toggle
+    document.getElementById('dark-mode-btn').onclick=()=>{
+      const user = users[currentUserId];
+      user.darkMode = !user.darkMode;
+      localStorage.setItem('users',JSON.stringify(users));
+      applyDarkMode(user.darkMode);
+    };
+
+    function applyDarkMode(on){
+      if(on) document.body.classList.add('dark-mode');
+      else document.body.classList.remove('dark-mode');
+    }
+
+    // Signup
+    const signupPicInput=document.getElementById('signup-pic'),
+          signupPicCircle=document.getElementById('signup-pic-circle');
+    signupPicCircle.onclick=()=>signupPicInput.click();
+    signupPicInput.onchange=e=>{
+      if(e.target.files[0]){
+        const rdr=new FileReader();
+        rdr.onload=()=>{
+          signupPicCircle.innerHTML='';
+          const img=document.createElement('img');
+          img.src=rdr.result;
+          signupPicCircle.appendChild(img);
+        };
+        rdr.readAsDataURL(e.target.files[0]);
+      }
+    };
+    document.getElementById('signup-form').onsubmit=e=>{
+      e.preventDefault();
+      const name=document.getElementById('signup-name').value.trim(),
+            id=  document.getElementById('signup-id').value.trim(),
+            pwd= document.getElementById('signup-password').value;
+      if(users[id]) return alert('ID exists');
+      const rdr=new FileReader();
+      rdr.onload=()=>{
+        users[id]={name,pwd,pic:rdr.result,darkMode:false};
+        localStorage.setItem('users',JSON.stringify(users));
+        alert('Sign up successful');
+        signupView.classList.add('hidden'); loginView.classList.remove('hidden');
+      };
+      rdr.readAsDataURL(signupPicInput.files[0]);
+    };
+
+    // Login
+    document.getElementById('login-form').onsubmit=e=>{
+      e.preventDefault();
+      const id=document.getElementById('login-id').value.trim(),
+            pwd=document.getElementById('login-password').value;
+      if(!users[id]||users[id].pwd!==pwd) return alert('Invalid');
+      currentUserId=id;
+      if(!projects[id]) projects[id]=[];
+      if(!shared[id]) shared[id]=[];
+      localStorage.setItem('projects',JSON.stringify(projects));
+      localStorage.setItem('shared',JSON.stringify(shared));
+      showDashboard();
+    };
+
+    function showDashboard(){
+      document.body.classList.remove('bg-image');
+      loginView.classList.add('hidden');
+      signupView.classList.add('hidden');
+      dashboard.style.display='block';
+      const user=users[currentUserId];
+      applyDarkMode(user.darkMode);
+      document.getElementById('profile-pic').src=user.pic;
+      document.getElementById('profile-name').innerText=user.name;
+      loadProjects();
+      loadShared();
+    }
+
+    // Logout
+    document.getElementById('profile-btn').onclick=()=>{
+      dropdown.style.display = dropdown.style.display==='block'?'none':'block';
+    };
+    document.getElementById('logout-btn').onclick=()=>{
+      document.body.classList.add('bg-image');
+      document.body.classList.remove('dark-mode');
+      dashboard.style.display='none';
+      loginView.classList.remove('hidden');
+      dropdown.style.display='none';
+    };
+
+    // Tabs
+    document.getElementById('tab-mine').onclick=()=>switchTab('mine');
+    document.getElementById('tab-shared').onclick=()=>switchTab('shared');
+    function switchTab(tab){
+      document.getElementById('tab-mine').classList.toggle('active',tab==='mine');
+      document.getElementById('tab-shared').classList.toggle('active',tab==='shared');
+      document.getElementById('mine-section').classList.toggle('hidden',tab!=='mine');
+      document.getElementById('shared-section').classList.toggle('hidden',tab!=='shared');
+    }
+
+    // Load Mine
+    function loadProjects(){
+      const c=document.getElementById('project-cards');
+      c.innerHTML='';
+      const arr=projects[currentUserId]||[];
+      if(arr.length===0){
+        c.innerHTML='<p class="no-projects">No projects available</p>';
+      } else arr.forEach((p,i)=>{
+        const card=document.createElement('div');
+        card.className='card';
+        card.innerHTML=`<img src="${p.pic}"><p>${p.name}</p>`;
+        card.onclick=()=>openEditModal(i);
+        c.appendChild(card);
+      });
+    }
+
+    // Load Shared
+    function loadShared(){
+      const c=document.getElementById('shared-cards');
+      c.innerHTML='';
+      const arr=shared[currentUserId]||[];
+      if(arr.length===0){
+        c.innerHTML='<p class="no-projects">No projects available</p>';
+      } else arr.forEach(p=>{
+        const card=document.createElement('div');
+        card.className='card';
+        card.innerHTML=`<img src="${p.pic}"><p>${p.name}</p>`;
+        card.onclick=()=>openViewModal(p);
+        c.appendChild(card);
+      });
+    }
+
+    // Add Project
+    const addModal=document.getElementById('add-modal');
+    document.getElementById('add-project-btn').onclick=()=>addModal.style.display='flex';
+    document.getElementById('close-add').onclick=()=>{
+      addModal.style.display='none';
+      document.getElementById('project-form').reset();
+    };
+    document.getElementById('attach-icon').onclick=()=>document.getElementById('code-file-input').click();
+    document.getElementById('code-file-input').onchange=e=>{
+      const f=e.target.files[0];
+      if(f){
+        const rdr=new FileReader();
+        rdr.onload=()=>document.getElementById('proj-code').value=rdr.result;
+        rdr.readAsText(f);
+      }
+    };
+    document.getElementById('project-form').onsubmit=e=>{
+      e.preventDefault();
+      const picF=document.getElementById('proj-pic').files[0];
+      const rdr=new FileReader();
+      rdr.onload=()=>{
+        const proj={
+          pic:rdr.result,
+          name:document.getElementById('proj-name').value.trim(),
+          desc:document.getElementById('proj-desc').value.trim(),
+          code:document.getElementById('proj-code').value
+        };
+        projects[currentUserId].push(proj);
+        localStorage.setItem('projects',JSON.stringify(projects));
+        loadProjects();
+        addModal.style.display='none';
+        e.target.reset();
+      };
+      rdr.readAsDataURL(picF);
+    };
+
+    // Edit Project Modal
+    const editModal=document.getElementById('edit-modal');
+    document.getElementById('close-edit').onclick=()=>editModal.style.display='none';
+    function openEditModal(idx){
+      editingIndex=idx;
+      const p=projects[currentUserId][idx];
+      document.getElementById('edit-name').value=p.name;
+      document.getElementById('edit-desc').value=p.desc;
+      document.getElementById('edit-code').value=p.code;
+      editModal.style.display='flex';
+    }
+    document.getElementById('edit-attach').onclick=()=>document.getElementById('edit-code-file').click();
+    document.getElementById('edit-code-file').onchange=e=>{
+      const f=e.target.files[0];
+      if(f){
+        const rdr=new FileReader();
+        rdr.onload=()=>document.getElementById('edit-code').value=rdr.result;
+        rdr.readAsText(f);
+      }
+    };
+    document.getElementById('edit-form').onsubmit=e=>{
+      e.preventDefault();
+      const p=projects[currentUserId][editingIndex];
+      const np=document.getElementById('edit-pic').files[0];
+      function finalize(){
+        p.name=document.getElementById('edit-name').value.trim();
+        p.desc=document.getElementById('edit-desc').value.trim();
+        p.code=document.getElementById('edit-code').value;
+        localStorage.setItem('projects',JSON.stringify(projects));
+        loadProjects();
+        editModal.style.display='none';
+      }
+      if(np){
+        const rdr=new FileReader();
+        rdr.onload=()=>{p.pic=rdr.result; finalize()};
+        rdr.readAsDataURL(np);
+      } else finalize();
+    };
+    document.getElementById('delete-btn').onclick=()=>{
+      if(confirm('Delete this project?')){
+        projects[currentUserId].splice(editingIndex,1);
+        localStorage.setItem('projects',JSON.stringify(projects));
+        loadProjects();
+        editModal.style.display='none';
+      }
+    };
+
+    // Share Selection Modal
+    const shareModal=document.getElementById('share-modal'),
+          shareUserCards=document.getElementById('share-user-cards');
+    document.getElementById('share-btn').onclick=()=>{
+      shareUserCards.innerHTML=''; selectedShareUser=null;
+      Object.entries(users).forEach(([id,u])=>{
+        if(id===currentUserId) return;
+        const c=document.createElement('div');
+        c.className='card';
+        c.innerHTML=`<img src="${u.pic}"><p>${u.name}</p>`;
+        c.onclick=()=>{
+          shareUserCards.querySelectorAll('.card').forEach(x=>x.classList.remove('selected'));
+          c.classList.add('selected');
+          selectedShareUser=id;
+        };
+        shareUserCards.appendChild(c);
+      });
+      shareModal.style.display='flex';
+    };
+    document.getElementById('cancel-share').onclick=()=>shareModal.style.display='none';
+    document.getElementById('confirm-share').onclick=()=>{
+      if(!selectedShareUser) return alert('Select a user');
+      const proj={...projects[currentUserId][editingIndex]};
+      if(!shared[selectedShareUser]) shared[selectedShareUser]=[];
+      shared[selectedShareUser].push(proj);
+      localStorage.setItem('shared',JSON.stringify(shared));
+      shareModal.style.display='none';
+      alert('Project shared!');
+    };
+
+    // Shared Project Modal
+    const viewModalEl=document.getElementById('view-modal');
+    document.getElementById('close-view').onclick=()=>viewModalEl.style.display='none';
+    document.getElementById('save-shared').onclick=()=>{
+      if(!viewProjectData) return;
+      projects[currentUserId].push({...viewProjectData});
+      localStorage.setItem('projects',JSON.stringify(projects));
+      loadProjects();
+      viewModalEl.style.display='none';
+      alert('Project saved to Mine');
+    };
+    function openViewModal(p){
+      viewProjectData=p;
+      document.getElementById('shared-pic-img').src=p.pic;
+      document.getElementById('shared-name').value=p.name;
+      document.getElementById('shared-desc').value=p.desc;
+      document.getElementById('shared-code').value=p.code;
+      viewModalEl.style.display='flex';
+    }
+  </script>
+</body>
+</html>
